@@ -108,13 +108,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
       suppressHydrationWarning
       className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-(--color-bg) text-(--color-text-primary)">
-        {children}
-      </body>
+      <body className="bg-bg text-text-primary flex min-h-full flex-col">{children}</body>
     </html>
   );
 }
