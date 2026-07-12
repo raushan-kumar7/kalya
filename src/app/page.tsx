@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { Button, toast } from "@/components/ui";
 import { TrendingUp, ArrowUpRight, Shield, PiggyBank, Scale } from "lucide-react";
 
 export default function Home() {
@@ -217,12 +217,12 @@ export default function Home() {
             UI Design System Preview (Button Variants Showcase)
           </h4>
           <div className="flex flex-wrap gap-3">
-            <Button variant="default">Default Emerald</Button>
-            <Button variant="accent">Satin Gold Accent</Button>
-            <Button variant="outline">Outline Button</Button>
-            <Button variant="ghost">Ghost Button</Button>
-            <Button variant="success">Success State</Button>
-            <Button variant="danger">Danger State</Button>
+            <Button variant="default" onClick={() => toast.info("This is a standard informational toast.")}>Default Emerald</Button>
+            <Button variant="accent" onClick={() => toast.info("Gold milestone achieved!", { description: "1-year investment goal completed." })}>Satin Gold Accent</Button>
+            <Button variant="outline" onClick={() => toast.success("Asset added to your portfolio.")}>Outline Button</Button>
+            <Button variant="ghost" onClick={() => toast.error("Destructive action simulation.")}>Ghost Button</Button>
+            <Button variant="success" onClick={() => toast.success("EPF retirement balance updated.")}>Success State</Button>
+            <Button variant="danger" onClick={() => toast.error("Liability payment past due date!")}>Danger State</Button>
           </div>
         </section>
       </main>
