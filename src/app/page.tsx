@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, ArrowUpRight, Shield, PiggyBank, Scale } from "lucide-react";
 
@@ -17,7 +17,7 @@ export default function Home() {
               <span className="font-display text-lg font-bold text-bg dark:text-text-primary">K</span>
             </div>
             <div>
-              <span className="font-display text-xl font-bold tracking-tight text-primary">kalya</span>
+              <span className="font-display text-xl font-bold tracking-tight text-text-primary">kalya</span>
               <span className="ml-1 text-[10px] font-medium text-text-muted">कल्य</span>
             </div>
           </div>

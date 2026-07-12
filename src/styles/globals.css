@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ============================================================
    KALYA — Design Tokens
@@ -8,106 +9,120 @@
 
 @theme {
   /* ---------- Typography ---------- */
-  --font-display: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-numeric: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--font-outfit), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-numeric: var(--font-ibm-plex-mono), "JetBrains Mono", ui-monospace, monospace;
 
   /* Type scale */
-  --text-display-xl: 3.5rem;   /* Hero net-worth figure, onboarding headline */
-  --text-display-lg: 2.5rem;   /* Page titles */
-  --text-display-md: 1.75rem;  /* Section headers */
+  --text-display-xl: 3.5rem;
+  --text-display-lg: 2.5rem;
+  --text-display-md: 1.75rem;
   --text-body-lg: 1.125rem;
   --text-body-md: 1rem;
   --text-body-sm: 0.875rem;
-  --text-caption: 0.75rem;     /* Timestamps, helper text */
+  --text-caption: 0.75rem;
+
+  /* ---------- Colors — theme-time refs, values live in :root / [data-theme="dark"] ---------- */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --color-success-subtle: var(--success-subtle);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info-subtle: var(--info-subtle);
+
+  --color-on-primary: var(--on-primary);
+  --color-on-accent: var(--on-accent);
+  --color-on-success: var(--on-success);
+  --color-on-danger: var(--on-danger);
 }
 
 /* ============================================================
-   LIGHT MODE (default)
+   LIGHT MODE (default) — raw runtime values
    ============================================================ */
 :root {
-  /* Brand core */
-  --color-primary: #0D3E26;         /* Deep Emerald — primary actions, nav, brand marks */
-  --color-primary-hover: #0A3019;
-  --color-primary-subtle: #E4EEE8;  /* Emerald tint for selected states, chips */
+  --primary: #0d3e26;
+  --primary-hover: #0a3019;
+  --primary-subtle: #e4eee8;
 
-  --color-accent: #B8912E;          /* Satin Gold, darkened slightly for AA contrast on white */
-  --color-accent-subtle: #F6EDD4;   /* Gold tint — goal milestones, achievement badges */
+  --accent: #b8912e;
+  --accent-subtle: #f6edd4;
 
-  /* Surfaces */
-  --color-bg: #F9F8F6;              /* Alabaster — app background */
-  --color-surface: #FFFFFF;         /* Cards, sheets, modals */
-  --color-surface-raised: #FCFBFA;  /* Hover/elevated surface */
-  --color-border: #E4E1DA;
+  --bg: #f9f8f6;
+  --surface: #ffffff;
+  --surface-raised: #fcfbfa;
+  --border: #e4e1da;
 
-  /* Text */
-  --color-text-primary: #16241D;    /* Emerald-tinted near-black */
-  --color-text-secondary: #4E5D6C;  /* Alert Slate — reused for secondary text */
-  --color-text-muted: #8A9098;
+  --text-primary: #16241d;
+  --text-secondary: #4e5d6c;
+  --text-muted: #8a9098;
 
-  /* Semantic (financial states) */
-  --color-success: #1E7A4C;         /* Positive net worth trend, income */
-  --color-warning: #C9862B;         /* EMI due soon, budget nearing limit */
-  --color-danger: #B3432D;          /* Overspend, overdue, liability spike */
-  --color-info: #3E6B8A;            /* Neutral insights, tips */
+  --success: #1e7a4c;
+  --warning: #c9862b;
+  --danger: #b3432d;
+  --info: #3e6b8a;
 
-  --color-success-subtle: #E5F2EA;
-  --color-warning-subtle: #FBEEDC;
-  --color-danger-subtle: #F7E5E0;
-  --color-info-subtle: #E6EEF2;
+  --success-subtle: #e5f2ea;
+  --warning-subtle: #fbeedc;
+  --danger-subtle: #f7e5e0;
+  --info-subtle: #e6eef2;
+
+  --on-primary: #ffffff;
+  --on-accent: #16241d;
+  --on-success: #ffffff;
+  --on-danger: #ffffff;
 }
 
 /* ============================================================
-   DARK MODE
+   DARK MODE — raw runtime values
    ============================================================ */
 [data-theme="dark"] {
-  /* Brand core */
-  --color-primary: #3FA873;         /* Brightened emerald for legibility on dark */
-  --color-primary-hover: #4FBD84;
-  --color-primary-subtle: #16281F;
+  --primary: #3fa873;
+  --primary-hover: #4fbd84;
+  --primary-subtle: #16281f;
 
-  --color-accent: #E8C468;          /* Brightened gold */
-  --color-accent-subtle: #2E2716;
+  --accent: #e8c468;
+  --accent-subtle: #2e2716;
 
-  /* Surfaces */
-  --color-bg: #0B1410;              /* Deep green-black, not pure black */
-  --color-surface: #131F19;
-  --color-surface-raised: #1A2721;
-  --color-border: #223027;
+  --bg: #0b1410;
+  --surface: #131f19;
+  --surface-raised: #1a2721;
+  --border: #223027;
 
-  /* Text */
-  --color-text-primary: #F4F2EC;    /* Warm off-white, echoes light-mode alabaster */
-  --color-text-secondary: #93A3A0;
-  --color-text-muted: #62716C;
+  --text-primary: #f4f2ec;
+  --text-secondary: #93a3a0;
+  --text-muted: #62716c;
 
-  /* Semantic */
-  --color-success: #4FBD84;
-  --color-warning: #E3A34E;
-  --color-danger: #E2694F;
-  --color-info: #6FA8C9;
+  --success: #4fbd84;
+  --warning: #e3a34e;
+  --danger: #e2694f;
+  --info: #6fa8c9;
 
-  --color-success-subtle: #16281F;
-  --color-warning-subtle: #2C2115;
-  --color-danger-subtle: #2C1813;
-  --color-info-subtle: #16232B;
+  --success-subtle: #16281f;
+  --warning-subtle: #2c2115;
+  --danger-subtle: #2c1813;
+  --info-subtle: #16232b;
+
+  --on-primary: #0b1410;
+  --on-accent: #0b1410;
+  --on-success: #0b1410;
+  --on-danger: #0b1410;
 }
-
-/* ============================================================
-   Usage notes
-   ============================================================
-   - --font-display: Outfit 600/700. Use ONLY for hero numbers,
-     page titles, and onboarding — never for body copy or tables.
-   - --font-body: Inter 400/500/600. Everything else: labels,
-     buttons, forms, nav.
-   - --font-numeric: IBM Plex Mono for ALL currency amounts,
-     balances, and tabular data (transactions, EMI schedules,
-     net worth). Tabular figures make scanning numbers reliable
-     and give Kalya a quiet "precision instrument" feel that
-     also nods to the "byte" in Kaalbyte.
-   - Never use --color-danger for anything except liabilities/
-     overspend — keep it rare so it stays meaningful.
-   - --color-accent (gold) is a MOMENT color: goal completion,
-     milestones, premium features. Not a UI workhorse color —
-     overusing it will make the app feel like a rewards app,
-     not a wealth command center.
-============================================================ */

@@ -1,7 +1,8 @@
-// src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Outfit } from "next/font/google";
 import "@/styles/globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+
 
 // Font configurations — mapped to match design tokens in globals.css
 const outfit = Outfit({
@@ -111,7 +112,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="bg-bg text-text-primary flex min-h-full flex-col">{children}</body>
+      <body className="bg-bg text-text-primary min-h-full flex flex-col transition-colors duration-200">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
