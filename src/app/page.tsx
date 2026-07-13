@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button, toast } from "@/components/ui";
 import { TrendingUp, ArrowUpRight, Shield, PiggyBank, Scale } from "lucide-react";
@@ -23,11 +24,11 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Button variant="outline" size="sm">
-              Sign In
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/login">Sign In</Link>
             </Button>
-            <Button variant="accent" size="sm">
-              Get Started
+            <Button variant="accent" size="sm" asChild>
+              <Link href="/signup">Get Started</Link>
             </Button>
           </div>
         </div>
