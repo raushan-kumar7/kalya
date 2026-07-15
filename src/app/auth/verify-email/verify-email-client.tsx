@@ -4,19 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Mail, Check, RotateCw } from "lucide-react";
-import { Card, Button, toast } from "@/components/ui";
+import { Card, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useAuth } from "@/hooks/auth";
 
 const RESEND_COOLDOWN_SECONDS = 45;
-
-type ResendState = "idle" | "sending" | "sent" | "error";
 
 export function VerifyEmailClient() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 
-  const [resend, setResend] = useState<ResendState>("idle");
+  const { resendVerificationEmail, isResendingVerification } = useAuth();
+  const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const reduceMotion = useReducedMotion();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -35,24 +35,14 @@ export function VerifyEmailClient() {
   }, [cooldown]);
 
   const handleResend = async () => {
-    if (resend === "sending" || cooldown > 0) return;
-    setResend("sending");
-    const toastId = "resend-verification";
-    toast.loading("Sending verification email...", { id: toastId });
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-      setResend("sent");
+    if (isResendingVerification || cooldown > 0 || !email) return;
+
+    // runAction (inside useAuth) already handles the loading state and
+    // success/error toasts, so we only need to react to the boolean result.
+    const success = await resendVerificationEmail(email);
+    if (success) {
+      setSent(true);
       setCooldown(RESEND_COOLDOWN_SECONDS);
-      toast.success("Verification email sent", {
-        id: toastId,
-        description: email ? `Check ${email} for the link.` : "Check your inbox for the link.",
-      });
-    } catch {
-      setResend("error");
-      toast.error("Couldn't resend the email", {
-        id: toastId,
-        description: "Something went wrong on our end. Try again in a moment.",
-      });
     }
   };
 
@@ -64,19 +54,17 @@ export function VerifyEmailClient() {
         <motion.div
           className={cn(
             "flex h-14 w-14 items-center justify-center rounded-full border-2 transition-colors duration-300",
-            resend === "sent"
+            sent
               ? "bg-primary border-primary text-on-primary"
               : "bg-primary-subtle border-primary/30 text-primary"
           )}
           animate={
-            resend === "sent" && !reduceMotion
-              ? { scale: [1, 0.85, 1.08, 1], rotate: [0, -6, 0] }
-              : undefined
+            sent && !reduceMotion ? { scale: [1, 0.85, 1.08, 1], rotate: [0, -6, 0] } : undefined
           }
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <AnimatePresence mode="wait" initial={false}>
-            {resend === "sent" ? (
+            {sent ? (
               <motion.span
                 key="check"
                 initial={reduceMotion ? undefined : { opacity: 0, scale: 0.6 }}
@@ -124,16 +112,16 @@ export function VerifyEmailClient() {
           variant="default"
           className="w-full"
           onClick={handleResend}
-          disabled={resend === "sending" || cooldown > 0}
+          disabled={isResendingVerification || cooldown > 0 || !email}
         >
-          {resend === "sending" ? (
+          {isResendingVerification ? (
             <span className="flex items-center justify-center gap-2">
               <RotateCw className="h-4 w-4 animate-spin" />
               Sending...
             </span>
           ) : cooldown > 0 ? (
             `Resend email (0:${cooldown.toString().padStart(2, "0")})`
-          ) : resend === "sent" ? (
+          ) : sent ? (
             "Email sent — resend"
           ) : (
             "Resend email"

@@ -13,43 +13,41 @@ import {
   Button,
   Input,
   Spinner,
-  toast,
 } from "@/components/ui";
 import { PasswordStrengthMeter } from "@/components/shared/password-strength-meter";
+import { useAuth } from "@/hooks/auth";
 import { ChangePasswordInput, ChangePasswordSchema } from "@/validations/auth";
 
 export function ChangePasswordForm() {
+  const { changePassword, isChangingPassword } = useAuth();
+
   const {
     register,
     control,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    setError,
+    formState: { errors },
   } = useForm<ChangePasswordInput>({
     resolver: zodResolver(ChangePasswordSchema),
     defaultValues: { currentPassword: "", password: "", confirmPassword: "" },
   });
 
-  const newPassword = useWatch({control, name: "password"});
+  const newPassword = useWatch({ control, name: "password" });
 
   const onSubmit = async (data: ChangePasswordInput) => {
-    try {
-      console.log("Data: ", data)
-      // Replace with real change-password API call, sending
-      // { currentPassword: data.currentPassword, password: data.password }
-      await new Promise((resolve) => setTimeout(resolve, 900));
-      toast.success("Password changed", {
-        description: "Use your new password next time you sign in.",
-      });
-      reset();
-    } catch {
-      // If the API reports the current password didn't match, surface it on that
-      // field specifically instead of a generic error:
-      // setError("currentPassword", { message: "That password doesn't match your current one" });
-      toast.error("Couldn't change your password", {
-        description: "Double check your current password and try again.",
-      });
+    const result = await changePassword(data);
+
+    if (result?.success === false) {
+      if (result?.error?.code === "INVALID_PASSWORD") {
+        setError("currentPassword", {
+          message: "That password doesn't match your current one",
+        });
+      }
+      return;
     }
+
+    reset();
   };
 
   return (
@@ -68,7 +66,7 @@ export function ChangePasswordForm() {
             placeholder="Enter current password"
             leadingIcon={<Lock size={16} />}
             autoComplete="current-password"
-            disabled={isSubmitting}
+            disabled={isChangingPassword}
             errorMessage={errors.currentPassword?.message}
             {...register("currentPassword")}
           />
@@ -81,7 +79,7 @@ export function ChangePasswordForm() {
               placeholder="Enter new password"
               leadingIcon={<Lock size={16} />}
               autoComplete="new-password"
-              disabled={isSubmitting}
+              disabled={isChangingPassword}
               errorMessage={errors.password?.message}
               {...register("password")}
             />
@@ -95,7 +93,7 @@ export function ChangePasswordForm() {
             placeholder="Re-enter new password"
             leadingIcon={<Lock size={16} />}
             autoComplete="new-password"
-            disabled={isSubmitting}
+            disabled={isChangingPassword}
             errorMessage={errors.confirmPassword?.message}
             {...register("confirmPassword")}
           />
@@ -108,9 +106,9 @@ export function ChangePasswordForm() {
           form="password-change-form"
           variant="default"
           size="md"
-          disabled={isSubmitting}
+          disabled={isChangingPassword}
         >
-          {isSubmitting ? (
+          {isChangingPassword ? (
             <span className="flex items-center justify-center gap-2">
               <Spinner size="sm" /> Saving...
             </span>

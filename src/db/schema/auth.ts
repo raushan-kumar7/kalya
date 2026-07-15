@@ -1,7 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
-export const users = sqliteTable("users", {
+export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -17,6 +17,7 @@ export const users = sqliteTable("users", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   username: text("username").notNull().unique(),
+  displayUsername: text("display_username"),
   first_name: text("first_name").notNull(),
   middle_name: text("middle_name"),
   last_name: text("last_name").notNull(),
@@ -49,7 +50,7 @@ export const session = sqliteTable(
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -62,7 +63,7 @@ export const account = sqliteTable(
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
@@ -102,21 +103,21 @@ export const verification = sqliteTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
-  users: one(users, {
+  user: one(user, {
     fields: [session.userId],
-    references: [users.id],
+    references: [user.id],
   }),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
-  users: one(users, {
+  user: one(user, {
     fields: [account.userId],
-    references: [users.id],
+    references: [user.id],
   }),
 }));

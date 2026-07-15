@@ -1,19 +1,16 @@
 "use client";
 
-import { Button, Input, Spinner, toast } from "@/components/ui";
+import { Alert, AlertDescription, Button, Input, Spinner } from "@/components/ui";
 import { SignupInput, SignupSchema } from "@/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleUser, Lock, Mail, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { CircleCheckBig, CircleUser, CircleX, Lock, Mail, UserRound } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { PasswordStrengthMeter } from "@/components/shared";
+import { useAuth, useUsernameAvailability } from "@/hooks/auth";
 
 export function SignupForm() {
-  const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signUp, isSigningUp, signUpError } = useAuth();
 
   const {
     register,
@@ -33,28 +30,56 @@ export function SignupForm() {
     },
   });
 
-    const password = useWatch({ control, name: "password" });
+  const password = useWatch({ control, name: "password" });
+  const username = useWatch({ control, name: "username" });
 
-  const onSubmit = (data: SignupInput) => {
-    setFormError(null);
-    setIsSubmitting(true);
+  const usernameAvailability = useUsernameAvailability(username ?? "");
 
-    try {
-      console.log("Signin Data: ", data);
-      toast.success("Account created successfully, Please check your email box to verify account");
-      router.push("/auth/sign-in");
+  const onSubmit = async (data: SignupInput) => {
+    if (usernameAvailability.status === "taken" || usernameAvailability.status === "invalid") {
+      return;
+    }
+
+    const success = await signUp(
+      data,
+      `/auth/verify-email?email=${encodeURIComponent(data.email)}`
+    );
+    if (success) {
       reset();
-    } catch {
-      setFormError("Something went wrong");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const ICON_SIZE = 16;
 
+  const usernameErrorMessage =
+    errors.username?.message ??
+    (usernameAvailability.status === "invalid" || usernameAvailability.status === "taken"
+      ? (usernameAvailability.message ?? undefined)
+      : undefined);
+
+  const usernameHelperText =
+    !usernameErrorMessage &&
+    (usernameAvailability.status === "available" || usernameAvailability.status === "checking")
+      ? (usernameAvailability.message ??
+        (usernameAvailability.status === "checking" ? "Checking availability…" : undefined))
+      : undefined;
+
+  const usernameTrailingIcon =
+    usernameAvailability.status === "available" ? (
+      <CircleCheckBig size={ICON_SIZE} className="text-success" />
+    ) : usernameAvailability.status === "taken" ||
+      usernameAvailability.status === "invalid" ||
+      usernameAvailability.status === "error" ? (
+      <CircleX size={ICON_SIZE} className="text-danger" />
+    ) : undefined;
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
+      {signUpError && (
+        <Alert variant="danger">
+          <AlertDescription>{signUpError}</AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-3 gap-3 space-y-1.5">
         <Input
           label="First Name"
@@ -93,7 +118,10 @@ export function SignupForm() {
           type="text"
           placeholder="kalya_user"
           leadingIcon={<CircleUser size={ICON_SIZE} />}
-          errorMessage={errors.username?.message}
+          trailingIcon={usernameTrailingIcon}
+          loading={usernameAvailability.status === "checking"}
+          errorMessage={usernameErrorMessage}
+          helperText={usernameHelperText}
           {...register("username")}
         />
 
@@ -126,9 +154,9 @@ export function SignupForm() {
         variant="default"
         size="md"
         className="mt-4 w-full"
-        disabled={isSubmitting}
+        disabled={isSigningUp || usernameAvailability.status === "checking"}
       >
-        {isSubmitting ? (
+        {isSigningUp ? (
           <span className="flex items-center justify-center gap-2">
             <Spinner size="sm" /> Creating account...
           </span>

@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import { SigninForm } from "@/components/forms/auth";
 import { Card } from "@/components/ui";
 
-
 export const metadata: Metadata = {
   title: "Sign In",
   description: "Sign in to your Kalya dashboard to track income, assets, and net worth.",
 };
 
-export default function Signin() {
+export default async function Signin({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirectTo?: string }>;
+}) {
+  const { redirectTo } = await searchParams;
+
   return (
     <Card className="flex flex-col items-center justify-center p-8 shadow-md">
       <div className="mb-6 text-center">
@@ -17,7 +22,7 @@ export default function Signin() {
           Enter your credentials to access your dashboard.
         </p>
       </div>
-      <SigninForm />
+      <SigninForm redirectTo={redirectTo} />
     </Card>
   );
 }
