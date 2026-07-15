@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { Lock, ShieldAlert } from "lucide-react";
-import { Button, Input, Spinner, toast } from "@/components/ui";
+import { Button, Input, Spinner } from "@/components/ui";
 import { AuthSeal } from "@/components/shared/auth-seal";
 import { PasswordStrengthMeter } from "@/components/shared/password-strength-meter";
+import { useAuth } from "@/hooks/auth";
 import { ResetPasswordInput, ResetPasswordSchema } from "@/validations/auth";
 
 interface ResetPasswordFormProps {
@@ -17,37 +17,28 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
-  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "success">("idle");
+
+  const { confirmPasswordReset, isResettingPassword } = useAuth();
 
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  const password = useWatch({control, name: "password"});
+  const password = useWatch({ control, name: "password" });
 
   const onSubmit = async (data: ResetPasswordInput) => {
-    console.log("Data: ", data)
-    try {
-      // Replace with real reset-password API call, sending { token, password: data.password }
-      await new Promise((resolve) => setTimeout(resolve, 900));
+    if (!token) return;
+
+    const result = await confirmPasswordReset(data, token);
+    if (result) {
       setStatus("success");
-      toast.success("Password updated", {
-        description: "Sign in with your new password.",
-      });
-      setTimeout(() => router.push("/auth/sign-in"), 1600);
-    } catch {
-      // A dedicated "token expired mid-submit" response from the API should
-      // route here too — swap toast.error for setStatus("expired") if so.
-      toast.error("Couldn't reset your password", {
-        description: "Something went wrong on our end. Try again in a moment.",
-      });
     }
   };
 
@@ -108,7 +99,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           placeholder="Enter new password"
           leadingIcon={<Lock size={16} />}
           autoComplete="new-password"
-          disabled={isSubmitting}
+          disabled={isResettingPassword}
           errorMessage={errors.password?.message}
           {...register("password")}
         />
@@ -122,7 +113,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             placeholder="Re-enter new password"
             leadingIcon={<Lock size={16} />}
             autoComplete="new-password"
-            disabled={isSubmitting}
+            disabled={isResettingPassword}
             errorMessage={errors.confirmPassword?.message}
             {...register("confirmPassword")}
           />
@@ -133,9 +124,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           variant="default"
           size="md"
           className="mt-5 w-full"
-          disabled={isSubmitting}
+          disabled={isResettingPassword}
         >
-          {isSubmitting ? (
+          {isResettingPassword ? (
             <span className="flex items-center justify-center gap-2">
               <Spinner size="sm" /> Updating password...
             </span>

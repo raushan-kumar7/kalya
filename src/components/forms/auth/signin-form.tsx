@@ -1,18 +1,19 @@
 "use client";
 
-import { Alert, AlertDescription, Button, Checkbox, Input, Label, Spinner, toast } from "@/components/ui";
+import { Alert, AlertDescription, Button, Checkbox, Input, Label, Spinner } from "@/components/ui";
+import { useAuth } from "@/hooks/auth";
 import { SigninInput, SigninSchema } from "@/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-export function SigninForm() {
-  const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface SigninFormProps {
+  redirectTo?: string;
+}
+
+export function SigninForm({ redirectTo }: SigninFormProps) {
+  const { signIn, isSigningIn, signInError } = useAuth();
 
   const {
     register,
@@ -25,27 +26,18 @@ export function SigninForm() {
   });
 
   const onSubmit = async (data: SigninInput) => {
-    setFormError(null);
-    setIsSubmitting(true);
-
-    try {
-      // Replace with your real auth call
-      console.log("Signin Data: ", data);
-      toast.success("Successfully signed in!");
-      router.push("/dashboard");
+    // const success = await signIn(data);
+    const success = await signIn(data, redirectTo || "/dashboard");
+    if (success) {
       reset();
-    } catch {
-      setFormError("We couldn't sign you in. Check your details and try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5" noValidate>
-      {formError && (
+      {signInError && (
         <Alert variant="danger">
-          <AlertDescription>{formError}</AlertDescription>
+          <AlertDescription>{signInError}</AlertDescription>
         </Alert>
       )}
 
@@ -54,7 +46,7 @@ export function SigninForm() {
         placeholder="Enter your userId or email"
         leadingIcon={<User />}
         autoComplete="username"
-        disabled={isSubmitting}
+        disabled={isSigningIn}
         errorMessage={errors.userId?.message}
         {...register("userId")}
       />
@@ -65,29 +57,29 @@ export function SigninForm() {
         placeholder="Enter your password"
         leadingIcon={<KeyRound />}
         autoComplete="current-password"
-        disabled={isSubmitting}
+        disabled={isSigningIn}
         errorMessage={errors.password?.message}
         {...register("password")}
       />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Checkbox id="remember" disabled={isSubmitting} />
-          <Label htmlFor="remember" className="font-normal text-text-secondary">
+          <Checkbox id="remember" disabled={isSigningIn} />
+          <Label htmlFor="remember" className="text-text-secondary font-normal">
             Remember me
           </Label>
         </div>
 
         <Link
           href="/auth/forgot-password"
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-primary text-sm font-medium hover:underline"
         >
           Forgot password?
         </Link>
       </div>
 
-      <Button type="submit" variant="default" size="md" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button type="submit" variant="default" size="md" className="w-full" disabled={isSigningIn}>
+        {isSigningIn ? (
           <span className="flex items-center justify-center gap-2">
             <Spinner size="sm" /> Signing in...
           </span>
@@ -96,9 +88,9 @@ export function SigninForm() {
         )}
       </Button>
 
-      <p className="text-center text-sm text-text-secondary">
+      <p className="text-text-secondary text-center text-sm">
         Don&apos;t have an account?{" "}
-        <Link href="/auth/sign-up" className="font-medium text-primary hover:underline">
+        <Link href="/auth/sign-up" className="text-primary font-medium hover:underline">
           Create one
         </Link>
       </p>

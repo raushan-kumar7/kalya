@@ -5,8 +5,9 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { KeyRound, Mail } from "lucide-react";
-import { Button, Input, Spinner, toast } from "@/components/ui";
+import { Button, Input, Spinner } from "@/components/ui";
 import { AuthSeal } from "@/components/shared";
+import { useAuth } from "@/hooks/auth";
 import { ForgotPasswordInput, ForgotPasswordSchema } from "@/validations/auth";
 
 const RESEND_COOLDOWN_SECONDS = 45;
@@ -16,11 +17,13 @@ export function ForgotPasswordForm() {
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const { requestPasswordReset, isRequestingPasswordReset } = useAuth();
+
   const {
     register,
     handleSubmit,
     getValues,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(ForgotPasswordSchema),
     defaultValues: { email: "" },
@@ -40,23 +43,15 @@ export function ForgotPasswordForm() {
   }, [cooldown]);
 
   const sendLink = async (data: ForgotPasswordInput) => {
-    try {
-      // Replace with real forgot-password API call
-      await new Promise((resolve) => setTimeout(resolve, 900));
+    const result = await requestPasswordReset(data, '/auth/reset-password');
+    if (result) {
       setSentTo(data.email);
       setCooldown(RESEND_COOLDOWN_SECONDS);
-      toast.success("Reset link sent", {
-        description: `Check ${data.email} for the link.`,
-      });
-    } catch {
-      toast.error("Couldn't send the reset link", {
-        description: "Something went wrong on our end. Try again in a moment.",
-      });
     }
   };
 
   const handleResend = () => {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || isRequestingPasswordReset) return;
     const email = getValues("email");
     if (email) sendLink({ email });
   };
@@ -82,9 +77,17 @@ export function ForgotPasswordForm() {
             size="md"
             className="w-full"
             onClick={handleResend}
-            disabled={cooldown > 0}
+            disabled={cooldown > 0 || isRequestingPasswordReset}
           >
-            {cooldown > 0 ? `Resend link (0:${cooldown.toString().padStart(2, "0")})` : "Resend link"}
+            {isRequestingPasswordReset ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner size="sm" /> Resending...
+              </span>
+            ) : cooldown > 0 ? (
+              `Resend link (0:${cooldown.toString().padStart(2, "0")})`
+            ) : (
+              "Resend link"
+            )}
           </Button>
           <Link
             href="/auth/sign-in"
@@ -117,13 +120,19 @@ export function ForgotPasswordForm() {
           placeholder="Enter email"
           leadingIcon={<Mail size={16} />}
           autoComplete="email"
-          disabled={isSubmitting}
+          disabled={isRequestingPasswordReset}
           errorMessage={errors.email?.message}
           {...register("email")}
         />
 
-        <Button type="submit" variant="default" size="md" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? (
+        <Button
+          type="submit"
+          variant="default"
+          size="md"
+          className="w-full"
+          disabled={isRequestingPasswordReset}
+        >
+          {isRequestingPasswordReset ? (
             <span className="flex items-center justify-center gap-2">
               <Spinner size="sm" /> Sending link...
             </span>
