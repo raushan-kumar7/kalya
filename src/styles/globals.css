@@ -77,7 +77,8 @@
 
   --success: #1e7a4c;
   --warning: #c9862b;
-  --danger: #b3432d;
+  /* --danger: #b3432d; */
+  --danger: #B00020;
   --info: #3e6b8a;
 
   --success-subtle: #e5f2ea;
@@ -113,7 +114,8 @@
 
   --success: #4fbd84;
   --warning: #e3a34e;
-  --danger: #e2694f;
+  /* --danger: #e2694f; */
+  --danger: #B00020;
   --info: #6fa8c9;
 
   --success-subtle: #16281f;

@@ -1,3 +1,5 @@
+import { Footer, Sidebar, Top } from "@/components/dashboard";
+import { StoreHydration } from "@/hooks";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -12,5 +14,18 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
     redirect(`/auth/sign-in?redirectTo=${encodeURIComponent(pathname)}`);
   }
 
-  return <main>{children}</main>;
+  return (
+    <div className="bg-bg flex min-h-full overflow-x-hidden">
+      <StoreHydration/>
+      <Sidebar user={session.user} />
+      {/** sidebar  */}
+      <div className="flex min-h-full w-full flex-1 flex-col">
+        {/** top */}
+        <Top user={session.user} className="pl-18 md:pl-4" />
+        <main className="flex-1 px-4 pb-6 sm:px-6 md:px-8">{children}</main>
+        {/** footer */}
+        <Footer/>
+      </div>
+    </div>
+  );
 }
