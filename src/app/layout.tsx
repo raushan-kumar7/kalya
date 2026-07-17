@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Inter, Outfit } from "next/font/google";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toast";
+import { TooltipProvider } from "@/components/ui";
 
 
 // Font configurations — mapped to match design tokens in globals.css
@@ -115,8 +116,10 @@ export default function RootLayout({
     >
       <body className="bg-bg text-text-primary min-h-full flex flex-col transition-colors duration-200">
         <ThemeProvider>
-          {children}
-          <Toaster />
+          <TooltipProvider delayDuration={200}>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

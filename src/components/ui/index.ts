@@ -6,12 +6,15 @@ export * from "./label";
 export * from "./theme-toggle";
 export * from "./badge";
 export * from "./field";
+export * from "./image";
 export * from "./input-group";
 export * from "./numeric-value";
 export * from "./budget-progress";
 export * from "./metric-card";
 export * from "./skeleton";
 export * from "./alert";
+export * from "./avatar"
+export * from "./animated-tooltip"
 export * from "./tabs";
 export * from "./dialog";
 export * from "./dropdown-menu";
