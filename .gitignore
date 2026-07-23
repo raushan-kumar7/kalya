@@ -43,3 +43,7 @@ next-env.d.ts
 data/
 
 commit-message.txt
+
+# uploads
+/public/uploads/
+/public/user.jpg

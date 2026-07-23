@@ -17,6 +17,8 @@ export interface SidebarNavItem {
   label: string;
   /** lucide-react icon component, rendered at size=18 in the sidebar */
   icon: LucideIcon;
+  /** Short one-line subtitle shown under the page title in Top.tsx */
+  description?: string;
   /** Optional badge, e.g. unread count — rendered via your Badge component */
   badge?: string | number;
   /** Marks item as disabled (greyed out, non-interactive) */
@@ -34,18 +36,53 @@ export const SIDEBAR_NAVIGATIONS: SidebarNavItems[] = [
   {
     group: "Main",
     items: [
-      { href: "/dashboard", label: "Overview", icon: LayoutGrid },
-      { href: "/dashboard/wallet", label: "Wallet", icon: CreditCard },
-      { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-      { href: "/dashboard/schedule", label: "Schedule", icon: Calendar },
-      { href: "/dashboard/clients", label: "Clients", icon: Users },
-      { href: "/dashboard/reports", label: "Reports", icon: ClipboardList },
+      {
+        href: "/dashboard",
+        label: "Overview",
+        icon: LayoutGrid,
+        description: "Here's where your finances stand today.",
+      },
+      {
+        href: "/dashboard/wallet",
+        label: "Wallet",
+        icon: CreditCard,
+        description: "Your accounts, cards, and balances.",
+      },
+      {
+        href: "/dashboard/analytics",
+        label: "Analytics",
+        icon: BarChart3,
+        description: "Spending trends and cash flow over time.",
+      },
+      {
+        href: "/dashboard/schedule",
+        label: "Schedule",
+        icon: Calendar,
+        description: "Upcoming bills, transfers, and reminders.",
+      },
+      {
+        href: "/dashboard/clients",
+        label: "Clients",
+        icon: Users,
+        description: "Manage the people you work with.",
+      },
+      {
+        href: "/dashboard/reports",
+        label: "Reports",
+        icon: ClipboardList,
+        description: "Generate and export financial reports.",
+      },
     ],
   },
   {
     group: "Account",
     items: [
-      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+      {
+        href: "/dashboard/settings",
+        label: "Settings",
+        icon: Settings,
+        description: "Manage your profile, security, and preferences.",
+      },
       { href: "/sign-out", label: "Sign out", icon: LogOut },
     ],
   },

@@ -191,6 +191,7 @@ import { formatDateTime } from "@/utils/datetime";
 import PasswordChanged from "@/emails/password-changed";
 import { username } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
+import DeleteAccount from "@/emails/delete-account";
 
 /**
  * better-auth's built-in User type only knows the core fields — it has no
@@ -318,8 +319,23 @@ export const auth = betterAuth({
 
     session: {
       expiresIn: 60 * 60 * 24 * 30,
-      disableSessionRefresh: true,
+      // disableSessionRefresh: true,
       freshAge: 60 * 60 * 24,
+    },
+
+    deleteUser: {
+      enabled: true,
+      sendDeleteAccountVerification: async ({ user, url }) => {
+        await sendMail({
+          to: user.email,
+          subject: "Confirm account deletion",
+          react: DeleteAccount({ name: user.name, deleteUrl: url }),
+        });
+      },
+      afterDelete: async (user) => {
+        // any cleanup — e.g. removing the avatar you upload/remove elsewhere
+        console.log(`Account deleted: ${user.email}`);
+      },
     },
   },
 

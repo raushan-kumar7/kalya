@@ -273,6 +273,7 @@ import {
 } from "react-hot-toast";
 import { CheckCircle2, XCircle, AlertTriangle, Info, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppEvent } from "@/hooks";
 
 /* ------------------------------------------------------------------ */
 /* Variant configuration                                               */
@@ -391,14 +392,20 @@ function KalyaToast({ t, variant, title, description, action }: { t: Toast } & T
       {/* Copy */}
       <div className="flex-1 pt-0.5">
         <p className="text-body-sm leading-snug font-semibold">{title}</p>
-        {description ? (
+        {/* {description ? (
           <p
             className="text-caption mt-0.5 leading-snug"
             style={{ color: "var(--color-text-secondary)" }}
           >
             {description}
           </p>
-        ) : null}
+        ) : null} */}
+
+        {description ? (
+  <p className="text-caption mt-0.5 leading-snug" style={{ color: "var(--color-text-secondary)" }}>
+    {description}
+  </p>
+) : null}
         {action ? (
           <button
             type="button"
@@ -463,6 +470,9 @@ function isTogglePayload(data: unknown): data is TogglePayload {
 /* ------------------------------------------------------------------ */
 
 export function Toaster() {
+  useAppEvent("toast:show", ({variant, title, ...options}) => {
+    toast[variant](title, options)
+  });
   return (
     <HotToaster
       position="top-right"

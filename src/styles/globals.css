@@ -78,7 +78,7 @@
   --success: #1e7a4c;
   --warning: #c9862b;
   /* --danger: #b3432d; */
-  --danger: #B00020;
+  --danger: #b00020;
   --info: #3e6b8a;
 
   --success-subtle: #e5f2ea;
@@ -90,6 +90,10 @@
   --on-accent: #16241d;
   --on-success: #ffffff;
   --on-danger: #ffffff;
+
+  /* Scrollbar — light mode values */
+  --scrollbar-thumb: var(--border);
+  --scrollbar-thumb-hover: var(--text-muted);
 }
 
 /* ============================================================
@@ -115,7 +119,7 @@
   --success: #4fbd84;
   --warning: #e3a34e;
   /* --danger: #e2694f; */
-  --danger: #B00020;
+  --danger: #b00020;
   --info: #6fa8c9;
 
   --success-subtle: #16281f;
@@ -127,4 +131,78 @@
   --on-accent: #0b1410;
   --on-success: #0b1410;
   --on-danger: #0b1410;
+
+  /* Scrollbar — dark mode values */
+  --scrollbar-thumb: var(--border);
+  --scrollbar-thumb-hover: var(--text-secondary);
+}
+
+/* ============================================================
+   SCROLLBAR — theme-aware, thin by default
+   Applies globally so every scroll container matches the theme
+   without needing a class on each one. Uses --scrollbar-thumb /
+   --scrollbar-thumb-hover, which flip automatically with
+   [data-theme="dark"] since they're re-declared above.
+   ============================================================ */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* ------------------------------------------------------------
+   Opt-in utility: hide the scrollbar entirely while keeping the
+   element scrollable. Apply alongside overflow-y-auto, e.g.
+   className="no-scrollbar overflow-y-auto".
+   ------------------------------------------------------------ */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+/* ------------------------------------------------------------
+   Opt-in utility: fades content at the top/bottom edge of a
+   scroll container so "there's more below" stays legible even
+   without a visible scrollbar. Pair with .no-scrollbar.
+   ------------------------------------------------------------ */
+.scroll-fade {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
 }
