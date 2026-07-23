@@ -4,7 +4,7 @@ import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui";
-
+import { Providers } from "./providers";
 
 // Font configurations — mapped to match design tokens in globals.css
 const outfit = Outfit({
@@ -114,13 +114,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="bg-bg text-text-primary min-h-full flex flex-col transition-colors duration-200">
-        <ThemeProvider>
-          <TooltipProvider delayDuration={200}>
-            {children}
-            <Toaster />
-          </TooltipProvider>
-        </ThemeProvider>
+      <body className="bg-bg text-text-primary flex min-h-full flex-col transition-colors duration-200">
+        <Providers>
+          <ThemeProvider>
+            <TooltipProvider delayDuration={200}>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

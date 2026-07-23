@@ -1,4 +1,5 @@
 export * from "./use-debounce"
+export * from "./use-events"
 export * from "./use-sidebar"
 export * from "./use-store-hydration"
 export * from "./use-throttle"
