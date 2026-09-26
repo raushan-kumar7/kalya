@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs & caches
+dist
+build
+.next
+out
+.turbo
+
+# Package manager lockfiles
+pnpm-lock.yaml
+
+# TypeScript build artifacts
+*.tsbuildinfo
+**/dist/**/*.d.ts
+
+# Database migrations & SQLite binaries
+*.sqlite
+*.sqlite-journal
+**/migrations/*.sql
+
+# Generated files
+next-env.d.ts
+routeTree.gen.ts

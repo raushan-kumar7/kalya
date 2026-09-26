@@ -1,0 +1,11 @@
+{
+  "name": "@kalya/prettier-config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.json",
+  "files": [
+    "index.json"
+  ],
+  "description": "Kalya shared Prettier configuration",
+  "license": "ISC"
+}

@@ -8,12 +8,20 @@ importers:
 
   .:
     devDependencies:
+      '@kalya/prettier-config':
+        specifier: workspace:*
+        version: link:packages/prettier-config
+      prettier:
+        specifier: ^3.9.9
+        version: 3.9.9
       turbo:
         specifier: ^2.11.4
         version: 2.11.4
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+
+  packages/prettier-config: {}
 
 packages:
 
@@ -167,6 +175,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  prettier@3.9.9:
+    resolution: {integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   turbo@2.11.4:
     resolution: {integrity: sha512-nedZtJ2hjWpU/JBFq7Aj1GQBxQ56si+kIUmNZBUX35O35TIuhSBR6/u3yHHmk81U+RBdBcVjvLQ3/iOFzMwKsA==}
     hasBin: true
@@ -255,6 +268,8 @@ snapshots:
 
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
+
+  prettier@3.9.9: {}
 
   turbo@2.11.4:
     optionalDependencies:
