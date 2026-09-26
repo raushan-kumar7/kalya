@@ -5,7 +5,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "create:file": "",
+    "create:file": "tsx scripts/create-file.ts",
     "format": "prettier --write --cache .",
     "format:check": "prettier --check --cache .",
     "typecheck": "turbo run typecheck",
@@ -23,7 +23,9 @@
   "prettier": "@kalya/prettier-config",
   "devDependencies": {
     "@kalya/prettier-config": "workspace:*",
+    "@types/node": "^26.6.3",
     "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
     "turbo": "^2.11.4",
     "typescript": "^7.0.2"
   }
