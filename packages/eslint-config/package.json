@@ -9,6 +9,11 @@
     "./next": "./src/next.js",
     "./react": "./src/react.js"
   },
+  "files": [
+    "src/base.js",
+    "src/next.js",
+    "src/react.js"
+  ],
   "devDependencies": {
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",

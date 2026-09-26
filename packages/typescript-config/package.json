@@ -4,6 +4,12 @@
   "private": true,
   "description": "Kalya shared TypeScript configuration presets",
   "license": "ISC",
+  "exports": {
+    ".": "./src/base.json",
+    "./nextjs": "./src/nextjs.json",
+    "./react-library": "./src/react-library.json",
+    "./node": "./src/node.json"
+  },
   "files": [
     "src/base.json",
     "src/nextjs.json",
