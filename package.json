@@ -7,7 +7,9 @@
   "scripts": {
     "create:file": "",
     "format": "prettier --write --cache .",
-    "format:check": "prettier --check --cache ."
+    "format:check": "prettier --check --cache .",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint"
   },
   "keywords": [
     "kalya",

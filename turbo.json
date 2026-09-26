@@ -11,6 +11,10 @@
     },
     "format:check": {
       "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^topo"],
+      "outputs": []
     }
   }
 }

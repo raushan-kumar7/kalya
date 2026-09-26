@@ -1,0 +1,13 @@
+{
+  "name": "@kalya/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Kalya shared TypeScript configuration presets",
+  "license": "ISC",
+  "files": [
+    "src/base.json",
+    "src/nextjs.json",
+    "src/react-library.json",
+    "src/node.json"
+  ]
+}
