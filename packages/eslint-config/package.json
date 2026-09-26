@@ -1,0 +1,17 @@
+{
+  "name": "@kalya/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Kalya shared ESLint configuration",
+  "type": "module",
+  "exports": {
+    "./base": "./src/base.js",
+    "./next": "./src/next.js",
+    "./react": "./src/react.js"
+  },
+  "devDependencies": {
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript-eslint": "^8.70.1"
+  }
+}
