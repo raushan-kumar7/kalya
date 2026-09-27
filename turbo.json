@@ -13,7 +13,7 @@
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^topo"],
+      "dependsOn": ["^typecheck"],
       "outputs": []
     }
   }

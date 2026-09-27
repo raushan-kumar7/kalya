@@ -1,6 +1,8 @@
 {
-  "extends": "@kalya/typescript-config",
+  "extends": "@kalya/typescript-config/node",
   "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "outDir": "dist",
     "rootDir": "src"
   },

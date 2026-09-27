@@ -3,7 +3,7 @@
   "display": "Base",
   "compilerOptions": {
     "target": "es2022",
-    "lib": ["es2022"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
