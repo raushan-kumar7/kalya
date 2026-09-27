@@ -1,3 +1,4 @@
+export * from './db-plugin';
 export * from './security-plugin';
 export * from './multipart-plugin';
 export * from './static-plugin';

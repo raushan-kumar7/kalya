@@ -1,8 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
-import { envSchema, RawEnv } from '@kalya/validations';
+import { loadMonorepoEnv } from '@kalya/utils';
+import { envSchema, type RawEnv } from '@kalya/validations';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Discover monorepo root .env or fall back to local directory .env
+if (!loadMonorepoEnv()) {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 /**
  * Validates process.env variables against the Zod schema from @kalya/validations.

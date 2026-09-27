@@ -1,7 +1,19 @@
-import { zBoolString, zCsvList, zDurationMs } from '../core';
 import { z } from 'zod';
+import { zBoolString, zCsvList, zDurationMs } from '../core';
 
-export const envSchema = z.object({
+/**
+ * Isolated validation schema for database connection credentials.
+ */
+export const databaseEnvSchema = z.object({
+  'KALYA_DATABASE.URL': z.string().min(1),
+});
+
+export type DatabaseRawEnv = z.infer<typeof databaseEnvSchema>;
+
+/**
+ * Complete environment validation schema for the API server.
+ */
+export const envSchema = databaseEnvSchema.extend({
   // ---- App ----
   'KALYA_APP.NAME': z.string().min(1),
   'KALYA_APP.API_VERSION': z.string().min(1),
@@ -26,9 +38,6 @@ export const envSchema = z.object({
         .map((s) => s.trim())
         .filter(Boolean)
     ),
-
-  // ---- Database ----
-  'KALYA_DATABASE.URL': z.string().min(1),
 
   // ---- Auth ----
   'KALYA_AUTH.SECRET_KEY': z.string().min(32, 'SECRET_KEY must be at least 32 chars'),
