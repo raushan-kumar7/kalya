@@ -13,6 +13,7 @@ export { schema };
  */
 export const createDbClient = (dbUrl: string) => {
   const sqlite = new Database(dbUrl);
+  sqlite.pragma('journal_mode = WAL');
   return drizzle(sqlite, { schema });
 };
 

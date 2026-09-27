@@ -1,1 +1,109 @@
-console.info('Starting Kalya API Server...');
+import { buildApp } from '@/app';
+import { config } from '@/configs';
+import { log } from '@/logger';
+
+const app = buildApp();
+
+/**
+ * Guard flag to ensure shutdown logic is executed only once.
+ */
+let isShuttingDown = false;
+
+/**
+ * Gracefully shuts down the Fastify server and application resources.
+ *
+ * @description Handles process termination signals (SIGINT, SIGTERM) and fatal errors.
+ * Closes active network listeners, drains in-flight requests, and forces termination
+ * if shutdown hangs longer than the timeout threshold.
+ *
+ * @param {string} signal - The operating system or runtime signal received.
+ * @returns {Promise<void>}
+ */
+async function shutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  log.info(`Received ${signal}, shutting down gracefully...`, {
+    service: config.app.name,
+    environment: config.env,
+  });
+
+  // Force exit after 10 seconds if connections fail to close in time
+  const forceExitTimeout = setTimeout(() => {
+    log.error('Graceful shutdown timed out, forcing exit.', {
+      service: config.app.name,
+      errorCode: 'SHUTDOWN_TIMEOUT',
+    });
+    process.exit(1);
+  }, 10_000);
+
+  forceExitTimeout.unref();
+
+  try {
+    await app.close();
+    log.info(`${config.app.name} has been shut down successfully.`);
+    process.exit(0);
+  } catch (err) {
+    log.error(err, {
+      service: config.app.name,
+      errorCode: 'SHUTDOWN_ERROR',
+    });
+    process.exit(1);
+  }
+}
+
+/**
+ * Initializes and starts the Fastify API server.
+ *
+ * @description Binds the server to the configured host and port, logging the
+ * bound address and runtime environment on successful startup.
+ *
+ * @returns {Promise<void>}
+ */
+async function start(): Promise<void> {
+  try {
+    const address = await app.listen({
+      host: config.server.host,
+      port: config.server.port,
+    });
+
+    log.info(`🚀 ${config.app.name} running in [${config.env}] mode on ${address}`, {
+      service: config.app.name,
+      environment: config.env,
+      path: address,
+    });
+  } catch (err) {
+    log.error(err, {
+      service: config.app.name,
+      environment: config.env,
+      errorCode: 'SERVER_BOOT_ERROR',
+    });
+    process.exit(1);
+  }
+}
+
+// Lifecycle and Termination Signal Listeners
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+
+// Uncaught Error Handlers
+process.on('unhandledRejection', (reason) => {
+  log.error(reason instanceof Error ? reason : new Error(String(reason)), {
+    service: config.app.name,
+    environment: config.env,
+    errorCode: 'SYSTEM_UNHANDLED_REJECTION',
+  });
+  void shutdown('unhandledRejection');
+});
+
+process.on('uncaughtException', (err) => {
+  log.error(err, {
+    service: config.app.name,
+    environment: config.env,
+    errorCode: 'SYSTEM_UNCAUGHT_EXCEPTION',
+  });
+  void shutdown('uncaughtException');
+});
+
+// Boot the application
+void start();
