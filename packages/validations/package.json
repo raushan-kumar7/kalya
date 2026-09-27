@@ -1,0 +1,20 @@
+{
+  "name": "@kalya/validations",
+  "version": "0.0.0",
+  "description": "Shared Zod schemas and runtime validation logic for Kalya",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kalya/types": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@kalya/eslint-config": "workspace:*",
+    "@kalya/typescript-config": "workspace:*",
+    "typescript": "^7.0.2"
+  }
+}

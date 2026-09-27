@@ -212,6 +212,25 @@ importers:
         specifier: ^10.11.0
         version: 10.11.0(jiti@2.6.1)
 
+  packages/validations:
+    dependencies:
+      '@kalya/types':
+        specifier: workspace:*
+        version: link:../types
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@kalya/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@kalya/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
 packages:
 
   '@babel/code-frame@7.29.7':
