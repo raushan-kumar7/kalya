@@ -1,0 +1,16 @@
+{
+  "name": "@kalya/types",
+  "version": "0.0.0",
+  "description": "Shared TypeScript definitions and interfaces for Kalya",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@kalya/eslint-config": "workspace:*",
+    "@kalya/typescript-config": "workspace:*",
+    "typescript": "^7.0.2"
+  }
+}

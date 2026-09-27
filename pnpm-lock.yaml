@@ -179,6 +179,18 @@ importers:
 
   packages/prettier-config: {}
 
+  packages/types:
+    devDependencies:
+      '@kalya/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@kalya/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   packages/typescript-config: {}
 
   packages/utils:

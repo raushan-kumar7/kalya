@@ -1,1 +1,1 @@
-console.info("Starting Kalya API Server...")
+console.info('Starting Kalya API Server...');
