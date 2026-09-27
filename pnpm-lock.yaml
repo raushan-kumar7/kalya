@@ -50,9 +50,15 @@ importers:
       '@kalya/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@kalya/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@kalya/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@kalya/validations':
+        specifier: workspace:*
+        version: link:../../packages/validations
       cloudinary:
         specifier: ^2.11.0
         version: 2.11.0
@@ -217,6 +223,9 @@ importers:
       '@kalya/types':
         specifier: workspace:*
         version: link:../types
+      '@kalya/utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: ^4.6.5
         version: 4.6.5

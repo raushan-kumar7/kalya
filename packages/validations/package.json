@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@kalya/types": "workspace:*",
+    "@kalya/utils": "workspace:*",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -1,5 +1,14 @@
 /**
- * Created: 27/9/2026 3:41:38 pm
+ * Defines the deployment environments for the Kalya application ecosystem.
  */
+export type AppEnvironment = 'local' | 'development' | 'staging' | 'production';
 
-export {};
+/**
+ * Standardized logging levels across the application for Observability.
+ */
+export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+
+/**
+ * Valid SameSite cookie policy attributes for session management.
+ */
+export type CookieSameSite = 'lax' | 'strict' | 'none';
