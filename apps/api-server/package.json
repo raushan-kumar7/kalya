@@ -1,0 +1,44 @@
+{
+  "name": "@kalya/api-server",
+  "version": "0.0.0",
+  "description": "Primary Fastify backend API for Kalya Web and Mobile clients",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/static": "^10.1.5",
+    "@kalya/db": "workspace:*",
+    "@kalya/email": "workspace:*",
+    "@kalya/utils": "workspace:*",
+    "cloudinary": "^2.11.0",
+    "dotenv": "^18.0.4",
+    "fastify": "^5.12.5",
+    "fastify-plugin": "^6.0.0",
+    "fastify-type-provider-zod": "^7.0.0",
+    "nodemailer": "^10.0.11",
+    "picocolors": "^1.1.1",
+    "resend": "^6.30.0",
+    "sharp": "^0.35.4",
+    "slugify": "^1.6.9",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@kalya/eslint-config": "workspace:*",
+    "@kalya/typescript-config": "workspace:*",
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
