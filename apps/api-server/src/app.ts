@@ -1,23 +1,28 @@
-import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
-import rateLimit from '@fastify/rate-limit';
+import Fastify, { type FastifyInstance } from 'fastify';
 import { config } from '@/configs';
-import { log } from '@/logger';
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import {
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
+import {
+  errorHandlerPlugin,
+  multipartPlugin,
+  requestLoggerPlugin,
+  securityPlugin,
+  staticFilesPlugin,
+} from '@/plugins';
 
 /**
  * Builds and configures the primary Fastify application instance.
  *
- * @description Initializes Fastify with Zod type providers, server timeout configurations,
- * security headers (Helmet), CORS, rate limiting, request observability hooks,
- * standardized 404 responses, and centralized error handling.
+ * @description Orchestrates core server configuration, Zod type provider compilers,
+ * security headers, CORS policies, rate limiting, static asset delivery,
+ * request observability, and global error interception.
  *
- * @returns {FastifyInstance} Configured Fastify instance ready for plugin and route registration.
+ * @returns {FastifyInstance} Configured Fastify instance ready to listen.
  */
 export const buildApp = (): FastifyInstance => {
   const app = Fastify({
@@ -32,13 +37,8 @@ export const buildApp = (): FastifyInstance => {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  // Security Headers
-  app.register(helmet, {
-    contentSecurityPolicy: config.isProd,
-    crossOriginEmbedderPolicy: false,
-  });
-
-  // Cross-Origin Resource Sharing
+  // 1. Security & Access Control
+  app.register(securityPlugin);
   app.register(cors, {
     origin: config.server.corsAllowedOrigins,
     methods: config.server.corsAllowedMethods,
@@ -47,7 +47,7 @@ export const buildApp = (): FastifyInstance => {
     maxAge: 86400,
   });
 
-  // Global Rate Limiting
+  // 2. Abuse Prevention (Rate Limiting)
   app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
@@ -60,21 +60,17 @@ export const buildApp = (): FastifyInstance => {
     }),
   });
 
-  // Request Observability Hook (skips spammy health check polling)
-  app.addHook('onResponse', (request: FastifyRequest, reply: FastifyReply, done) => {
-    if (request.url !== '/health') {
-      log.info(`${request.method} ${request.url} ${reply.statusCode}`, {
-        method: request.method,
-        path: request.url,
-        status: reply.statusCode,
-        latency_ms: Math.round(reply.elapsedTime * 100) / 100,
-        ip: request.ip,
-      });
-    }
-    done();
-  });
+  // 3. Payload & File Handling
+  app.register(multipartPlugin);
+  app.register(staticFilesPlugin);
 
-  // Observability Health Check Endpoint
+  // 4. Observability & Logging
+  app.register(requestLoggerPlugin);
+
+  // 5. Global Error & 404 Handling (Registered after hooks to catch all unhandled exceptions)
+  app.register(errorHandlerPlugin);
+
+  // 6. Operational Health Endpoint
   if (config.observability.healthChecks.enabled) {
     app.get('/health', async () => {
       const memory = process.memoryUsage();
