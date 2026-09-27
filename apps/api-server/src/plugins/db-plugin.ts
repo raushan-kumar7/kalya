@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createDbClient, sql } from '@kalya/db';
 import type { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import { log } from '@/logger';
 
 /**
@@ -20,7 +20,7 @@ import { log } from '@/logger';
  * @param fastify - The Fastify application instance.
  */
 const dbPluginCallback: FastifyPluginAsync = async (fastify) => {
-  const dbUrl = config.database.url;
+  const dbUrl = env.database.url;
 
   try {
     // Ensure parent directory exists for file-based SQLite databases

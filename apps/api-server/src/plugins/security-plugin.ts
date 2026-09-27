@@ -1,4 +1,4 @@
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import helmet from '@fastify/helmet';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
@@ -38,7 +38,7 @@ const buildAPICSP = (isLocal: boolean) => ({
  */
 export const securityPlugin = fp(
   async (app: FastifyInstance) => {
-    const isLocal = config.env === 'local';
+    const isLocal = env.isDev;
 
     await app.register(helmet, buildAPICSP(isLocal));
 

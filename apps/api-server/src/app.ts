@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { sql } from '@kalya/db';
@@ -30,9 +30,9 @@ export const buildApp = (): FastifyInstance => {
   const app = Fastify({
     logger: false,
     trustProxy: true,
-    connectionTimeout: config.server.readTimeoutSec * 1000,
-    requestTimeout: config.server.writeTimeoutSec * 1000,
-    keepAliveTimeout: config.server.idleTimeoutSec * 1000,
+    connectionTimeout: env.server.readTimeoutSec * 1000,
+    requestTimeout: env.server.writeTimeoutSec * 1000,
+    keepAliveTimeout: env.server.idleTimeoutSec * 1000,
   }).withTypeProvider<ZodTypeProvider>();
 
   // Schema Compilers for fastify-type-provider-zod
@@ -42,8 +42,8 @@ export const buildApp = (): FastifyInstance => {
   // 1. Security & Access Control
   app.register(securityPlugin);
   app.register(cors, {
-    origin: config.server.corsAllowedOrigins,
-    methods: config.server.corsAllowedMethods,
+    origin: env.server.corsAllowedOrigins,
+    methods: env.server.corsAllowedMethods,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
     maxAge: 86400,
@@ -76,7 +76,7 @@ export const buildApp = (): FastifyInstance => {
   app.register(errorHandlerPlugin);
 
   // 7. Operational Health Endpoint with Database Verification
-  if (config.observability.healthChecks.enabled) {
+  if (env.observability.healthChecks.enabled) {
     app.get('/health', async (request, reply) => {
       const memory = process.memoryUsage();
       let dbStatus: 'healthy' | 'unreachable' = 'healthy';
@@ -95,9 +95,9 @@ export const buildApp = (): FastifyInstance => {
 
       return reply.status(statusCode).send({
         status: isHealthy ? 'operational' : 'degraded',
-        service: config.observability.serviceName,
-        env: config.env,
-        version: config.app.apiVersion,
+        service: env.observability.serviceName,
+        env: env.env,
+        version: env.app.apiVersion,
         uptime: `${Math.floor(process.uptime())}s`,
         checks: {
           database: {

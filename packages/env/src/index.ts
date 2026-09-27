@@ -1,6 +1,9 @@
 import type { AppConfig } from '@kalya/types';
 import { rawEnv } from './env';
 
+export * from './env';
+export * from './db';
+
 /**
  * Transforms validated environment variables into the domain-structured AppConfig.
  *
@@ -105,3 +108,10 @@ function createConfig(): AppConfig {
  * Strongly typed and frozen server configuration instance.
  */
 export const config: AppConfig = createConfig();
+
+/**
+ * Alias export for `config`.
+ */
+export const env = config;
+
+export type { AppConfig };

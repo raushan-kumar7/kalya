@@ -1,4 +1,4 @@
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import { toInstant } from '@kalya/utils';
 import path from 'node:path';
 import pc from 'picocolors';
@@ -141,7 +141,7 @@ const consoleFormat = winston.format.printf((info) => {
   const { timestamp, level, message, logMetadata, stack } = info as LogInfo;
   const time = formatTimestamp(timestamp as string);
   const levelTag = level.toUpperCase().padEnd(8);
-  const appName = config.app.name;
+  const appName = env.app.name;
   const prefix = `[${appName.charAt(0).toUpperCase() + appName.slice(1)} ${time}]`;
 
   // Don't print the stack inside the metadata JSON blob on console.
@@ -169,7 +169,7 @@ const consoleFormat = winston.format.printf((info) => {
 
 const internalLogger = winston.createLogger({
   levels: CustomLevels,
-  level: config.observability.logging.level === 'debug' ? 'debug' : 'info',
+  level: env.observability.logging.level === 'debug' ? 'debug' : 'info',
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
     winston.format.errors({ stack: true })
@@ -181,7 +181,7 @@ const internalLogger = winston.createLogger({
     }),
     // File: full JSON, including the complete stack trace for debugging.
     new DailyRotateFile({
-      filename: path.join(process.cwd(), 'logs', `${config.app.name}-%DATE%.log`),
+      filename: path.join(process.cwd(), 'logs', `${env.app.name}-%DATE%.log`),
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',

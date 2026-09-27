@@ -3,10 +3,8 @@ import { defineConfig, type Config } from 'drizzle-kit';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schemas';
 
-
 export { schema };
 export * from './schemas';
-
 
 export {
   // SQL template tag & expressions
@@ -59,7 +57,6 @@ export type { InferSelectModel, InferInsertModel, SQL, SQLWrapper } from 'drizzl
 export { drizzle, defineConfig, Database };
 export type { Config, BetterSqliteOptions };
 
-
 /**
  * Type alias for the strongly-typed Drizzle client instance bound to application schemas.
  */
@@ -107,7 +104,6 @@ export const createDbClient = (dbUrl: string, options?: CreateDbClientOptions) =
 
   return drizzle(sqlite, { schema });
 };
-
 
 /**
  * Configuration options for the `drizzleConfig` helper.

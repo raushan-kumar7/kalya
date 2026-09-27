@@ -1,4 +1,4 @@
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import fastifyStatic from '@fastify/static';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
@@ -13,9 +13,9 @@ import path from 'node:path';
  */
 export const staticFilesPlugin = fp(
   async (app: FastifyInstance) => {
-    if (config.storage.provider !== 'local') return;
+    if (env.storage.provider !== 'local') return;
 
-    const uploadDir = path.resolve(process.cwd(), config.storage.local.uploadDir);
+    const uploadDir = path.resolve(process.cwd(), env.storage.local.uploadDir);
 
     // Ensure the upload directory exists on disk to prevent @fastify/static ENOENT crash
     if (!fs.existsSync(uploadDir)) {

@@ -1,8 +1,8 @@
 import { drizzleConfig } from './src';
-import { getDatabaseUrl } from '@kalya/utils';
+import { dbEnv } from '@kalya/env/db';
 
 export default drizzleConfig({
   dbCredentials: {
-    url: getDatabaseUrl(),
+    url: dbEnv.url,
   },
 });

@@ -1,4 +1,4 @@
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import { HttpStatus } from '@/constants';
 import {
   AppError,
@@ -91,12 +91,12 @@ function buildBody(appErr: AppError): IErrorResponse {
     code: appErr.code,
     message: appErr.isOperational
       ? appErr.message
-      : config.isProd
+      : env.isProd
         ? 'Internal server error'
         : appErr.message,
     ...(appErr.details && { details: appErr.details }),
     ...(isValidationError(appErr) && { errors: appErr.fields }),
-    ...(config.isDev && appErr.stack && { stack: appErr.stack }),
+    ...(env.isDev && appErr.stack && { stack: appErr.stack }),
   };
 
   return body;
@@ -116,14 +116,14 @@ export const errorHandlerPlugin = fp(
       const err = new NotFoundError(`Cannot ${request.method} ${request.url}`);
 
       log.warn(err.message, {
-        service: config.app.name,
-        environment: config.env,
+        service: env.app.name,
+        environment: env.env,
         method: request.method,
         path: request.url,
         status: err.statusCode,
         ip: request.ip,
         requestId: request.id,
-        ...(config.isDev && { stack: err.stack }),
+        ...(env.isDev && { stack: err.stack }),
       });
 
       request.errorLogged = true;
@@ -137,8 +137,8 @@ export const errorHandlerPlugin = fp(
 
         if (appErr.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
           log.error(appErr, {
-            service: config.app.name,
-            environment: config.env,
+            service: env.app.name,
+            environment: env.env,
             method: request.method,
             path: request.url,
             status: appErr.statusCode,
@@ -147,8 +147,8 @@ export const errorHandlerPlugin = fp(
           });
         } else {
           log.warn(appErr.message, {
-            service: config.app.name,
-            environment: config.env,
+            service: env.app.name,
+            environment: env.env,
             method: request.method,
             path: request.url,
             status: appErr.statusCode,

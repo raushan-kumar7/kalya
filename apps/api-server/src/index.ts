@@ -1,5 +1,5 @@
 import { buildApp } from '@/app';
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import { log } from '@/logger';
 
 const app = buildApp();
@@ -24,14 +24,14 @@ async function shutdown(signal: string): Promise<void> {
   isShuttingDown = true;
 
   log.info(`Received ${signal}, shutting down gracefully...`, {
-    service: config.app.name,
-    environment: config.env,
+    service: env.app.name,
+    environment: env.env,
   });
 
   // Force exit after 10 seconds if connections fail to close in time
   const forceExitTimeout = setTimeout(() => {
     log.error('Graceful shutdown timed out, forcing exit.', {
-      service: config.app.name,
+      service: env.app.name,
       errorCode: 'SHUTDOWN_TIMEOUT',
     });
     process.exit(1);
@@ -41,11 +41,11 @@ async function shutdown(signal: string): Promise<void> {
 
   try {
     await app.close();
-    log.info(`${config.app.name} has been shut down successfully.`);
+    log.info(`${env.app.name} has been shut down successfully.`);
     process.exit(0);
   } catch (err) {
     log.error(err, {
-      service: config.app.name,
+      service: env.app.name,
       errorCode: 'SHUTDOWN_ERROR',
     });
     process.exit(1);
@@ -63,19 +63,19 @@ async function shutdown(signal: string): Promise<void> {
 async function start(): Promise<void> {
   try {
     const address = await app.listen({
-      host: config.server.host,
-      port: config.server.port,
+      host: env.server.host,
+      port: env.server.port,
     });
 
-    log.info(`🚀 ${config.app.name} running in [${config.env}] mode on ${address}`, {
-      service: config.app.name,
-      environment: config.env,
+    log.info(`🚀 ${env.app.name} running in [${env.env}] mode on ${address}`, {
+      service: env.app.name,
+      environment: env.env,
       path: address,
     });
   } catch (err) {
     log.error(err, {
-      service: config.app.name,
-      environment: config.env,
+      service: env.app.name,
+      environment: env.env,
       errorCode: 'SERVER_BOOT_ERROR',
     });
     process.exit(1);
@@ -89,8 +89,8 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 // Uncaught Error Handlers
 process.on('unhandledRejection', (reason) => {
   log.error(reason instanceof Error ? reason : new Error(String(reason)), {
-    service: config.app.name,
-    environment: config.env,
+    service: env.app.name,
+    environment: env.env,
     errorCode: 'SYSTEM_UNHANDLED_REJECTION',
   });
   void shutdown('unhandledRejection');
@@ -98,8 +98,8 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (err) => {
   log.error(err, {
-    service: config.app.name,
-    environment: config.env,
+    service: env.app.name,
+    environment: env.env,
     errorCode: 'SYSTEM_UNCAUGHT_EXCEPTION',
   });
   void shutdown('uncaughtException');

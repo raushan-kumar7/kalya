@@ -1,4 +1,4 @@
-import { config } from '@/configs';
+import { env } from '@kalya/env';
 import { log } from '@/logger';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
@@ -20,14 +20,14 @@ export const requestLoggerPlugin = fp(
       if (request.url === '/health') return;
 
       // In production, suppress 2xx/3xx to keep log volume efficient unless configured
-      if (!config.isDev && reply.statusCode < 400) return;
+      if (!env.isDev && reply.statusCode < 400) return;
 
       const userId = request.user?.id ?? undefined;
       const latencyMs = Math.round(reply.elapsedTime * 100) / 100;
 
       log.info(`HTTP ${request.method} ${request.url} ${reply.statusCode}`, {
-        service: config.app.name,
-        environment: config.env,
+        service: env.app.name,
+        environment: env.env,
         requestId: request.id,
         userId,
         method: request.method,
