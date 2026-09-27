@@ -1,5 +1,5 @@
 {
-  "extends": "@kalya/typescript-config/node",
+  "extends": "@kalya/typescript-config",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src"

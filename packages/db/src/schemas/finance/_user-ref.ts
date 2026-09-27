@@ -1,5 +1,8 @@
-/**
- * Created: 27/9/2026 12:23:58 am
- */
+import { text } from 'drizzle-orm/sqlite-core';
+import { user } from '../auth';
 
-export {};
+/** Owning-user FK column, present on almost every finance table. */
+export const userIdCol = () =>
+  text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' });

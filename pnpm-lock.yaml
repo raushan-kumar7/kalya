@@ -29,6 +29,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@kalya/utils':
+        specifier: workspace:*
+        version: link:../utils
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
