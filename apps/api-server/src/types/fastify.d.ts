@@ -1,10 +1,15 @@
 import 'fastify';
 import { DatabaseClient } from '@kalya/db';
 
+import type { HealthCheckRegistry } from '@kalya/types';
+
 declare module 'fastify' {
   interface FastifyInstance {
     /** Global Drizzle ORM client bound to application schemas */
     db: DatabaseClient;
+
+    /** Global Health & Monitoring registry */
+    healthRegistry: HealthCheckRegistry;
   }
 
   interface FastifyRequest {

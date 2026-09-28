@@ -2,7 +2,6 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { env } from '@kalya/env';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import { sql } from '@kalya/db';
 import {
   serializerCompiler,
   validatorCompiler,
@@ -16,6 +15,7 @@ import {
   securityPlugin,
   staticFilesPlugin,
 } from '@/plugins';
+import { healthPlugin } from '@/modules/health';
 
 /**
  * Builds and configures the primary Fastify application instance.
@@ -77,41 +77,7 @@ export const buildApp = (): FastifyInstance => {
 
   // 7. Operational Health Endpoint with Database Verification
   if (env.observability.healthChecks.enabled) {
-    app.get('/health', async (request, reply) => {
-      const memory = process.memoryUsage();
-      let dbStatus: 'healthy' | 'unreachable' = 'healthy';
-      let dbLatencyMs = 0;
-
-      try {
-        const start = performance.now();
-        request.server.db.run(sql`SELECT 1;`);
-        dbLatencyMs = Math.round((performance.now() - start) * 100) / 100;
-      } catch {
-        dbStatus = 'unreachable';
-      }
-
-      const isHealthy = dbStatus === 'healthy';
-      const statusCode = isHealthy ? 200 : 503;
-
-      return reply.status(statusCode).send({
-        status: isHealthy ? 'operational' : 'degraded',
-        service: env.observability.serviceName,
-        env: env.env,
-        version: env.app.apiVersion,
-        uptime: `${Math.floor(process.uptime())}s`,
-        checks: {
-          database: {
-            status: dbStatus,
-            latencyMs: dbLatencyMs,
-          },
-        },
-        memory: {
-          heapUsedMB: Math.round((memory.heapUsed / 1024 / 1024) * 100) / 100,
-          rssMB: Math.round((memory.rss / 1024 / 1024) * 100) / 100,
-        },
-        timestamp: new Date().toISOString(),
-      });
-    });
+    app.register(healthPlugin);
   }
 
   return app;
