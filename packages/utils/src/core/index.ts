@@ -4,3 +4,4 @@ export * from './duration';
 export * from './timestamp';
 export * from './timing';
 export * from './env';
+export * from './name';

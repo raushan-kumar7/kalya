@@ -1,9 +1,14 @@
-import slugify from 'slugify';
 import { type DatabaseClient, eq, schema } from '@kalya/db';
 import type { AuthInstance } from './auth.instance';
-import { AUTH_LIMITS, type AvailabilityResponse, type CheckAvailabilityDto } from '@kalya/types';
-import { BadRequestError, InternalServerError, UnauthorizedError } from '@/errors';
+import type { AvailabilityResponse, CheckAvailabilityDto } from '@kalya/types';
+import { UnauthorizedError } from '@/errors';
+import { generateUniqueUsername } from '../helpers';
 
+/**
+ * Service orchestrating authentication workflows, credential verifications, and session resolutions.
+ *
+ * @description Coordinates Better-Auth instance integration, username availability checks, and unique handle generation for authenticated user operations.
+ */
 export class AuthService {
   constructor(
     private readonly db: DatabaseClient,
@@ -13,58 +18,28 @@ export class AuthService {
   /**
    * Generates a unique, collision-resistant username handle compliant with UsernameSchema.
    *
-   * @description
-   * 1. Merges name parts: `${firstName} ${middleName ?? ''} ${lastName}`.
-   * 2. Uses slugify with `replacement: '_'` (critical: UsernameSchema enforces alphanumeric + underscore).
-   * 3. Truncates base slug to 24 characters to guarantee headroom for numeric suffixes within AUTH_LIMITS.
-   * 4. Attempts up to MAX_ATTEMPTS collision checks against existing usernames.
-   * 5. Falls back to timestamp suffix if all random attempts collide.
+   * @description Merges name parts into normalized slug handle and resolves collisions against existing database usernames using incremental suffixes.
+   *
+   * @param {string} firstName - First name of user.
+   * @param {string} lastName - Last name of user.
+   * @param {string} [middleName] - Optional middle name.
+   * @returns {Promise<string>} Unique username handle meeting length constraints.
    */
   async generateUniqueUsername(
     firstName: string,
     lastName: string,
     middleName?: string
   ): Promise<string> {
-    if (!firstName?.trim() && !lastName?.trim()) {
-      throw new BadRequestError('At least one name component is required to generate a username');
-    }
-    const rawParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
-    const base = slugify(rawParts, {
-      lower: true,
-      strict: true,
-      trim: true,
-      replacement: '_',
-    });
-
-    const safeBase = (base.slice(0, 24) || 'user').replace(/_+/g, '_');
-
-    let candidate = safeBase;
-    let attempt = 0;
-    const MAX_ATTEMPTS = 5;
-
-    while (attempt < MAX_ATTEMPTS) {
-      const [existing] = await this.db
-        .select({ id: schema.user.id })
-        .from(schema.user)
-        .where(eq(schema.user.username, candidate))
-        .limit(1);
-
-      if (!existing) {
-        return candidate;
-      }
-
-      attempt++;
-      const suffix = Math.floor(1000 + Math.random() * 9000);
-      candidate = `${safeBase}_${suffix}`.slice(0, AUTH_LIMITS.MAX_USERNAME_LENGTH);
-    }
-
-    // Fallback: Append last 5 digits of current timestamp
-    const fallbackSuffix = Date.now().toString().slice(-5);
-    return `${safeBase}_${fallbackSuffix}`.slice(0, AUTH_LIMITS.MAX_USERNAME_LENGTH);
+    return generateUniqueUsername(this.db, firstName, lastName, middleName);
   }
 
   /**
    * Performs an instant uniqueness check for username or email.
+   *
+   * @description Queries database to verify if an email address or username handle is already claimed by an account.
+   *
+   * @param {CheckAvailabilityDto} dto - Field and value to inspect for uniqueness.
+   * @returns {Promise<AvailabilityResponse>} Availability status and user-facing message.
    */
   async checkAvailability(dto: CheckAvailabilityDto): Promise<AvailabilityResponse> {
     const { field, value } = dto;
@@ -97,6 +72,12 @@ export class AuthService {
 
   /**
    * Resolves the active session and user from request headers using Better-Auth.
+   *
+   * @description Validates incoming request headers with Better-Auth authentication engine to resolve active user identity and session token.
+   *
+   * @param {HeadersInit} headers - Inbound HTTP request headers.
+   * @returns {Promise<unknown>} Authenticated user and session context.
+   * @throws {UnauthorizedError} If session extraction or verification fails.
    */
   async resolveSession(headers: HeadersInit) {
     try {

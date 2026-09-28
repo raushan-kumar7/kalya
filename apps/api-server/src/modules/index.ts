@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { env } from '@kalya/env';
 import { authPlugin } from './auth';
 import { healthPlugin } from './health';
+import { userPlugin } from './users';
 
 /**
  * Root Application Modules Plugin.
@@ -15,7 +16,10 @@ export const modulesPlugin: FastifyPluginAsync = fp(
     // 1. Authentication & Better-Auth Module
     await fastify.register(authPlugin);
 
-    // 2. Health & Observability Module (when enabled)
+    // 2. User Profile Management Module
+    await fastify.register(userPlugin);
+
+    // 3. Health & Observability Module (when enabled)
     if (env.observability.healthChecks.enabled) {
       await fastify.register(healthPlugin);
     }
