@@ -15,7 +15,7 @@ import {
   securityPlugin,
   staticFilesPlugin,
 } from '@/plugins';
-import { healthPlugin } from '@/modules/health';
+import { modulesPlugin } from '@/modules';
 
 /**
  * Builds and configures the primary Fastify application instance.
@@ -65,20 +65,18 @@ export const buildApp = (): FastifyInstance => {
   // 3. Database Layer (Decorates fastify.db & request.db)
   app.register(databasePlugin);
 
-  // 4. Payload & File Handling
+  // 4. Application Modules (Auth, Health, and domain features)
+  app.register(modulesPlugin);
+
+  // 5. Payload & File Handling
   app.register(multipartPlugin);
   app.register(staticFilesPlugin);
 
-  // 5. Observability & Logging
+  // 6. Observability & Logging
   app.register(requestLoggerPlugin);
 
-  // 6. Global Error & 404 Handling (Registered after hooks to catch all unhandled exceptions)
+  // 7. Global Error & 404 Handling (Registered after hooks to catch all unhandled exceptions)
   app.register(errorHandlerPlugin);
-
-  // 7. Operational Health Endpoint with Database Verification
-  if (env.observability.healthChecks.enabled) {
-    app.register(healthPlugin);
-  }
 
   return app;
 };

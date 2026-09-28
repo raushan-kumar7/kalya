@@ -1,7 +1,8 @@
 import 'fastify';
 import { DatabaseClient } from '@kalya/db';
 
-import type { HealthCheckRegistry } from '@kalya/types';
+import type { HealthCheckRegistry, Session, User } from '@kalya/types';
+import { AuthInstance } from '@/modules/auth';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -10,6 +11,10 @@ declare module 'fastify' {
 
     /** Global Health & Monitoring registry */
     healthRegistry: HealthCheckRegistry;
+
+    auth: AuthInstance;
+    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireVerifiedEmail: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 
   interface FastifyRequest {
@@ -20,11 +25,7 @@ declare module 'fastify' {
     errorLogged?: boolean;
 
     /** Authenticated user session or token payload */
-    user?: {
-      id: string;
-      email?: string;
-      role?: string;
-      [key: string]: unknown;
-    };
+    user: User | null;
+    session: Session | null;
   }
 }

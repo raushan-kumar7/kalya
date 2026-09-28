@@ -1,11 +1,26 @@
 import { HttpStatus, type HttpStatusCode } from '@/constants';
 import type { FastifyReply } from 'fastify';
+import { z } from '@kalya/validations';
 import type {
   CursorPaginationMeta,
   PaginationInput,
   PaginationMeta,
   StandardResponse,
 } from './response.types';
+
+/**
+ * Generates a strongly typed Zod response schema matching the StandardResponse<T> envelope.
+ *
+ * @param dataSchema - Schema validating the inner data payload.
+ */
+export const standardResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
+  z.object({
+    success: z.literal(true),
+    statusCode: z.number(),
+    message: z.string(),
+    data: dataSchema,
+    timestamp: z.string(),
+  });
 
 /**
  * Computes derived pagination metadata (currentPage, totalPages, hasNext, hasPrev).
