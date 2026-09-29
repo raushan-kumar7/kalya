@@ -4,7 +4,9 @@
   "private": true,
   "description": "Kalya shared ESLint configuration",
   "type": "module",
+  "main": "./src/base.js",
   "exports": {
+    ".": "./src/base.js",
     "./base": "./src/base.js",
     "./next": "./src/next.js",
     "./react": "./src/react.js"

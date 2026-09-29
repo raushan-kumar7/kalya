@@ -31,17 +31,17 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
 
 ## 🛠 Architecture & Tech Stack
 
-| Domain | Technology / Library | Purpose |
-| --- | --- | --- |
-| **Runtime & Framework** | [Node.js](https://nodejs.org/) + [Fastify v5](https://fastify.dev/) | High-throughput asynchronous HTTP API server |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) (strict mode) | End-to-end type safety |
-| **Validation & Schemas** | [Zod](https://zod.dev/) + `fastify-type-provider-zod` | Runtime schema validation and typed request/response contracts |
-| **Authentication** | [Better-Auth v1.7+](https://www.better-auth.com/) | Session-based authentication with Drizzle SQLite adapter |
-| **Database & ORM** | [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/) via `@kalya/db` | ACID transactions, WAL mode, migrations, typed queries |
-| **Client Intelligence** | `ua-parser-js` v2 + `geoip-lite` + Client Hints | Real-time browser, OS, hardware, bot/crawler detection, and IP geolocation |
-| **Email Subsystem** | `@kalya/email` (React-Email) + Resend / Nodemailer | Transactional email templates with dynamic provider fallback |
-| **Storage & Image Optimization** | Local disk / Cloudinary + [Sharp](https://sharp.pixelplumbing.com/) | Avatar upload, resize, WebP conversion, and asset distribution |
-| **Logging & Diagnostics** | [Winston](https://github.com/winstonjs/winston) + `winston-daily-rotate-file` | Structured JSON and colored console logging with daily file rotation |
+| Domain                           | Technology / Library                                                                     | Purpose                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Runtime & Framework**          | [Node.js](https://nodejs.org/) + [Fastify v5](https://fastify.dev/)                      | High-throughput asynchronous HTTP API server                               |
+| **Language**                     | [TypeScript](https://www.typescriptlang.org/) (strict mode)                              | End-to-end type safety                                                     |
+| **Validation & Schemas**         | [Zod](https://zod.dev/) + `fastify-type-provider-zod`                                    | Runtime schema validation and typed request/response contracts             |
+| **Authentication**               | [Better-Auth v1.7+](https://www.better-auth.com/)                                        | Session-based authentication with Drizzle SQLite adapter                   |
+| **Database & ORM**               | [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/) via `@kalya/db` | ACID transactions, WAL mode, migrations, typed queries                     |
+| **Client Intelligence**          | `ua-parser-js` v2 + `geoip-lite` + Client Hints                                          | Real-time browser, OS, hardware, bot/crawler detection, and IP geolocation |
+| **Email Subsystem**              | `@kalya/email` (React-Email) + Resend / Nodemailer                                       | Transactional email templates with dynamic provider fallback               |
+| **Storage & Image Optimization** | Local disk / Cloudinary + [Sharp](https://sharp.pixelplumbing.com/)                      | Avatar upload, resize, WebP conversion, and asset distribution             |
+| **Logging & Diagnostics**        | [Winston](https://github.com/winstonjs/winston) + `winston-daily-rotate-file`            | Structured JSON and colored console logging with daily file rotation       |
 
 ---
 
@@ -179,36 +179,36 @@ Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-serve
 
 ### Health & Monitoring
 
-| Method | Endpoint | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/health/live` | Public | Liveness probe (event loop responsiveness) |
-| `GET` | `/health/ready` | Public | Readiness probe (database connection & memory) |
-| `GET` | `/health` | Public | Detailed operational subsystem report |
+| Method | Endpoint        | Auth   | Description                                    |
+| ------ | --------------- | ------ | ---------------------------------------------- |
+| `GET`  | `/health/live`  | Public | Liveness probe (event loop responsiveness)     |
+| `GET`  | `/health/ready` | Public | Readiness probe (database connection & memory) |
+| `GET`  | `/health`       | Public | Detailed operational subsystem report          |
 
 ### Authentication (`/api/v1/auth/*`)
 
-| Method | Endpoint | Auth | Description |
-| --- | --- | --- | --- |
-| `ALL` | `/api/v1/auth/*` | Better-Auth | Better-Auth core handler (sign-in, sign-up, sign-out, OAuth callbacks, sessions) |
-| `GET` | `/api/v1/auth/check-availability` | Public | Query check for username or email availability (`?email=...` or `?username=...`) |
+| Method | Endpoint                          | Auth        | Description                                                                      |
+| ------ | --------------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| `ALL`  | `/api/v1/auth/*`                  | Better-Auth | Better-Auth core handler (sign-in, sign-up, sign-out, OAuth callbacks, sessions) |
+| `GET`  | `/api/v1/auth/check-availability` | Public      | Query check for username or email availability (`?email=...` or `?username=...`) |
 
 ### User Profile & Account Management (`/api/v1/users/*`)
 
-| Method | Endpoint | Auth Guard | Description |
-| --- | --- | --- | --- |
-| `GET` | `/api/v1/users/me` | `authenticate` | Retrieve authenticated user profile |
-| `PATCH` | `/api/v1/users/` | `authenticate` | Update current user profile fields |
-| `PATCH` | `/api/v1/users/username` | `authenticate` | Change unique username handle |
-| `GET` | `/api/v1/users/suggest-username` | `authenticate` | Suggest available unique username derived from name |
-| `POST` | `/api/v1/users/avatar` | `authenticate` | Upload and optimize user profile avatar (multipart) |
-| `DELETE` | `/api/v1/users/avatar` | `authenticate` | Remove user profile avatar |
-| `GET` | `/api/v1/users/sessions` | `authenticate` | List all active sessions with device & IP info |
-| `DELETE` | `/api/v1/users/sessions/:sessionId` | `authenticate` | Revoke a specific active session |
-| `POST` | `/api/v1/users/sessions/revoke-others` | `authenticate` | Revoke all other active sessions except current |
-| `POST` | `/api/v1/users/schedule-deletion` | `authenticate` | Schedule account deletion (14-day grace window) |
-| `POST` | `/api/v1/users/cancel-deletion` | `authenticate` | Cancel pending account deletion |
-| `POST` | `/api/v1/users/request-email-change` | `authenticate` | Initiate primary email address change with verification link |
-| `POST` | `/api/v1/users/admin/broadcast-policy` | `authenticate` | Admin: broadcast legal policy updates to all verified users |
+| Method   | Endpoint                               | Auth Guard     | Description                                                  |
+| -------- | -------------------------------------- | -------------- | ------------------------------------------------------------ |
+| `GET`    | `/api/v1/users/me`                     | `authenticate` | Retrieve authenticated user profile                          |
+| `PATCH`  | `/api/v1/users/`                       | `authenticate` | Update current user profile fields                           |
+| `PATCH`  | `/api/v1/users/username`               | `authenticate` | Change unique username handle                                |
+| `GET`    | `/api/v1/users/suggest-username`       | `authenticate` | Suggest available unique username derived from name          |
+| `POST`   | `/api/v1/users/avatar`                 | `authenticate` | Upload and optimize user profile avatar (multipart)          |
+| `DELETE` | `/api/v1/users/avatar`                 | `authenticate` | Remove user profile avatar                                   |
+| `GET`    | `/api/v1/users/sessions`               | `authenticate` | List all active sessions with device & IP info               |
+| `DELETE` | `/api/v1/users/sessions/:sessionId`    | `authenticate` | Revoke a specific active session                             |
+| `POST`   | `/api/v1/users/sessions/revoke-others` | `authenticate` | Revoke all other active sessions except current              |
+| `POST`   | `/api/v1/users/schedule-deletion`      | `authenticate` | Schedule account deletion (14-day grace window)              |
+| `POST`   | `/api/v1/users/cancel-deletion`        | `authenticate` | Cancel pending account deletion                              |
+| `POST`   | `/api/v1/users/request-email-change`   | `authenticate` | Initiate primary email address change with verification link |
+| `POST`   | `/api/v1/users/admin/broadcast-policy` | `authenticate` | Admin: broadcast legal policy updates to all verified users  |
 
 ---
 
@@ -300,16 +300,16 @@ KALYA_STORAGE.CLOUDINARY_FOLDER=kalya
 
 All commands can be executed from the monorepo root using `pnpm` filter or directly within `apps/api-server`.
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Starts API server with hot-reload via `tsx watch` |
-| `pnpm build` | Compiles TypeScript to JavaScript in `dist/` |
-| `pnpm start` | Runs the compiled production server (`node dist/index.js`) |
-| `pnpm typecheck` | Validates TypeScript types across the package (`tsc --noEmit`) |
-| `pnpm lint` | Runs ESLint analysis across all source files |
-| `pnpm docker:up` | Starts local infrastructure (MailDev web at `:1080`, SMTP at `:1025`) |
-| `pnpm docker:down` | Stops and tears down local Docker containers |
-| `pnpm docker:logs` | Tails Docker container logs in real time |
+| Command            | Description                                                           |
+| ------------------ | --------------------------------------------------------------------- |
+| `pnpm dev`         | Starts API server with hot-reload via `tsx watch`                     |
+| `pnpm build`       | Compiles TypeScript to JavaScript in `dist/`                          |
+| `pnpm start`       | Runs the compiled production server (`node dist/index.js`)            |
+| `pnpm typecheck`   | Validates TypeScript types across the package (`tsc --noEmit`)        |
+| `pnpm lint`        | Runs ESLint analysis across all source files                          |
+| `pnpm docker:up`   | Starts local infrastructure (MailDev web at `:1080`, SMTP at `:1025`) |
+| `pnpm docker:down` | Stops and tears down local Docker containers                          |
+| `pnpm docker:logs` | Tails Docker container logs in real time                              |
 
 ### Monorepo Workflows
 

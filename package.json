@@ -12,7 +12,17 @@
     "lint": "turbo run lint",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "docker:logs": "docker compose logs -f",
+    "prepare": "husky",
+    "predeploy": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,css,md,yaml,yml}": [
+      "prettier --write"
+    ]
   },
   "keywords": [
     "kalya",
@@ -25,8 +35,12 @@
   "packageManager": "pnpm@10.28.2",
   "prettier": "@kalya/prettier-config",
   "devDependencies": {
+    "@kalya/eslint-config": "workspace:*",
     "@kalya/prettier-config": "workspace:*",
     "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "turbo": "^2.11.4",

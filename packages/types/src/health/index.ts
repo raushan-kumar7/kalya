@@ -1,4 +1,4 @@
-import type { HealthCheckName, HealthStatus, ISOTimestamp, SystemOperationalStatus } from '@/core';
+import type { HealthCheckName, HealthStatus, ISOTimestamp, SystemOperationalStatus } from '../core';
 
 /**
  * Standard result contract for an individual subsystem health check.

@@ -1,4 +1,4 @@
-import { Gender, Identifiable, ISODate, ISOTimestamp, SyncStatus, UUID } from '@/core';
+import { Gender, Identifiable, ISODate, ISOTimestamp, SyncStatus, UUID } from '../core';
 
 /**
  * Standard camelCase timestamps matching Better-Auth and Drizzle schema conventions.
