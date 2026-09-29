@@ -1,0 +1,70 @@
+import * as React from 'react';
+import { Text, Section, Heading } from 'react-email';
+import { KeyRound } from 'lucide-react';
+import {
+  Layout,
+  Callout,
+  DetailRow,
+  IconBadge,
+  FallbackLinkBox,
+  Button,
+} from '../components';
+import { EMAILS_CONFIG } from '../constants';
+
+export interface ResetPasswordProps {
+  userName?: string;
+  userEmail?: string;
+  resetUrl?: string;
+  expiresInMinutes?: number;
+  requestedAt?: string;
+  ipAddress?: string;
+}
+
+export const ResetPassword = ({
+  userName = 'Arjun Sharma',
+  userEmail = 'arjun.sharma@example.com',
+  resetUrl = 'https://kalya.app/reset-password?token=rst_sample_token_81729',
+  expiresInMinutes = 30,
+  requestedAt = 'Today at 11:15 AM IST',
+  ipAddress = '103.21.124.58 (Mumbai, IN)',
+}: ResetPasswordProps) => {
+  return (
+    <Layout preview="Reset your Kalya account password">
+      <Section className="text-center">
+        <IconBadge
+          icon={KeyRound}
+          background={EMAILS_CONFIG.color.warningSubtle}
+          color={EMAILS_CONFIG.color.warning}
+          size={24}
+        />
+        <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
+          Password Reset Request
+        </Heading>
+        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+          Hello {userName}, we received a request to reset the password associated with your Kalya
+          account. Click below to choose a new password.
+        </Text>
+      </Section>
+
+      <Callout tone="warning">
+        This link is single-use and will expire in {expiresInMinutes} minutes. If you did not request
+        a password reset, someone may have mistyped their email. Your account remains safe and no
+        changes have been made.
+      </Callout>
+
+      <Section className="my-6">
+        <DetailRow label="Account Email" value={userEmail} />
+        <DetailRow label="Requested At" value={requestedAt} />
+        <DetailRow label="Request Location/IP" value={ipAddress} last />
+      </Section>
+
+      <Section className="text-center my-8">
+        <Button href={resetUrl}>Reset Password</Button>
+      </Section>
+
+      <FallbackLinkBox url={resetUrl} />
+    </Layout>
+  );
+};
+
+export default ResetPassword;
