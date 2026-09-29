@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { KeyRound } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  FallbackLinkBox,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface ResetPasswordProps {
@@ -47,9 +40,9 @@ export const ResetPassword = ({
       </Section>
 
       <Callout tone="warning">
-        This link is single-use and will expire in {expiresInMinutes} minutes. If you did not request
-        a password reset, someone may have mistyped their email. Your account remains safe and no
-        changes have been made.
+        This link is single-use and will expire in {expiresInMinutes} minutes. If you did not
+        request a password reset, someone may have mistyped their email. Your account remains safe
+        and no changes have been made.
       </Callout>
 
       <Section className="my-6">

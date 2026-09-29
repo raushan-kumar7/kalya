@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { UserPlus } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  ListRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitContactInviteProps {
@@ -69,8 +62,8 @@ export const SplitContactInvite = ({
       </Section>
 
       <Callout tone="info">
-        Signing up takes less than 30 seconds. Your shared expense history with {inviterName} will be
-        automatically linked.
+        Signing up takes less than 30 seconds. Your shared expense history with {inviterName} will
+        be automatically linked.
       </Callout>
 
       <Section className="text-center my-8">

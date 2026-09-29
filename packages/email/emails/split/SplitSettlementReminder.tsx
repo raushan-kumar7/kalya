@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Clock } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitSettlementReminderProps {
@@ -30,7 +24,9 @@ export const SplitSettlementReminder = ({
   upiPaymentLink = 'upi://pay?pa=priya@okhdfcbank&pn=Priya%20Patel&am=1200.00&cu=INR',
 }: SplitSettlementReminderProps) => {
   return (
-    <Layout preview={`Reminder: Outstanding split balance of ${outstandingAmount} with ${payerName}`}>
+    <Layout
+      preview={`Reminder: Outstanding split balance of ${outstandingAmount} with ${payerName}`}
+    >
       <Section className="text-center">
         <IconBadge
           icon={Clock}

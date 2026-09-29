@@ -7,7 +7,7 @@ import { standardResponseSchema } from '@/responses';
 export const createAuthRoutes = (controller: AuthController): FastifyPluginAsyncZod => {
   return async (fastify) => {
     // 1. Better-Auth Wildcard Route Handler (Standard Better-Auth client basePath)
-    fastify.all('/api/auth/*', controller.handleAuthRequest);
+    fastify.all(`/api/${env.app.apiVersion}/auth/*`, controller.handleAuthRequest);
 
     // 2. Custom Kalya Auth Endpoints (Versioned)
     fastify.get(`/api/${env.app.apiVersion}/auth/check-availability`, {

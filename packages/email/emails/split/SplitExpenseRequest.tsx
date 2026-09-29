@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Receipt } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitExpenseRequestProps {
@@ -48,8 +42,8 @@ export const SplitExpenseRequest = ({
           New Bill Split Request
         </Heading>
         <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
-          Hi {recipientName}, <strong>{payerName}</strong> added an expense on Kalya and assigned your
-          portion.
+          Hi {recipientName}, <strong>{payerName}</strong> added an expense on Kalya and assigned
+          your portion.
         </Text>
       </Section>
 
@@ -75,8 +69,8 @@ export const SplitExpenseRequest = ({
       </Section>
 
       <Callout tone="info">
-        You can pay {payerName} directly via UPI or record a settlement if you have already transferred
-        the amount.
+        You can pay {payerName} directly via UPI or record a settlement if you have already
+        transferred the amount.
       </Callout>
 
       <Section className="text-center my-8">

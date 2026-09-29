@@ -34,8 +34,8 @@ export const PasswordChangedNotice = ({
           Password Updated Successfully
         </Heading>
         <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
-          Hello {userName}, the password for your Kalya account was recently changed. You can now use
-          your new password to log in.
+          Hello {userName}, the password for your Kalya account was recently changed. You can now
+          use your new password to log in.
         </Text>
       </Section>
 

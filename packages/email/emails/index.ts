@@ -8,3 +8,5 @@ export * from './budget';
 export * from './goal';
 export * from './statement';
 export * from './account';
+
+export { type ComponentType, createElement } from 'react';

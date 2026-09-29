@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Download } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  FallbackLinkBox,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface DataExportReadyProps {

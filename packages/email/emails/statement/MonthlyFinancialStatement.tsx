@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading, Row, Column } from 'react-email';
 import { BarChart3 } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  ListRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface MonthlyFinancialStatementProps {
@@ -82,7 +75,8 @@ export const MonthlyFinancialStatement = ({
         <Row className="pt-3 border-t border-solid border-brand-border text-center">
           <Column>
             <Text className="m-0 font-body text-[12px] text-brand-textSecondary">
-              Net Savings: <strong className="text-brand-success">{netSavings}</strong> ({savingsRate} savings rate)
+              Net Savings: <strong className="text-brand-success">{netSavings}</strong> (
+              {savingsRate} savings rate)
             </Text>
           </Column>
         </Row>
@@ -95,7 +89,11 @@ export const MonthlyFinancialStatement = ({
         <DetailRow label="Needs (Essentials)" value={needsSpend} />
         <DetailRow label="Wants (Discretionary)" value={wantsSpend} />
         <DetailRow label="Investments / Asset Additions" value={investmentsTotal} />
-        <DetailRow label="Highest Spending Category" value={`${topCategory} (${topCategoryAmount})`} last />
+        <DetailRow
+          label="Highest Spending Category"
+          value={`${topCategory} (${topCategoryAmount})`}
+          last
+        />
       </Section>
 
       <Section className="my-6">

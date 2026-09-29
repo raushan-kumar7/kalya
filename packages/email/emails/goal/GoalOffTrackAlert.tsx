@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { TrendingDown } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface GoalOffTrackAlertProps {

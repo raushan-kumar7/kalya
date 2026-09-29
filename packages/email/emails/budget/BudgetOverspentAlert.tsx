@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { AlertOctagon } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface BudgetOverspentAlertProps {
@@ -32,7 +26,9 @@ export const BudgetOverspentAlert = ({
   budgetUrl = 'https://kalya.app/budget',
 }: BudgetOverspentAlertProps) => {
   return (
-    <Layout preview={`Budget Exceeded: You've gone over your ${bucketName} limit by ${overspentAmount}`}>
+    <Layout
+      preview={`Budget Exceeded: You've gone over your ${bucketName} limit by ${overspentAmount}`}
+    >
       <Section className="text-center">
         <IconBadge
           icon={AlertOctagon}

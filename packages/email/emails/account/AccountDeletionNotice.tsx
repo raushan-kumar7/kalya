@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { AlertTriangle } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  ListRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface AccountDeletionNoticeProps {
@@ -63,8 +56,8 @@ export const AccountDeletionNotice = ({
       </Section>
 
       <Callout tone="danger">
-        If you changed your mind or did not request this deletion, you can cancel this request at any
-        time before {scheduledDeletionDate} simply by logging in.
+        If you changed your mind or did not request this deletion, you can cancel this request at
+        any time before {scheduledDeletionDate} simply by logging in.
       </Callout>
 
       <Section className="text-center my-8">

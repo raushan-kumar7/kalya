@@ -5,6 +5,15 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { username } from 'better-auth/plugins';
 
+import {
+  handleNewDeviceLogin,
+  handlePasswordChanged,
+  handleSendResetPassword,
+  handleSendVerificationEmail,
+  type SendResetPasswordPayload,
+  type SendVerificationEmailPayload,
+} from './hooks';
+
 /**
  * Creates and configures the Better-Auth instance using the existing Fastify Drizzle DB client.
  *
@@ -24,12 +33,53 @@ export const createAuth = (db: DatabaseClient) => {
     }),
     secret: env.auth.secretKey,
     baseURL: env.auth.baseUrl || env.app.clientUrl,
-    basePath: '/api/auth',
+    basePath: `/api/${env.app.apiVersion}/auth`,
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: AUTH_LIMITS.MIN_PASSWORD_LENGTH,
       maxPasswordLength: AUTH_LIMITS.MAX_PASSWORD_LENGTH,
+      sendVerificationEmail: async (
+        data: SendVerificationEmailPayload,
+        request?: Request | null
+      ) => {
+        await handleSendVerificationEmail(data, request);
+      },
+      sendResetPassword: async (data: SendResetPasswordPayload, request?: Request | null) => {
+        await handleSendResetPassword(data, request);
+      },
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          after: async (session, context) => {
+            const req = context?.request;
+            const ipAddress = session.ipAddress || req?.headers?.get('x-forwarded-for') || null;
+            const userAgent = session.userAgent || req?.headers?.get('user-agent') || null;
+
+            await handleNewDeviceLogin(db, {
+              userId: session.userId,
+              currentSessionId: session.id,
+              ipAddress,
+              userAgent,
+            });
+          },
+        },
+      },
+      account: {
+        update: {
+          after: async (account, context) => {
+            if (account.password) {
+              const req = context?.request;
+              await handlePasswordChanged(db, {
+                userId: account.userId,
+                ipAddress: req?.headers?.get('x-forwarded-for') || null,
+                userAgent: req?.headers?.get('user-agent') || null,
+              });
+            }
+          },
+        },
+      },
     },
     plugins: [
       username({

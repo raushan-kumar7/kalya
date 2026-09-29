@@ -6,9 +6,13 @@ import { AuthController } from './auth.controller';
 import { ForbiddenError, UnauthorizedError } from '@/errors';
 import { createAuthRoutes } from './auth.routes';
 import type { Session, User } from '@kalya/types';
+import { clientInfoPlugin } from '@/modules/helpers';
 
 export const authPlugin: FastifyPluginAsync = fp(
   async (fastify) => {
+    // 0. Register Client Intelligence Plugin (decorates request.clientInfo & sets Accept-CH)
+    await fastify.register(clientInfoPlugin);
+
     // 1. Initialize Better-Auth with the existing database connection from db-plugin
     const auth = createAuth(fastify.db);
 

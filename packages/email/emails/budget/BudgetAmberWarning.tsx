@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { AlertTriangle } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface BudgetAmberWarningProps {
@@ -36,7 +30,9 @@ export const BudgetAmberWarning = ({
   budgetUrl = 'https://kalya.app/budget',
 }: BudgetAmberWarningProps) => {
   return (
-    <Layout preview={`Budget Warning: You've reached ${percentSpent.toFixed(0)}% of your ${bucketName} budget`}>
+    <Layout
+      preview={`Budget Warning: You've reached ${percentSpent.toFixed(0)}% of your ${bucketName} budget`}
+    >
       <Section className="text-center">
         <IconBadge
           icon={AlertTriangle}
@@ -48,8 +44,8 @@ export const BudgetAmberWarning = ({
           Approaching Budget Limit
         </Heading>
         <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
-          Hi {userName}, you have spent <strong>{percentSpent.toFixed(1)}%</strong> of your allocated{' '}
-          <strong>{bucketName}</strong> budget for this month.
+          Hi {userName}, you have spent <strong>{percentSpent.toFixed(1)}%</strong> of your
+          allocated <strong>{bucketName}</strong> budget for this month.
         </Text>
       </Section>
 
@@ -94,7 +90,11 @@ export const BudgetAmberWarning = ({
         <DetailRow label="Total Budget" value={budgetLimit} />
         <DetailRow label="Spent So Far" value={spentAmount} />
         <DetailRow label="Remaining Allowance" value={remainingAmount} />
-        <DetailRow label="Triggering Expense" value={`${recentExpenseDescription} (${recentExpenseAmount})`} last />
+        <DetailRow
+          label="Triggering Expense"
+          value={`${recentExpenseDescription} (${recentExpenseAmount})`}
+          last
+        />
       </Section>
 
       <Callout tone="warning">

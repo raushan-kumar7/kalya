@@ -198,6 +198,49 @@ export class UserController {
   };
 
   /**
+   * Schedules account deletion with a 14-day grace period and dispatches email notice.
+   */
+  scheduleAccountDeletion = async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = this.assertAuthenticatedUserId(request);
+    const result = await this.userService.scheduleAccountDeletion(userId);
+    return ApiResponse.ok(reply, result, 'Account scheduled for deletion in 14 days');
+  };
+
+  /**
+   * Cancels a pending account deletion request and restores normal account status.
+   */
+  cancelAccountDeletion = async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = this.assertAuthenticatedUserId(request);
+    const result = await this.userService.cancelAccountDeletion(userId);
+    return ApiResponse.ok(reply, result, 'Account deletion request successfully cancelled');
+  };
+
+  /**
+   * Requests an update to primary email address, dispatching a verification email.
+   */
+  requestEmailChange = async (
+    request: FastifyRequest<{ Body: { newEmail: string } }>,
+    reply: FastifyReply
+  ) => {
+    const userId = this.assertAuthenticatedUserId(request);
+    const result = await this.userService.requestEmailChange(userId, request.body.newEmail);
+    return ApiResponse.ok(reply, result, 'Verification email sent to new address');
+  };
+
+  /**
+   * Admin broadcast of Terms / Privacy Policy update notice to all verified users.
+   */
+  broadcastPolicyUpdate = async (
+    request: FastifyRequest<{
+      Body: { effectiveDate: string; termsUrl?: string; privacyUrl?: string };
+    }>,
+    reply: FastifyReply
+  ) => {
+    const result = await this.userService.broadcastPolicyUpdate(request.body);
+    return ApiResponse.ok(reply, result, `Policy update dispatched to ${result.totalSent} users`);
+  };
+
+  /**
    * Asserts that request has a valid authenticated user ID.
    */
   private assertAuthenticatedUserId(request: FastifyRequest): string {

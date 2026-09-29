@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { CheckCircle2 } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitSettledReceiptProps {
@@ -44,8 +38,8 @@ export const SplitSettledReceipt = ({
           Payment Settled
         </Heading>
         <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
-          The split balance between <strong>{payerName}</strong> and <strong>{recipientName}</strong>{' '}
-          has been marked as settled.
+          The split balance between <strong>{payerName}</strong> and{' '}
+          <strong>{recipientName}</strong> has been marked as settled.
         </Text>
       </Section>
 

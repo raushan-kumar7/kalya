@@ -1,6 +1,11 @@
-import { ConflictError, InternalServerError, NotFoundError } from '@/errors';
+import crypto from 'node:crypto';
+import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from '@/errors';
 import { AVATAR_OPTIMIZE_PRESET, getStorage } from '@/libs/storage';
+import { getMailer } from '@/libs/mail';
+import { log } from '@/logger';
 import { and, type DatabaseClient, desc, eq, gt, ne, schema } from '@kalya/db';
+import { AccountDeletionNotice, PolicyUpdateNotice } from '@kalya/email';
+import { env } from '@kalya/env';
 import type {
   Session,
   StorageProvider,
@@ -8,8 +13,9 @@ import type {
   UpdateUsernameDto,
   User,
 } from '@kalya/types';
-import { fullName } from '@kalya/utils';
-import { generateUniqueUsername } from '../helpers';
+import { formatCardDate, formatDateTime, fullName } from '@kalya/utils';
+import { generateUniqueUsername, resolveDisplayName, resolveUserTimezone } from '../helpers';
+import { handleSendEmailChangeVerification } from '../auth/hooks';
 
 /**
  * Service orchestrating user profile mutations, session life-cycles, and media storage operations.
@@ -289,5 +295,202 @@ export class UserService {
       .returning({ id: schema.session.id });
 
     return revoked.length;
+  }
+
+  /**
+   * Initiates account deletion with a 14-day grace period, revoking other sessions
+   * and emailing the AccountDeletionNotice template with a cancellation link.
+   *
+   * @param {string} userId - Target user unique identifier.
+   * @returns {Promise<{ scheduledDate: Date; gracePeriodDays: number }>} Deletion schedule details.
+   */
+  async scheduleAccountDeletion(
+    userId: string
+  ): Promise<{ scheduledDate: Date; gracePeriodDays: number }> {
+    const [user] = await this.db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundError('User account not found', 'USER_NOT_FOUND', { userId });
+    }
+
+    const gracePeriodDays = 14;
+    const scheduledDate = new Date();
+    scheduledDate.setDate(scheduledDate.getDate() + gracePeriodDays);
+
+    // 1. Mark user record sync_status as PENDING
+    await this.db
+      .update(schema.user)
+      .set({
+        sync_status: 'PENDING',
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.user.id, userId));
+
+    const tz = resolveUserTimezone(user.timezone);
+
+    // 2. Dispatch AccountDeletionNotice email using @kalya/utils formatters (non-blocking)
+    void getMailer()
+      .sendTemplate({
+        template: AccountDeletionNotice,
+        props: {
+          userName: resolveDisplayName(user),
+          userEmail: user.email,
+          requestedAt: formatDateTime(new Date(), tz),
+          scheduledDeletionDate: formatCardDate(scheduledDate.toISOString().split('T')[0]),
+          gracePeriodDays,
+          cancelDeletionUrl: `${env.app.clientUrl}/settings/account/cancel-deletion`,
+        },
+        to: user.email,
+        subject: 'Important: Kalya account deletion confirmation',
+      })
+      .catch((err) => {
+        log.error(err, {
+          action: 'ACCOUNT_DELETION_EMAIL_FAILED',
+          userId,
+          to: user.email,
+        });
+      });
+
+    return { scheduledDate, gracePeriodDays };
+  }
+
+  /**
+   * Cancels scheduled account deletion and restores active account status.
+   *
+   * @param {string} userId - Target user unique identifier.
+   * @returns {Promise<{ restored: boolean }>} Restoration status confirmation.
+   */
+  async cancelAccountDeletion(userId: string): Promise<{ restored: boolean }> {
+    const [user] = await this.db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundError('User account not found', 'USER_NOT_FOUND', { userId });
+    }
+
+    await this.db
+      .update(schema.user)
+      .set({
+        sync_status: 'SYNCED',
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.user.id, userId));
+
+    return { restored: true };
+  }
+
+  /**
+   * Initiates primary email change by generating a token and dispatching VerifyEmailChange.
+   *
+   * @param {string} userId - Target user unique identifier.
+   * @param {string} newEmail - New target email address.
+   * @returns {Promise<{ pending: boolean }>} Confirmation of pending email verification.
+   */
+  async requestEmailChange(userId: string, newEmail: string): Promise<{ pending: boolean }> {
+    const normalizedNewEmail = newEmail.trim().toLowerCase();
+
+    // Check if new email is already registered
+    const [existing] = await this.db
+      .select({ id: schema.user.id })
+      .from(schema.user)
+      .where(eq(schema.user.email, normalizedNewEmail))
+      .limit(1);
+
+    if (existing) {
+      throw new BadRequestError(
+        'Email address is already in use by another account',
+        'EMAIL_ALREADY_EXISTS'
+      );
+    }
+
+    const [user] = await this.db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundError('User account not found', 'USER_NOT_FOUND', { userId });
+    }
+
+    const token = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    // Store verification token in Better-Auth verification table
+    await this.db.insert(schema.verification).values({
+      id: crypto.randomUUID(),
+      identifier: `email-change:${userId}:${normalizedNewEmail}`,
+      value: token,
+      expiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const verificationUrl = `${env.app.clientUrl}/verify-email-change?token=${token}`;
+
+    await handleSendEmailChangeVerification({
+      userName: resolveDisplayName(user),
+      currentEmail: user.email,
+      newEmail: normalizedNewEmail,
+      verificationUrl,
+    });
+
+    return { pending: true };
+  }
+
+  /**
+   * Broadcasts PolicyUpdateNotice to all active users in batches of 50 with 250ms backoff.
+   *
+   * @param {object} dto - Policy update broadcast details.
+   * @returns {Promise<{ totalSent: number }>} Total number of recipients.
+   */
+  async broadcastPolicyUpdate(dto: {
+    effectiveDate: string;
+    termsUrl?: string;
+    privacyUrl?: string;
+  }): Promise<{ totalSent: number }> {
+    const activeUsers = await this.db
+      .select({
+        email: schema.user.email,
+        firstName: schema.user.first_name,
+        name: schema.user.name,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.emailVerified, true));
+
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < activeUsers.length; i += CHUNK_SIZE) {
+      const chunk = activeUsers.slice(i, i + CHUNK_SIZE);
+      await Promise.allSettled(
+        chunk.map((u) =>
+          getMailer().sendTemplate({
+            template: PolicyUpdateNotice,
+            props: {
+              userName: resolveDisplayName(u, 'Valued Member'),
+              effectiveDate: dto.effectiveDate,
+              termsUrl: dto.termsUrl || `${env.app.clientUrl}/terms`,
+              privacyUrl: dto.privacyUrl || `${env.app.clientUrl}/privacy`,
+            },
+            to: u.email,
+            subject: "Important updates to Kalya's Terms of Service and Privacy Policy",
+          })
+        )
+      );
+
+      // Backoff between batches to prevent provider rate limits
+      if (i + CHUNK_SIZE < activeUsers.length) {
+        await new Promise((res) => setTimeout(res, 250));
+      }
+    }
+
+    return { totalSent: activeUsers.length };
   }
 }

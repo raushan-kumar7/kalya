@@ -1,7 +1,7 @@
 import 'fastify';
 import { DatabaseClient } from '@kalya/db';
 
-import type { HealthCheckRegistry, Session, User } from '@kalya/types';
+import type { HealthCheckRegistry, Session, User, ClientIntelligence } from '@kalya/types';
 import { AuthInstance } from '@/modules/auth';
 
 declare module 'fastify' {
@@ -20,6 +20,9 @@ declare module 'fastify' {
   interface FastifyRequest {
     /** Global Drizzle ORM client bound to application schemas */
     db: DatabaseClient;
+
+    /** client */
+    clientInfo: ClientIntelligence;
 
     /** True if this request error has already been logged by the error handler */
     errorLogged?: boolean;

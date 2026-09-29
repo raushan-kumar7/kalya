@@ -12,7 +12,7 @@ export class AuthController {
   ) {}
 
   /**
-   * Handles Better-Auth wildcard requests (/api/auth/*).
+   * Handles Better-Auth wildcard requests (/api/v1/auth/*).
    */
   handleAuthRequest = async (request: FastifyRequest, reply: FastifyReply) => {
     try {

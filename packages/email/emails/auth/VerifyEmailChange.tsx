@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { MailCheck } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  IconBadge,
-  FallbackLinkBox,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, IconBadge, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface VerifyEmailChangeProps {
@@ -39,8 +32,8 @@ export const VerifyEmailChange = ({
           Confirm Your New Email
         </Heading>
         <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
-          Hello {userName}, we received a request to update your primary email address for your Kalya
-          account. Please confirm that you own this email address.
+          Hello {userName}, we received a request to update your primary email address for your
+          Kalya account. Please confirm that you own this email address.
         </Text>
       </Section>
 

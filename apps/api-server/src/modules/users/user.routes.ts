@@ -162,5 +162,82 @@ export const createUserRoutes = (controller: UserController): FastifyPluginAsync
       },
       handler: controller.revokeOtherSessions,
     });
+
+    // 10. Schedule Account Deletion
+    fastify.post(`${basePrefix}/schedule-deletion`, {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['User Account'],
+        summary: 'Schedule account deletion with 14-day grace period',
+        response: {
+          200: standardResponseSchema(
+            z.object({
+              scheduledDate: z.date(),
+              gracePeriodDays: z.number(),
+            })
+          ),
+        },
+      },
+      handler: controller.scheduleAccountDeletion,
+    });
+
+    // 11. Cancel Scheduled Deletion
+    fastify.post(`${basePrefix}/cancel-deletion`, {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['User Account'],
+        summary: 'Cancel pending account deletion',
+        response: {
+          200: standardResponseSchema(
+            z.object({
+              restored: z.boolean(),
+            })
+          ),
+        },
+      },
+      handler: controller.cancelAccountDeletion,
+    });
+
+    // 12. Request Primary Email Change
+    fastify.post(`${basePrefix}/request-email-change`, {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['User Account'],
+        summary: 'Request email address change with verification link',
+        body: z.object({
+          newEmail: z.string().email('Invalid email address format'),
+        }),
+        response: {
+          200: standardResponseSchema(
+            z.object({
+              pending: z.boolean(),
+            })
+          ),
+        },
+      },
+      handler: controller.requestEmailChange,
+    });
+
+    // 13. Admin Broadcast Policy Update
+    fastify.post(`${basePrefix}/admin/broadcast-policy`, {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['Admin Compliance'],
+        summary: 'Broadcast legal policy update to all verified users',
+        body: z.object({
+          effectiveDate: z.string(),
+          termsUrl: z.string().url().optional(),
+          privacyUrl: z.string().url().optional(),
+        }),
+        response: {
+          200: standardResponseSchema(
+            z.object({
+              totalSent: z.number(),
+            })
+          ),
+        },
+      },
+      handler: controller.broadcastPolicyUpdate,
+    });
   };
 };
