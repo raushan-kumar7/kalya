@@ -136,6 +136,7 @@ Implemented in [`src/libs/mail/`](file:///d:/Projects/personal/kalya/apps/api-se
 - **Provider Agnostic**: Unified `MailerService` interface allowing switching between **Resend** (`ResendMailProvider`) and **SMTP / Nodemailer** (`SmtpMailProvider`) via environment configuration (`KALYA_MAIL.PROVIDER`).
 - **React-Email Integration**: Direct compilation of templates from `@kalya/email` (`sendTemplate`) with automatic plain-text fallback generation.
 - **Reliability & Resilience**: Input normalization (handles strings and arrays of recipients), recipient deduplication, connection verification on startup, and graceful transporter teardown.
+- **Local Mail Testing (MailDev)**: Run `pnpm docker:up` from the root to spin up MailDev on port `1025` (SMTP) with a web inbox at `http://localhost:1080`.
 
 ### 5. Media & Storage Abstraction
 
@@ -211,7 +212,7 @@ Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-serve
 
 ---
 
-## ⚙️ Environment Variables
+## 🔧 Environment Variables
 
 Copy `.env.example` to `.env` in `apps/api-server/` before starting:
 
@@ -306,6 +307,9 @@ All commands can be executed from the monorepo root using `pnpm` filter or direc
 | `pnpm start` | Runs the compiled production server (`node dist/index.js`) |
 | `pnpm typecheck` | Validates TypeScript types across the package (`tsc --noEmit`) |
 | `pnpm lint` | Runs ESLint analysis across all source files |
+| `pnpm docker:up` | Starts local infrastructure (MailDev web at `:1080`, SMTP at `:1025`) |
+| `pnpm docker:down` | Stops and tears down local Docker containers |
+| `pnpm docker:logs` | Tails Docker container logs in real time |
 
 ### Monorepo Workflows
 

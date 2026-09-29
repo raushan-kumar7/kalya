@@ -1,0 +1,10 @@
+services:
+  maildev:
+    image: maildev/maildev:latest
+    container_name: kalya-maildev
+    restart: unless-stopped
+    ports:
+      - "1080:1080" # Web UI: http://localhost:1080
+      - "1025:1025" # SMTP server: localhost:1025
+    environment:
+      - TZ=UTC

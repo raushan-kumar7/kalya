@@ -9,7 +9,10 @@
     "format": "prettier --write --cache .",
     "format:check": "prettier --check --cache .",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "keywords": [
     "kalya",
