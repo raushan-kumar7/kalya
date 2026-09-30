@@ -9,6 +9,11 @@ build
 out
 .turbo
 
+# Vercel & TypeScript incremental builds
+.vercel
+*.tsbuildinfo
+
+
 # Logs
 logs/
 *.log
