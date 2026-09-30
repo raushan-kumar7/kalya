@@ -4,12 +4,14 @@ import { env } from '@kalya/env';
 import { authPlugin } from './auth';
 import { healthPlugin } from './health';
 import { userPlugin } from './users';
+import { financesPlugin } from './finances';
+import { notificationsPlugin } from './notifications';
 
 /**
  * Root Application Modules Plugin.
  *
- * @description Encapsulates and registers all domain module plugins (Auth, Health,
- * and future modules like User Profile) in a single unified Fastify plugin call.
+ * @description Encapsulates and registers all domain module plugins:
+ * Auth, User Profiles, Finances, Notifications, and Health Checks.
  */
 export const modulesPlugin: FastifyPluginAsync = fp(
   async (fastify) => {
@@ -19,7 +21,13 @@ export const modulesPlugin: FastifyPluginAsync = fp(
     // 2. User Profile Management Module
     await fastify.register(userPlugin);
 
-    // 3. Health & Observability Module (when enabled)
+    // 3. Finances Domain Module
+    await fastify.register(financesPlugin);
+
+    // 4. Notifications & Alerts Module
+    await fastify.register(notificationsPlugin);
+
+    // 5. Health & Observability Module (when enabled)
     if (env.observability.healthChecks.enabled) {
       await fastify.register(healthPlugin);
     }
