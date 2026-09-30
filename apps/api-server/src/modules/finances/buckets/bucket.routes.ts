@@ -15,6 +15,14 @@ export const createBucketRoutes = (controller: BucketController): FastifyPluginA
       handler: controller.list,
     });
 
+    fastify.post('/seed-defaults', {
+      schema: {
+        tags: ['Finances - Buckets'],
+        summary: 'Seed standard default allocation buckets (Needs, Wants, Savings)',
+      },
+      handler: controller.seedDefaults,
+    });
+
     fastify.get('/:id', {
       schema: {
         tags: ['Finances - Buckets'],

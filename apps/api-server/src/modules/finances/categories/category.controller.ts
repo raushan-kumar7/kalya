@@ -45,4 +45,10 @@ export class CategoryController {
     await this.categoryService.deleteCategory(userId, request.params.id);
     return ApiResponse.ok(reply, { success: true }, 'Category deleted successfully');
   };
+
+  seedDefaults = async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = request.user!.id;
+    const items = await this.categoryService.seedDefaultCategories(userId);
+    return ApiResponse.created(reply, items, 'Default categories seeded successfully');
+  };
 }

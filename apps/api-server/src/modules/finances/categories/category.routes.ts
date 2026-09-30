@@ -15,6 +15,14 @@ export const createCategoryRoutes = (controller: CategoryController): FastifyPlu
       handler: controller.list,
     });
 
+    fastify.post('/seed-defaults', {
+      schema: {
+        tags: ['Finances - Categories'],
+        summary: 'Seed standard default categories nested under allocation buckets',
+      },
+      handler: controller.seedDefaults,
+    });
+
     fastify.get('/:id', {
       schema: {
         tags: ['Finances - Categories'],

@@ -136,5 +136,7 @@ export class BucketService extends BaseFinanceService {
         await this.db.insert(bucket).values({ userId, ...def });
       }
     }
+
+    return this.listBuckets(userId);
   }
 }

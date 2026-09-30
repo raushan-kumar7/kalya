@@ -17,7 +17,14 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
   - [5. Media & Storage Abstraction](#5-media--storage-abstraction)
   - [6. Health & Observability](#6-health--observability)
   - [7. Error Handling & Standard Responses](#7-error-handling--standard-responses)
+  - [8. Personal Finances Engine](#8-personal-finances-engine)
+  - [9. Notifications & Alert Dispatch Engine](#9-notifications--alert-dispatch-engine)
 - [API Route Reference](#-api-route-reference)
+  - [Health & Monitoring](#health--monitoring)
+  - [Authentication](#authentication-apiv1auth)
+  - [User Profile & Account Management](#user-profile--account-management-apiv1users)
+  - [Personal Finances](#personal-finances-apiv1finances)
+  - [Notifications & Alerts](#notifications--alerts-apiv1notifications)
 - [Environment Variables](#-environment-variables)
 - [Development & Scripts](#-development--scripts)
 
@@ -25,7 +32,7 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
 
 ## 🚀 Overview
 
-`@kalya/api-server` is the central API service powering Kalya web and mobile clients. It enforces type safety from HTTP request boundaries down to database persistence, provides real-time client telemetry, automated email triggers for critical user security events, and handles GDPR-compliant data operations such as scheduled account deletions with grace periods.
+`@kalya/api-server` is the central API service powering Kalya web and mobile clients. It enforces type safety from HTTP request boundaries down to database persistence, provides real-time client telemetry, automated email triggers for critical user security events, and handles GDPR-compliant data operations such as scheduled account deletions with grace periods. It also serves as the host for the complete personal finance engine (budgeting, categories, split expenses, multi-asset portfolio tracking, financial summaries) and user-configurable alert notifications.
 
 ---
 
@@ -38,6 +45,7 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
 | **Validation & Schemas**         | [Zod](https://zod.dev/) + `fastify-type-provider-zod`                                    | Runtime schema validation and typed request/response contracts             |
 | **Authentication**               | [Better-Auth v1.7+](https://www.better-auth.com/)                                        | Session-based authentication with Drizzle SQLite adapter                   |
 | **Database & ORM**               | [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/) via `@kalya/db` | ACID transactions, WAL mode, migrations, typed queries                     |
+| **Finance Utilities**            | `@kalya/utils`                                                                           | Minor-unit currency rounding, split arithmetic, valuations & goal pacing   |
 | **Client Intelligence**          | `ua-parser-js` v2 + `geoip-lite` + Client Hints                                          | Real-time browser, OS, hardware, bot/crawler detection, and IP geolocation |
 | **Email Subsystem**              | `@kalya/email` (React-Email) + Resend / Nodemailer                                       | Transactional email templates with dynamic provider fallback               |
 | **Storage & Image Optimization** | Local disk / Cloudinary + [Sharp](https://sharp.pixelplumbing.com/)                      | Avatar upload, resize, WebP conversion, and asset distribution             |
@@ -67,6 +75,25 @@ apps/api-server/
 │   │   │   ├── auth.plugin.ts  # Fastify auth decorators & preHandler guards
 │   │   │   └── auth.routes.ts  # Better-Auth wildcard & custom auth endpoints
 │   │   ├── users/              # User profile, sessions, deletion, email change, policy broadcast
+│   │   ├── finances/           # Personal finance engine (9 modular domains)
+│   │   │   ├── common/         # BaseFinanceService (ownership assertion & relation guards)
+│   │   │   ├── buckets/        # Allocation buckets (Needs/Wants/Savings)
+│   │   │   ├── categories/     # Nested expense categories with theme & icons
+│   │   │   ├── income/         # Monthly income tracking & carryover calculation
+│   │   │   ├── budgets/        # Budget plans, real-time health & threshold alerting
+│   │   │   ├── expenses/       # Transaction logging & atomic split management
+│   │   │   ├── splits/         # Contact directory & share obligation settlement
+│   │   │   ├── goals/          # Savings targets & timeline pacing metrics
+│   │   │   ├── assets/         # Commodities & equities portfolio valuation
+│   │   │   ├── summaries/      # Dashboard KPI overview & monthly statements
+│   │   │   ├── finances.plugin.ts # Mounts all finance domain routes
+│   │   │   └── index.ts        # Module export
+│   │   ├── notifications/      # Notification & alert dispatch subsystem
+│   │   │   ├── alert-dispatcher.service.ts # Multi-channel preference-aware dispatcher
+│   │   │   ├── alerts/         # In-app alerts, unread counters & batch operations
+│   │   │   ├── preferences/    # Channel & frequency delivery preference matrix
+│   │   │   ├── notifications.plugin.ts # Mounts notification routes & decorates dispatcher
+│   │   │   └── index.ts        # Module export
 │   │   ├── health/             # Liveness, readiness, and subsystem diagnostics
 │   │   ├── helpers/            # Client intelligence, username generators, formatters
 │   │   └── index.ts            # Root module aggregator plugin
@@ -173,6 +200,36 @@ Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-serve
   - **Success**: `{ "success": true, "data": T, "meta": { "timestamp": "...", "requestId": "..." } }`
   - **Failure**: `{ "success": false, "error": { "code": "...", "message": "...", "details": [...] } }`
 
+### 8. Personal Finances Engine
+
+Implemented in [`src/modules/finances/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/finances).
+
+- **Shared Domain Foundation**:
+  - [`BaseFinanceService`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/finances/common/base-finance.service.ts) provides strict tenant boundary isolation via `assertEntityOwnership` (protects against accessing or mutating another user's records) and `verifyParentExists` (verifies existence and user-ownership of parent entities like buckets and categories before child inserts).
+- **Sub-Modules Breakdown**:
+  - **Buckets (`buckets/`)**: Allocation categories aligned with budgeting principles (Needs, Wants, Savings). Features automated default seeding for the 50/30/20 rule, origin classification (`built-in` vs `custom`), and deletion guards protecting built-in buckets or those with active categories.
+  - **Categories (`categories/`)**: Hierarchical expenditure categories attached to parent allocation buckets, configured with UI icon keys and hex color themes.
+  - **Income Tracking (`income/`)**: Monthly income records capturing primary salary, secondary/freelance income, and previous-month carryover with automated `calculateNetIncome` derivation.
+  - **Budgets & Real-Time Health (`budgets/`)**: Period-based expenditure caps (monthly, quarterly, annual) with real-time health checks (`calculateBudgetStatus`). Evaluates percentage consumed, remaining allowance, and amber (default 80%) / red (default 100%) alert thresholds.
+  - **Expenses & Split Processing (`expenses/`)**: Transaction tracking with payment methods (`upi`, `phonepe`, `paytm`, `gpay`, `debit_card`, `credit_card`) and atomic split transaction creation in SQLite transactions.
+  - **Expense Splits (`splits/`)**: Split contact management, pending obligation tracking, and partial or complete debt settlement calculations with debt validation.
+  - **Goals (`goals/`)**: Savings goals with target dates, progress tracking, timeline pace evaluation (`calculateGoalPace`), and monthly planned contribution monitoring.
+  - **Multi-Class Assets (`assets/`)**: Digital commodity tracking (gold/silver, grams, platform, 3% GST calculation) and equities (NSE/BSE, company, shares, purchase price), along with aggregated portfolio valuation summaries.
+  - **Summaries (`summaries/`)**: Real-time financial dashboard metrics (total income, expenses, net savings, savings rate, adherence %, unsettled splits) and immutable monthly statement snapshot generation.
+
+### 9. Notifications & Alert Dispatch Engine
+
+Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/notifications).
+
+- **Preference-Aware Alert Dispatcher**:
+  - [`AlertDispatcherService`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/notifications/alert-dispatcher.service.ts) coordinates notification routing by inspecting the user's `notification_preference` table. If a category is muted or disabled, dispatch is gracefully bypassed.
+  - Decorated onto the Fastify instance as `fastify.alertDispatcher` for cross-domain alert triggering.
+- **In-App Notification Feed (`alerts/`)**:
+  - Polymorphic reference tracking (`referenceType`, `referenceId`), structured JSON metadata, unread count caching, single mark-as-read, and batch mark-as-read operations.
+- **Delivery Preferences Matrix (`preferences/`)**:
+  - Granular control over categories (`statement`, `budget_alerts`, `split_reminders`, `marketing`) and channels (`email`, `push`).
+  - Supports multiple delivery frequencies: `immediate`, `daily`, `weekly`, `monthly`, or `custom` cron expressions validated via `cron-parser`.
+
 ---
 
 ## 📡 API Route Reference
@@ -209,6 +266,122 @@ Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-serve
 | `POST`   | `/api/v1/users/cancel-deletion`        | `authenticate` | Cancel pending account deletion                              |
 | `POST`   | `/api/v1/users/request-email-change`   | `authenticate` | Initiate primary email address change with verification link |
 | `POST`   | `/api/v1/users/admin/broadcast-policy` | `authenticate` | Admin: broadcast legal policy updates to all verified users  |
+
+### Personal Finances (`/api/v1/finances/*`)
+
+All finance routes require the `authenticate` preHandler guard.
+
+#### Allocation Buckets (`/api/v1/finances/buckets`)
+
+| Method   | Endpoint                                 | Description                                                      |
+| -------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/buckets`               | List all allocation buckets for current user                     |
+| `POST`   | `/api/v1/finances/buckets/seed-defaults` | Seed standard default allocation buckets (Needs, Wants, Savings) |
+| `GET`    | `/api/v1/finances/buckets/:id`           | Retrieve bucket details by ID                                    |
+| `POST`   | `/api/v1/finances/buckets`               | Create custom allocation bucket (`CreateBucketSchema`)           |
+| `PATCH`  | `/api/v1/finances/buckets/:id`           | Update allocation bucket details (`UpdateBucketSchema`)          |
+| `DELETE` | `/api/v1/finances/buckets/:id`           | Delete custom bucket (fails if built-in or contains categories)  |
+
+#### Expense Categories (`/api/v1/finances/categories`)
+
+| Method   | Endpoint                                    | Description                                                      |
+| -------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/categories`               | List categories with optional bucket filter (`?bucket_id=`)      |
+| `POST`   | `/api/v1/finances/categories/seed-defaults` | Seed curated standard categories nested under allocation buckets |
+| `GET`    | `/api/v1/finances/categories/:id`           | Retrieve category by ID                                          |
+| `POST`   | `/api/v1/finances/categories`               | Create expense category under bucket (`CreateCategorySchema`)    |
+| `PATCH`  | `/api/v1/finances/categories/:id`           | Update category details (`UpdateCategorySchema`)                 |
+| `DELETE` | `/api/v1/finances/categories/:id`           | Delete expense category                                          |
+
+#### Monthly Income (`/api/v1/finances/income`)
+
+| Method   | Endpoint                      | Description                                                       |
+| -------- | ----------------------------- | ----------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/income`     | List income records with optional query filters (`month`, `year`) |
+| `GET`    | `/api/v1/finances/income/:id` | Retrieve monthly income entry by ID                               |
+| `POST`   | `/api/v1/finances/income`     | Register monthly income with auto net calculation                 |
+| `PATCH`  | `/api/v1/finances/income/:id` | Update income entry and recalculate derived total                 |
+| `DELETE` | `/api/v1/finances/income/:id` | Delete income entry                                               |
+
+#### Budget Plans (`/api/v1/finances/budgets`)
+
+| Method   | Endpoint                              | Description                                                         |
+| -------- | ------------------------------------- | ------------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/budgets`            | List budget plans with filters (`bucket_id`, `income_id`, `status`) |
+| `GET`    | `/api/v1/finances/budgets/:id`        | Retrieve budget plan by ID                                          |
+| `GET`    | `/api/v1/finances/budgets/:id/health` | Recompute real-time budget consumption, status & remaining          |
+| `POST`   | `/api/v1/finances/budgets`            | Create budget plan for bucket & income allocation                   |
+| `PATCH`  | `/api/v1/finances/budgets/:id`        | Update budget parameters and thresholds                             |
+| `DELETE` | `/api/v1/finances/budgets/:id`        | Delete budget plan                                                  |
+
+#### Expenses (`/api/v1/finances/expenses`)
+
+| Method   | Endpoint                        | Description                                                                   |
+| -------- | ------------------------------- | ----------------------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/expenses`     | List expenses with filters (`category_id`, `from`, `to`, `is_split`, `limit`) |
+| `GET`    | `/api/v1/finances/expenses/:id` | Get expense by ID (including nested splits if split expense)                  |
+| `POST`   | `/api/v1/finances/expenses`     | Log new expense with atomic split share creation                              |
+| `PATCH`  | `/api/v1/finances/expenses/:id` | Update expense details                                                        |
+| `DELETE` | `/api/v1/finances/expenses/:id` | Delete expense and cascade delete linked split expenses                       |
+
+#### Split Contacts & Obligations (`/api/v1/finances/splits`)
+
+| Method  | Endpoint                                    | Description                                     |
+| ------- | ------------------------------------------- | ----------------------------------------------- |
+| `GET`   | `/api/v1/finances/splits/contacts`          | List user split contacts                        |
+| `POST`  | `/api/v1/finances/splits/contacts`          | Register new split contact member               |
+| `PATCH` | `/api/v1/finances/splits/contacts/:id`      | Update split contact details                    |
+| `GET`   | `/api/v1/finances/splits/shares/pending`    | List unsettled split shares owed to user        |
+| `POST`  | `/api/v1/finances/splits/shares/:id/settle` | Settle split share obligation (partial or full) |
+
+#### Financial Goals (`/api/v1/finances/goals`)
+
+| Method   | Endpoint                     | Description                                                    |
+| -------- | ---------------------------- | -------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/goals`     | List goals with timeline pace evaluation (`calculateGoalPace`) |
+| `GET`    | `/api/v1/finances/goals/:id` | Get goal details by ID with calculated pace                    |
+| `POST`   | `/api/v1/finances/goals`     | Create new savings goal linked to bucket                       |
+| `PATCH`  | `/api/v1/finances/goals/:id` | Update goal progress or parameters                             |
+| `DELETE` | `/api/v1/finances/goals/:id` | Delete savings goal                                            |
+
+#### Multi-Class Assets (`/api/v1/finances/assets`)
+
+| Method | Endpoint                          | Description                                                 |
+| ------ | --------------------------------- | ----------------------------------------------------------- |
+| `GET`  | `/api/v1/finances/assets/digital` | List digital commodities (gold, silver)                     |
+| `POST` | `/api/v1/finances/assets/digital` | Log digital commodity purchase with auto GST valuation      |
+| `GET`  | `/api/v1/finances/assets/equity`  | List equity holdings                                        |
+| `POST` | `/api/v1/finances/assets/equity`  | Log equity share purchase with valuation                    |
+| `GET`  | `/api/v1/finances/assets/summary` | Get aggregated portfolio valuation (commodities + equities) |
+
+#### Dashboard Summaries (`/api/v1/finances/summaries`)
+
+| Method | Endpoint                                         | Description                                             |
+| ------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `GET`  | `/api/v1/finances/summaries/overview`            | Retrieve dashboard metrics for month (`?month=YYYY-MM`) |
+| `POST` | `/api/v1/finances/summaries/statements/generate` | Generate immutable monthly statement snapshot           |
+
+### Notifications & Alerts (`/api/v1/notifications/*`)
+
+All notification routes require the `authenticate` preHandler guard.
+
+#### In-App Alerts (`/api/v1/notifications/alerts`)
+
+| Method   | Endpoint                                    | Description                                      |
+| -------- | ------------------------------------------- | ------------------------------------------------ |
+| `GET`    | `/api/v1/notifications/alerts`              | List user in-app alerts with filter & pagination |
+| `GET`    | `/api/v1/notifications/alerts/unread-count` | Get total unread alert count                     |
+| `PATCH`  | `/api/v1/notifications/alerts/:id/read`     | Mark a single alert notification as read         |
+| `POST`   | `/api/v1/notifications/alerts/mark-read`    | Batch mark alerts as read (`alert_ids` or `all`) |
+| `DELETE` | `/api/v1/notifications/alerts/:id`          | Dismiss/delete an alert notification             |
+
+#### Notification Preferences (`/api/v1/notifications/preferences`)
+
+| Method  | Endpoint                                | Description                                                       |
+| ------- | --------------------------------------- | ----------------------------------------------------------------- |
+| `GET`   | `/api/v1/notifications/preferences`     | List notification channel and category preferences                |
+| `PUT`   | `/api/v1/notifications/preferences`     | Upsert delivery preference for channel and category               |
+| `PATCH` | `/api/v1/notifications/preferences/:id` | Partially update preference (enabled status, frequency, schedule) |
 
 ---
 

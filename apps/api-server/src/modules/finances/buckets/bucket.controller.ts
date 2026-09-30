@@ -38,4 +38,10 @@ export class BucketController {
     await this.bucketService.deleteBucket(userId, request.params.id);
     return ApiResponse.ok(reply, { success: true }, 'Bucket deleted successfully');
   };
+
+  seedDefaults = async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = request.user!.id;
+    const items = await this.bucketService.seedDefaultBuckets(userId);
+    return ApiResponse.created(reply, items, 'Default buckets seeded successfully');
+  };
 }
