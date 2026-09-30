@@ -4,3 +4,5 @@ export * from './server';
 export * from './auth';
 export * from './storage';
 export * from './email';
+export * from './finances';
+export * from './notifications';

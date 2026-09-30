@@ -108,3 +108,138 @@ export type Status = AvailabilityStatus;
  * Shorthand alias for `AvailabilityCheckResult`.
  */
 export type Result = AvailabilityCheckResult;
+
+/**
+ * Valid origin sources for buckets and categories.
+ */
+export const ORIGIN_OPTIONS = ['built-in', 'custom'] as const;
+
+/**
+ * Valid recurring budget calculation periods.
+ */
+export const BUDGET_PERIOD_OPTIONS = ['monthly', 'quarterly', 'annual', 'financial_year'] as const;
+
+/**
+ * Health states for budget consumption.
+ */
+export const BUDGET_STATUS_OPTIONS = ['under', 'warning', 'over'] as const;
+
+/**
+ * Supported digital asset types (precious metals).
+ */
+export const DIGITAL_ASSET_TYPE_OPTIONS = ['gold', 'silver'] as const;
+
+/**
+ * Supported Indian stock exchanges.
+ */
+export const EXCHANGE_TYPE_OPTIONS = ['BSE', 'NSE'] as const;
+
+/**
+ * Expense split algorithms.
+ */
+export const SPLIT_TYPE_OPTIONS = ['equal', 'exact', 'percentage', 'shares'] as const;
+
+/**
+ * Supported payment methods for expenses.
+ */
+export const PAYMENT_METHOD_OPTIONS = [
+  'upi',
+  'phonepe',
+  'paytm',
+  'gpay',
+  'debit_card',
+  'credit_card',
+] as const;
+
+/**
+ * Methods for settling split expense balances.
+ */
+export const SETTLEMENT_METHOD_OPTIONS = ['cash', 'upi', 'bank_transfer'] as const;
+
+/**
+ * Lifecycle states of a financial savings goal.
+ */
+export const GOAL_STATUS_OPTIONS = [
+  'not_started',
+  'in_progress',
+  'on_track',
+  'behind',
+  'completed',
+  'paused',
+] as const;
+
+/**
+ * Standard input length and numeric boundaries for finances.
+ */
+export const FINANCE_LIMITS = {
+  MIN_LABEL_LENGTH: 1,
+  MAX_LABEL_LENGTH: 100,
+  MIN_KEY_LENGTH: 1,
+  MAX_KEY_LENGTH: 50,
+  MIN_DESCRIPTION_LENGTH: 1,
+  MAX_DESCRIPTION_LENGTH: 500,
+  MAX_NAME_LENGTH: 100,
+  MIN_AMOUNT: 0,
+  MAX_AMOUNT: 1_000_000_000,
+  MIN_PERCENTAGE: 0,
+  MAX_PERCENTAGE: 100,
+  DEFAULT_AMBER_THRESHOLD: 80,
+  DEFAULT_RED_THRESHOLD: 100,
+} as const;
+
+/**
+ * Recognized alert categories dispatched to users.
+ */
+export const ALERT_TYPE_OPTIONS = [
+  'budget_alert',
+  'split_update',
+  'goal_milestone',
+  'system',
+] as const;
+
+/**
+ * Domain entity tables that alerts can link back to.
+ */
+export const ALERT_REFERENCE_TYPE_OPTIONS = [
+  'budget',
+  'split_expense',
+  'goal',
+  'expense',
+  'income',
+] as const;
+
+/**
+ * Notification preference preference categories.
+ */
+export const NOTIFICATION_CATEGORY_OPTIONS = [
+  'statement',
+  'budget_alerts',
+  'split_reminders',
+  'marketing',
+] as const;
+
+/**
+ * Communication delivery channels.
+ */
+export const NOTIFICATION_CHANNEL_OPTIONS = ['email', 'push'] as const;
+
+/**
+ * Frequency cadence for notification digests and alerts.
+ */
+export const NOTIFICATION_FREQUENCY_OPTIONS = [
+  'immediate',
+  'daily',
+  'weekly',
+  'monthly',
+  'custom',
+] as const;
+
+/**
+ * Standard input boundaries for notifications and alerts.
+ */
+export const NOTIFICATION_LIMITS = {
+  MIN_TITLE_LENGTH: 1,
+  MAX_TITLE_LENGTH: 200,
+  MIN_MESSAGE_LENGTH: 1,
+  MAX_MESSAGE_LENGTH: 2000,
+} as const;
