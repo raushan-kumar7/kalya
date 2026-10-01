@@ -63,6 +63,10 @@ export interface AppConfig {
     accessTokenExpiresLife: string;
     /** Lifetime duration of the long-lived refresh token (e.g., '7d') */
     refreshTokenExpiresLife: string;
+    /** Google OAuth Client ID (optional, enables "Continue with Google") */
+    googleClientId?: string;
+    /** Google OAuth Client Secret */
+    googleClientSecret?: string;
   };
 
   /** Browser cookie policies */

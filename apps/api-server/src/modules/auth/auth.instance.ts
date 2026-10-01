@@ -4,6 +4,7 @@ import { AUTH_LIMITS } from '@kalya/types';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { username } from 'better-auth/plugins';
+import { generateUniqueUsername } from '../helpers';
 
 import {
   handleNewDeviceLogin,
@@ -34,6 +35,19 @@ export const createAuth = (db: DatabaseClient) => {
     secret: env.auth.secretKey,
     baseURL: env.auth.baseUrl || env.app.clientUrl,
     basePath: `/api/${env.app.apiVersion}/auth`,
+    socialProviders: {
+      google: {
+        clientId: env.auth.googleClientId as string,
+        clientSecret: env.auth.googleClientSecret as string,
+        scope: ['email', 'profile'],
+      },
+    },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['google'],
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -50,6 +64,40 @@ export const createAuth = (db: DatabaseClient) => {
       },
     },
     databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            // For OAuth sign-ups (Google), Better-Auth populates `name` and `email`
+            // but not our custom additionalFields. Fill them in automatically.
+            const data = { ...user } as Record<string, unknown>;
+
+            if (!data.first_name && data.name) {
+              const nameParts = String(data.name).trim().split(/\s+/);
+              data.first_name = nameParts[0] || String(data.name);
+              data.last_name = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+            }
+
+            // Ensure first_name and last_name are never empty strings
+            if (!data.first_name) {
+              data.first_name = data.email ? String(data.email).split('@')[0] || 'User' : 'User';
+            }
+            if (!data.last_name) {
+              data.last_name = '';
+            }
+
+            // Auto-generate a unique username if not provided (OAuth flow)
+            if (!data.username) {
+              data.username = await generateUniqueUsername(
+                db,
+                String(data.first_name),
+                String(data.last_name)
+              );
+            }
+
+            return { data };
+          },
+        },
+      },
       session: {
         create: {
           after: async (session, context) => {

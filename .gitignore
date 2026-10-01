@@ -49,6 +49,7 @@ Thumbs.db
 # Database File
 data/
 uploads/
+*.zip
 
 setup.md
 UI.md

@@ -1,7 +1,6 @@
 import { Outfit, Inter, IBM_Plex_Mono } from 'next/font/google';
 import '@/styles/globals.css';
-import { Toaster } from '@/components/ui/feedback';
-import { ThemeProvider } from '@/components/ui/utilities';
+import { AppProviders } from '@/providers';
 
 const outfit = Outfit({
   variable: '--font-outfit',
@@ -32,15 +31,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange={false}
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

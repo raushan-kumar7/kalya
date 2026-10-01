@@ -48,6 +48,8 @@ function createConfig(): AppConfig {
       baseUrl: rawEnv['KALYA_AUTH.BASE_URL'],
       accessTokenExpiresLife: rawEnv['KALYA_AUTH.ACCESS_TOKEN_EXPIRES_LIFE'],
       refreshTokenExpiresLife: rawEnv['KALYA_AUTH.REFRESH_TOKEN_EXPIRES_LIFE'],
+      googleClientId: rawEnv['KALYA_AUTH.GOOGLE_CLIENT_ID'] || undefined,
+      googleClientSecret: rawEnv['KALYA_AUTH.GOOGLE_CLIENT_SECRET'] || undefined,
     },
 
     cookie: {

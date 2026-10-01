@@ -119,7 +119,11 @@ apps/api-server/
 
 Implemented in [`src/modules/auth/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/auth).
 
-- **Better-Auth Integration**: Powered by Better-Auth with the Drizzle SQLite adapter. Supports email/password, social logins, session management, and credential updates.
+- **Better-Auth Integration**: Powered by Better-Auth with the Drizzle SQLite adapter. Supports email/password, Google OAuth 2.0 social identity federation, session management, and credential updates.
+- **Google OAuth 2.0 & Identity Federation**:
+  - Configured via `socialProviders.google` with `['email', 'profile']` scopes.
+  - **Account Linking**: Enabled with `trustedProviders: ['google']`, allowing returning users with pre-existing email/password accounts to seamlessly sign in with Google without duplicate account errors or account locking.
+  - **Automated OAuth Provisioning Hook**: In `databaseHooks.user.create.before`, extracts `first_name` and `last_name` from Google's profile name and automatically invokes `generateUniqueUsername(db, ...)` to generate a collision-free username for newly provisioned OAuth users.
 - **Fastify Decorators & Guards**:
   - `fastify.authenticate`: Verifies active session token from cookie/headers; populates `request.user` and `request.session`.
   - `fastify.requireVerifiedEmail`: Guard ensuring the authenticated user has verified their primary email address.
@@ -244,10 +248,12 @@ Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya
 
 ### Authentication (`/api/v1/auth/*`)
 
-| Method | Endpoint                          | Auth        | Description                                                                      |
-| ------ | --------------------------------- | ----------- | -------------------------------------------------------------------------------- |
-| `ALL`  | `/api/v1/auth/*`                  | Better-Auth | Better-Auth core handler (sign-in, sign-up, sign-out, OAuth callbacks, sessions) |
-| `GET`  | `/api/v1/auth/check-availability` | Public      | Query check for username or email availability (`?email=...` or `?username=...`) |
+| Method | Endpoint                          | Auth        | Description                                                                                    |
+| ------ | --------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| `ALL`  | `/api/v1/auth/*`                  | Better-Auth | Better-Auth core wildcard handler (sign-in, sign-up, sign-out, session retrieval)              |
+| `POST` | `/api/v1/auth/sign-in/social`     | Public      | Initiates Google OAuth consent flow; sets CSRF/state cookies and returns `{ url, redirect }`   |
+| `GET`  | `/api/v1/auth/callback/google`    | Better-Auth | Google OAuth callback; exchanges code, links/creates user, sets session cookies, and redirects |
+| `GET`  | `/api/v1/auth/check-availability` | Public      | Query check for username or email availability (`?email=...` or `?username=...`)               |
 
 ### User Profile & Account Management (`/api/v1/users/*`)
 
@@ -422,6 +428,10 @@ KALYA_AUTH.SECRET_KEY=your-secure-random-secret-key-min-32-chars
 KALYA_AUTH.BASE_URL=http://localhost:3600
 KALYA_AUTH.ACCESS_TOKEN_EXPIRES_LIFE=15m
 KALYA_AUTH.REFRESH_TOKEN_EXPIRES_LIFE=7d
+
+# ---- Google OAuth 2.0 ----
+KALYA_AUTH.GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+KALYA_AUTH.GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # ---- Cookies ----
 KALYA_COOKIE.DOMAIN=

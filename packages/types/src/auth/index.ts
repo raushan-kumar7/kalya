@@ -281,3 +281,28 @@ export type AuthErrorCode =
   | 'INVALID_SESSION_TOKEN'
   | 'PASSWORD_TOO_WEAK'
   | 'TOKEN_EXPIRED';
+
+/**
+ * Standard password strength classification tiers.
+ */
+export type PasswordStrengthLevel = 'too-weak' | 'weak' | 'fair' | 'good' | 'strong';
+
+/**
+ * Result of testing a single password requirement criterion.
+ */
+export interface PasswordRuleResult {
+  message: string;
+  met: boolean;
+}
+
+/**
+ * Comprehensive password evaluation report for meters and strength indicators.
+ */
+export interface PasswordStrengthReport {
+  score: number;
+  level: PasswordStrengthLevel;
+  label: string;
+  percent: number;
+  isValid: boolean;
+  checklist: PasswordRuleResult[];
+}

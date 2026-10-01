@@ -45,6 +45,10 @@ export const envSchema = databaseEnvSchema.extend({
   'KALYA_AUTH.ACCESS_TOKEN_EXPIRES_LIFE': z.string(),
   'KALYA_AUTH.REFRESH_TOKEN_EXPIRES_LIFE': z.string(),
 
+  // ---- Google Auth ----
+  'KALYA_AUTH.GOOGLE_CLIENT_ID': z.string().optional(),
+  'KALYA_AUTH.GOOGLE_CLIENT_SECRET': z.string().optional(),
+
   // ---- Cookies ----
   'KALYA_COOKIE.DOMAIN': z.string().optional(),
   'KALYA_COOKIE.SAME_SITE': z.enum(['lax', 'strict', 'none']),
