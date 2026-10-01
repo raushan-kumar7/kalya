@@ -1,7 +1,6 @@
 {
   "extends": "@kalya/typescript-config/nextjs",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
