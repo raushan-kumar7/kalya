@@ -11,6 +11,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./env": {
+      "types": "./src/core/env.ts",
+      "import": "./src/core/env.ts",
+      "default": "./src/core/env.ts"
     }
   },
   "scripts": {

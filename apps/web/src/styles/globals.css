@@ -26,6 +26,9 @@
   /* Brand tagline style: wide-tracked caps ("READY FOR TOMORROW.") */
   --tracking-brand: 0.22em;
 
+  /* ---------- Spacing Extensions ---------- */
+  --spacing-8_5: 2.125rem; /* 34px - matches h-8.5 and w-8.5 controls */
+
   /* ---------- Radius (matches app-icon squircle + board cards) ---------- */
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;

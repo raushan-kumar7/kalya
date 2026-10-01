@@ -7,7 +7,7 @@ import {
   type UseThemeProps,
 } from 'next-themes';
 import { Sun, Moon, Laptop, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { cn } from '@/libs/utils';
 import { Button, type ButtonProps } from '../forms/button';
@@ -112,35 +112,11 @@ export function ThemeToggle({
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    let active = true;
-    setTimeout(() => {
-      if (active) {
-        setMounted(true);
-      }
-    }, 0);
-    return () => {
-      active = false;
-    };
+    setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button
-        variant={variant}
-        size={size}
-        className={cn(
-          'relative h-10 w-10 rounded-full border border-border/40 opacity-60 pointer-events-none',
-          className
-        )}
-        disabled
-        aria-hidden="true"
-      >
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-    );
-  }
-
   const cycleTheme = () => {
+    if (!mounted) return;
     if (cycleModes.length === 2 && cycleModes.includes('light') && cycleModes.includes('dark')) {
       setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
       return;
@@ -156,6 +132,11 @@ export function ThemeToggle({
   };
 
   const getIcon = () => {
+    if (!mounted) {
+      return (
+        <Sun className="h-5 w-5 text-accent drop-shadow-[0_0_8px_rgba(217,119,6,0.35)] opacity-75" />
+      );
+    }
     // Show Laptop icon if explicitly set to system
     if (theme === 'system') {
       return (
@@ -191,36 +172,32 @@ export function ThemeToggle({
     system: 'System',
   };
 
-  const currentThemeLabel = (theme && themeLabels[theme]) || 'System';
+  const currentThemeLabel = (mounted && theme && themeLabels[theme]) || 'System';
 
   return (
     <Button
       variant={variant}
       size={size}
       onClick={cycleTheme}
+      suppressHydrationWarning
       className={cn(
         'relative overflow-hidden rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-raised active:scale-95 border border-border/60 hover:border-border shadow-xs',
         size === 'icon' && 'h-10 w-10 p-0',
         FOCUS_RING.primary,
         className
       )}
-      aria-label={`Current theme: ${theme || 'system'}. Click to change.`}
+      aria-label={`Current theme: ${mounted && theme ? theme : 'system'}. Click to change.`}
       title={`Theme: ${currentThemeLabel} (Click to toggle)`}
       {...props}
     >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={(theme || '') + (resolvedTheme || '')}
-          initial={{ y: 16, opacity: 0, rotate: -45, scale: 0.85 }}
-          animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
-          exit={{ y: -16, opacity: 0, rotate: 45, scale: 0.85 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="flex items-center justify-center gap-2"
-        >
-          {getIcon()}
-          {showLabel && <span className="text-body-sm font-medium pr-1">{currentThemeLabel}</span>}
-        </motion.span>
-      </AnimatePresence>
+      <span className="flex items-center justify-center gap-2" suppressHydrationWarning>
+        {getIcon()}
+        {showLabel && (
+          <span className="text-body-sm font-medium pr-1" suppressHydrationWarning>
+            {currentThemeLabel}
+          </span>
+        )}
+      </span>
     </Button>
   );
 }
@@ -248,34 +225,11 @@ export function ThemeSegmented({ className, size = 'md' }: ThemeSegmentedProps) 
     { id: 'system', label: 'System', icon: Laptop },
   ];
 
-  if (!mounted) {
-    return (
-      <div
-        className={cn(
-          'inline-flex items-center gap-1 p-1 rounded-full bg-surface-raised border border-border/80 opacity-60 pointer-events-none',
-          size === 'sm' ? 'h-8' : 'h-10',
-          className
-        )}
-      >
-        {options.map((opt) => (
-          <div
-            key={opt.id}
-            className={cn(
-              'px-3 py-1 rounded-full text-caption text-text-muted flex items-center gap-1.5'
-            )}
-          >
-            <opt.icon className="w-3.5 h-3.5" />
-            <span>{opt.label}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div
       role="radiogroup"
       aria-label="Select color theme"
+      suppressHydrationWarning
       className={cn(
         'inline-flex items-center gap-1 p-1 rounded-full bg-surface-raised border border-border/80 shadow-xs relative',
         size === 'sm' ? 'h-8 text-caption' : 'h-10 text-body-sm',
@@ -283,7 +237,7 @@ export function ThemeSegmented({ className, size = 'md' }: ThemeSegmentedProps) 
       )}
     >
       {options.map((opt) => {
-        const isActive = theme === opt.id;
+        const isActive = mounted && theme === opt.id;
         const Icon = opt.icon;
         return (
           <button
@@ -291,7 +245,8 @@ export function ThemeSegmented({ className, size = 'md' }: ThemeSegmentedProps) 
             type="button"
             role="radio"
             aria-checked={isActive}
-            onClick={() => setTheme(opt.id)}
+            suppressHydrationWarning
+            onClick={() => mounted && setTheme(opt.id)}
             className={cn(
               'relative z-10 px-3 py-1 rounded-full font-medium transition-colors duration-150 flex items-center gap-1.5 cursor-pointer select-none',
               FOCUS_RING.primary,
@@ -334,22 +289,8 @@ export function ThemeDropdown({ className }: { className?: string }) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className={cn('h-9 px-3 gap-2 opacity-60', className)}
-        disabled
-      >
-        <Sun className="h-4 w-4 text-accent" />
-        <span className="text-body-sm">Theme</span>
-      </Button>
-    );
-  }
-
   const getActiveIcon = () => {
-    if (theme === 'system') {
+    if (!mounted || theme === 'system') {
       return <Laptop className="h-4 w-4 text-text-secondary" />;
     }
     if (resolvedTheme === 'dark') {
@@ -364,6 +305,7 @@ export function ThemeDropdown({ className }: { className?: string }) {
         <Button
           variant="outline"
           size="sm"
+          suppressHydrationWarning
           className={cn(
             'h-9 px-3 gap-2 rounded-md border-border bg-surface hover:bg-surface-raised shadow-xs',
             FOCUS_RING.primary,
@@ -371,7 +313,9 @@ export function ThemeDropdown({ className }: { className?: string }) {
           )}
         >
           {getActiveIcon()}
-          <span className="text-body-sm capitalize font-medium">{theme || 'system'}</span>
+          <span className="text-body-sm capitalize font-medium" suppressHydrationWarning>
+            {mounted && theme ? theme : 'system'}
+          </span>
         </Button>
       </DropdownMenuPrimitive.Trigger>
 

@@ -10,3 +10,4 @@ export * from './textarea';
 export * from './read-only-field';
 export * from './label';
 export * from './field';
+export * from './date-picker';
