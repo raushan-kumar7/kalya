@@ -104,6 +104,7 @@ export function Logo({
       width={finalWidth}
       height={finalHeight}
       priority={priority}
+      style={{ width: 'auto', height: 'auto' }}
       className={cn(
         'h-auto w-auto object-contain transition-opacity duration-200 select-none',
         className
@@ -198,6 +199,7 @@ export function Icon({
       width={finalWidth}
       height={finalHeight}
       priority={priority}
+      style={{ width: 'auto', height: 'auto' }}
       className={cn(
         'h-auto w-auto object-contain transition-opacity duration-200 select-none',
         className

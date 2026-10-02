@@ -38,8 +38,27 @@ export class AuthController {
       );
 
       reply.status(response.status);
+
+      // Forward Set-Cookie headers properly. In Node 18+, response.headers.getSetCookie()
+      // returns an array of individual cookie strings so Fastify can emit multiple Set-Cookie headers
+      // rather than overwriting each or joining them with commas.
+      const getSetCookie = (response.headers as any).getSetCookie;
+      if (typeof getSetCookie === 'function') {
+        const setCookies = getSetCookie.call(response.headers);
+        if (Array.isArray(setCookies) && setCookies.length > 0) {
+          reply.header('set-cookie', setCookies);
+        }
+      } else {
+        const setCookie = response.headers.get('set-cookie');
+        if (setCookie) {
+          reply.header('set-cookie', setCookie);
+        }
+      }
+
       response.headers.forEach((value, key) => {
-        reply.header(key, value);
+        if (key.toLowerCase() !== 'set-cookie') {
+          reply.header(key, value);
+        }
       });
 
       const responseText = await response.text();

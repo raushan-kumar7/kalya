@@ -211,13 +211,13 @@ export default function Home() {
           {/* Header Action Buttons */}
           <div className="hidden sm:flex items-center gap-3">
             <a
-              href="#calculator"
+              href="/auth/sign-in"
               className="text-body-sm font-semibold text-text-secondary hover:text-text-primary transition-colors px-3 py-2"
             >
               Sign In
             </a>
             <a
-              href="#get-started"
+              href="/auth/sign-up"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4.5 py-2 text-body-sm font-bold text-on-primary shadow-sm shadow-primary/20 hover:bg-primary-hover hover:shadow-md transition-all active:scale-97 cursor-pointer"
             >
               <span>Get Started Free</span>

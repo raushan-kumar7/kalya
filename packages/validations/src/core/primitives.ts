@@ -4,7 +4,10 @@ export const UUIDSchema = z.string().min(1, 'ID is required');
 
 export const ISODateSchema = z.iso.date({ message: 'Invalid ISO Date (YYYY-MM-DD)' });
 
-export const ISOTimestampSchema = z.iso.datetime({ message: 'Invalid ISO Timestamp' });
+export const ISOTimestampSchema = z.union([
+  z.iso.datetime({ message: 'Invalid ISO Timestamp' }),
+  z.date().transform((d) => d.toISOString()),
+]);
 
 export const DecimalSchema = z.number();
 

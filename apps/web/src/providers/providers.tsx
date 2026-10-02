@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/feedback';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from './auth-provider';
 import { TableProvider } from './table-provider';
+import { StoreHydration } from '@/hooks/use-store-hydration';
 
 export interface AppProvidersProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <QueryProvider>
         <AuthProvider>
           <TableProvider>
+            <StoreHydration />
             {children}
             <Toaster />
           </TableProvider>

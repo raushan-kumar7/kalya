@@ -73,12 +73,12 @@ export const buildApp = (): FastifyInstance => {
   // 3. Database Layer (Decorates fastify.db & request.db)
   app.register(databasePlugin);
 
-  // 4. Application Modules (Auth, Health, and domain features)
-  app.register(modulesPlugin);
-
-  // 5. Payload & File Handling
+  // 4. Payload & File Handling (Registered before routes so multipart parsers attach to Fastify)
   app.register(multipartPlugin);
   app.register(staticFilesPlugin);
+
+  // 5. Application Modules (Auth, Health, and domain features)
+  app.register(modulesPlugin);
 
   // 6. Observability & Logging
   app.register(requestLoggerPlugin);

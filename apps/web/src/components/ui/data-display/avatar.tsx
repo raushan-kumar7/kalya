@@ -65,7 +65,10 @@ export interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageEleme
 }
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, src, alt = '', onLoadingStatusChange, ...props }, ref) => {
+  (
+    { className, src, alt = '', referrerPolicy = 'no-referrer', onLoadingStatusChange, ...props },
+    ref
+  ) => {
     const [status, setStatus] = React.useState<'loading' | 'loaded' | 'error'>('loading');
 
     React.useEffect(() => {
@@ -87,6 +90,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
         ref={ref}
         src={src}
         alt={alt}
+        referrerPolicy={referrerPolicy}
         onLoad={() => {
           setStatus('loaded');
           onLoadingStatusChange?.('loaded');

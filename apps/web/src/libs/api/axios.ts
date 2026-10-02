@@ -8,6 +8,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { ApiError, type ApiErrorDetail, type StandardResponse } from './types';
+import { useAuthStore } from '@/stores/auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3600';
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
@@ -22,7 +23,6 @@ export const axiosInstance: AxiosInstance = axios.create({
   timeout: 30000,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 });
@@ -32,9 +32,18 @@ export const axiosInstance: AxiosInstance = axios.create({
 // ------------------------------------------------------------
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // If sending FormData (avatar uploads, file attachments), let browser set Content-Type with boundary
+    // If sending FormData (avatar uploads, file attachments), ensure Content-Type is unset so browser/client sets multipart with boundary
     if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+      if (config.headers) {
+        delete (config.headers as Record<string, unknown>)['Content-Type'];
+        delete (config.headers as Record<string, unknown>)['content-type'];
+        if (typeof config.headers.delete === 'function') {
+          config.headers.delete('Content-Type');
+          config.headers.delete('content-type');
+        }
+      }
+    } else if (config.data && config.headers && !config.headers.has('Content-Type')) {
+      config.headers.set('Content-Type', 'application/json');
     }
 
     // Ensure relative paths not starting with /api or /health get prefixed with /api/${API_VERSION}
@@ -47,6 +56,18 @@ axiosInstance.interceptors.request.use(
     ) {
       const cleanPath = config.url.replace(/^\/+/, '');
       config.url = `/api/${API_VERSION}/${cleanPath}`;
+    }
+
+    // Attach Authorization Bearer token from auth store if available and not already set
+    if (!config.headers.Authorization) {
+      try {
+        const token = useAuthStore.getState().session?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch {
+        // Ignore during early initialization or SSR
+      }
     }
 
     return config;
@@ -98,8 +119,16 @@ axiosInstance.interceptors.response.use(
 
     // Handle 401 Unauthorized globally if desired
     if (statusCode === 401 && typeof window !== 'undefined') {
-      const isAuthRoute = window.location.pathname.startsWith('/auth');
-      if (!isAuthRoute && !window.location.pathname.startsWith('/api/auth')) {
+      const reqUrl = error.config?.url || '';
+      const isAuthApi =
+        reqUrl.includes('/auth/get-session') ||
+        reqUrl.includes('/auth/sign-in') ||
+        reqUrl.includes('/auth/check-availability') ||
+        reqUrl.includes('/auth/sign-up');
+
+      const isAuthPage = window.location.pathname.startsWith('/auth');
+
+      if (!isAuthApi && !isAuthPage) {
         // Dispatch session expired custom event for UI listeners
         window.dispatchEvent(new CustomEvent('kalya:unauthorized'));
       }

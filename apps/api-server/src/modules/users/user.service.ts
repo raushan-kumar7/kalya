@@ -3,7 +3,17 @@ import { BadRequestError, ConflictError, InternalServerError, NotFoundError } fr
 import { AVATAR_OPTIMIZE_PRESET, getStorage } from '@/libs/storage';
 import { getMailer } from '@/libs/mail';
 import { log } from '@/logger';
-import { and, type DatabaseClient, desc, eq, gt, ne, schema } from '@kalya/db';
+import {
+  and,
+  type DatabaseClient,
+  desc,
+  eq,
+  gt,
+  ne,
+  schema,
+  type SessionRow,
+  type UserRow,
+} from '@kalya/db';
 import { AccountDeletionNotice, PolicyUpdateNotice } from '@kalya/email';
 import { env } from '@kalya/env';
 import type {
@@ -29,6 +39,49 @@ export class UserService {
   ) {}
 
   /**
+   * Formats a database UserRow into the domain User entity with ISO timestamp strings.
+   */
+  private formatUser(row: UserRow): User {
+    return {
+      ...row,
+      createdAt:
+        row.createdAt instanceof Date
+          ? row.createdAt.toISOString()
+          : new Date(row.createdAt).toISOString(),
+      updatedAt:
+        row.updatedAt instanceof Date
+          ? row.updatedAt.toISOString()
+          : new Date(row.updatedAt).toISOString(),
+    } as unknown as User;
+  }
+
+  /**
+   * Formats a database SessionRow into the domain Session entity with ISO timestamp strings.
+   */
+  private formatSession(row: SessionRow): Session {
+    return {
+      id: row.id,
+      userId: row.userId,
+      token: row.token,
+      expiresAt:
+        row.expiresAt instanceof Date
+          ? row.expiresAt.toISOString()
+          : new Date(row.expiresAt).toISOString(),
+      ipAddress: row.ipAddress ?? null,
+      userAgent: row.userAgent ?? null,
+      impersonatedBy: null,
+      createdAt:
+        row.createdAt instanceof Date
+          ? row.createdAt.toISOString()
+          : new Date(row.createdAt).toISOString(),
+      updatedAt:
+        row.updatedAt instanceof Date
+          ? row.updatedAt.toISOString()
+          : new Date(row.updatedAt).toISOString(),
+    };
+  }
+
+  /**
    * Retrieves the comprehensive user profile record by unique ID.
    *
    * @description Fetches a single user record from database by identifier, throwing a standard not-found error if nonexistent.
@@ -48,7 +101,7 @@ export class UserService {
       throw new NotFoundError('User profile not found', 'USER_NOT_FOUND', { userId });
     }
 
-    return foundUser as unknown as User;
+    return this.formatUser(foundUser);
   }
 
   /**
@@ -96,7 +149,7 @@ export class UserService {
       );
     }
 
-    return updatedUser as unknown as User;
+    return this.formatUser(updatedUser);
   }
 
   /**
@@ -131,7 +184,7 @@ export class UserService {
       .where(eq(schema.user.id, userId))
       .returning();
 
-    return updatedUser as unknown as User;
+    return this.formatUser(updatedUser);
   }
 
   /**
@@ -205,7 +258,7 @@ export class UserService {
       }
     }
 
-    return updatedUser as unknown as User;
+    return this.formatUser(updatedUser);
   }
 
   /**
@@ -233,7 +286,7 @@ export class UserService {
       .where(eq(schema.user.id, userId))
       .returning();
 
-    return updatedUser as unknown as User;
+    return this.formatUser(updatedUser);
   }
 
   /**
@@ -253,7 +306,7 @@ export class UserService {
       .where(and(eq(schema.session.userId, userId), gt(schema.session.expiresAt, now)))
       .orderBy(desc(schema.session.createdAt));
 
-    return activeSessions as unknown as Session[];
+    return activeSessions.map((session) => this.formatSession(session));
   }
 
   /**

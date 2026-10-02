@@ -31,6 +31,7 @@ import {
   TimezoneSchema,
   UsernameSchema,
 } from './helper';
+import { ISOTimestampSchema } from '../core';
 
 /**
  * Schema for user sign up with email and password.
@@ -155,8 +156,8 @@ export const UserSchema: z.ZodType<User> = z.object({
   timezone: z.string().nullable().optional(),
   currency: z.string().nullable().optional(),
   sync_status: SyncStatusSchema,
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  createdAt: ISOTimestampSchema,
+  updatedAt: ISOTimestampSchema,
 });
 
 /**
@@ -166,12 +167,12 @@ export const SessionSchema: z.ZodType<Session> = z.object({
   id: z.string(),
   userId: z.string(),
   token: z.string(),
-  expiresAt: z.iso.datetime(),
+  expiresAt: ISOTimestampSchema,
   ipAddress: z.string().nullable().optional(),
   userAgent: z.string().nullable().optional(),
   impersonatedBy: z.string().nullable().optional(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  createdAt: ISOTimestampSchema,
+  updatedAt: ISOTimestampSchema,
 });
 
 /**
@@ -187,11 +188,11 @@ export const AccountSchema: z.ZodType<Account> = z.object({
   accessToken: z.string().nullable().optional(),
   refreshToken: z.string().nullable().optional(),
   idToken: z.string().nullable().optional(),
-  accessTokenExpiresAt: z.iso.datetime().nullable().optional(),
-  refreshTokenExpiresAt: z.iso.datetime().nullable().optional(),
+  accessTokenExpiresAt: ISOTimestampSchema.nullable().optional(),
+  refreshTokenExpiresAt: ISOTimestampSchema.nullable().optional(),
   scope: z.string().nullable().optional(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  createdAt: ISOTimestampSchema,
+  updatedAt: ISOTimestampSchema,
 });
 
 /**
@@ -201,9 +202,9 @@ export const VerificationSchema: z.ZodType<Verification> = z.object({
   id: z.string(),
   identifier: z.string(),
   value: z.string(),
-  expiresAt: z.iso.datetime(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  expiresAt: ISOTimestampSchema,
+  createdAt: ISOTimestampSchema,
+  updatedAt: ISOTimestampSchema,
 });
 
 /**

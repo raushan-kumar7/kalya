@@ -71,6 +71,7 @@ export function AuthLayoutClient({ children, className }: AuthLayoutClientProps)
               width={160}
               height={38}
               priority
+              style={{ width: 'auto' }}
               className="h-9 w-auto object-contain transition-opacity duration-200 hover:opacity-90"
             />
           </Link>

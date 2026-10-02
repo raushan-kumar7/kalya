@@ -156,8 +156,10 @@ export class AuthService {
         return null;
       }
       return data;
-    } catch {
-      return null;
+    } catch (error) {
+      // Re-throw so callers (e.g. AuthProvider) can distinguish between
+      // network/server failures vs an explicit empty session response (HTTP 200 null)
+      throw error;
     }
   }
 

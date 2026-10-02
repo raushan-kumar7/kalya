@@ -19,7 +19,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     async function initializeAuth() {
       try {
-        setLoading(true);
+        // Ensure Zustand store is rehydrated from localStorage first
+        await useAuthStore.persist?.rehydrate?.();
+
+        const hasCachedAuth = useAuthStore.getState().isAuthenticated;
+        // Only set blocking loading spinner if user was not already cached as authenticated
+        if (!hasCachedAuth) {
+          setLoading(true);
+        }
+
         const data = await AuthService.getSession();
 
         if (!isMounted) return;
@@ -27,11 +35,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (data?.user && data?.session) {
           setAuth(data.user, data.session);
         } else {
-          clearAuth();
+          // If server returned no active session, verify if local session has genuinely expired
+          const cachedSession = useAuthStore.getState().session;
+          const isExpired = cachedSession?.expiresAt
+            ? new Date(cachedSession.expiresAt).getTime() <= Date.now()
+            : true;
+
+          // Only clear auth if the session actually expired or no user was cached
+          if (isExpired || !useAuthStore.getState().user) {
+            clearAuth();
+          }
         }
       } catch {
+        // On network error or connection timeout, preserve cached user from localStorage
+        // instead of forcing a logout. Only clear if no local session was found.
         if (isMounted) {
-          clearAuth();
+          const cachedUser = useAuthStore.getState().user;
+          if (!cachedUser) {
+            clearAuth();
+          }
         }
       } finally {
         if (isMounted) {

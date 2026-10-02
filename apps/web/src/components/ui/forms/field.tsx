@@ -89,9 +89,15 @@ const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const renderedChildren = React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
         const childProps = child.props as Record<string, unknown>;
+        const isDomElement = typeof child.type === 'string';
+
         return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
           id: childProps.id || controlId,
-          error: childProps.error !== undefined ? childProps.error : hasError,
+          ...(isDomElement
+            ? {}
+            : {
+                error: childProps.error !== undefined ? childProps.error : hasError,
+              }),
           'aria-invalid':
             childProps['aria-invalid'] !== undefined
               ? childProps['aria-invalid']
