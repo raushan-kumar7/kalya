@@ -48,6 +48,89 @@ export const ENDPOINTS = {
     ADMIN_BROADCAST_POLICY: `${USERS}/admin/broadcast-policy`,
   },
 
+  // // Finances & Ledger Subsystems (/api/v1/finances/*)
+  // FINANCES: {
+  //   ROOT: FINANCES,
+
+  //   // Allocation Buckets
+  //   BUCKETS: {
+  //     LIST: `${FINANCES}/buckets`,
+  //     SEED_DEFAULTS: `${FINANCES}/buckets/seed-defaults`,
+  //     DETAIL: (id: string) => `${FINANCES}/buckets/${id}`,
+  //     CREATE: `${FINANCES}/buckets`,
+  //     UPDATE: (id: string) => `${FINANCES}/buckets/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/buckets/${id}`,
+  //   },
+
+  //   // Expense Categories
+  //   CATEGORIES: {
+  //     LIST: `${FINANCES}/categories`,
+  //     SEED_DEFAULTS: `${FINANCES}/categories/seed-defaults`,
+  //     DETAIL: (id: string) => `${FINANCES}/categories/${id}`,
+  //     CREATE: `${FINANCES}/categories`,
+  //     UPDATE: (id: string) => `${FINANCES}/categories/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/categories/${id}`,
+  //   },
+
+  //   // Monthly Income
+  //   INCOME: {
+  //     LIST: `${FINANCES}/income`,
+  //     DETAIL: (id: string) => `${FINANCES}/income/${id}`,
+  //     CREATE: `${FINANCES}/income`,
+  //     UPDATE: (id: string) => `${FINANCES}/income/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/income/${id}`,
+  //   },
+
+  //   // Budget Plans
+  //   BUDGETS: {
+  //     LIST: `${FINANCES}/budgets`,
+  //     DETAIL: (id: string) => `${FINANCES}/budgets/${id}`,
+  //     HEALTH: (id: string) => `${FINANCES}/budgets/${id}/health`,
+  //     CREATE: `${FINANCES}/budgets`,
+  //     UPDATE: (id: string) => `${FINANCES}/budgets/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/budgets/${id}`,
+  //   },
+
+  //   // Expenses
+  //   EXPENSES: {
+  //     LIST: `${FINANCES}/expenses`,
+  //     DETAIL: (id: string) => `${FINANCES}/expenses/${id}`,
+  //     CREATE: `${FINANCES}/expenses`,
+  //     UPDATE: (id: string) => `${FINANCES}/expenses/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/expenses/${id}`,
+  //   },
+
+  //   // Split Contacts & Obligations
+  //   SPLITS: {
+  //     CONTACTS: `${FINANCES}/splits/contacts`,
+  //     CONTACT_DETAIL: (id: string) => `${FINANCES}/splits/contacts/${id}`,
+  //     SHARES_PENDING: `${FINANCES}/splits/shares/pending`,
+  //     SETTLE_SHARE: (id: string) => `${FINANCES}/splits/shares/${id}/settle`,
+  //   },
+
+  //   // Financial Goals
+  //   GOALS: {
+  //     LIST: `${FINANCES}/goals`,
+  //     DETAIL: (id: string) => `${FINANCES}/goals/${id}`,
+  //     CREATE: `${FINANCES}/goals`,
+  //     UPDATE: (id: string) => `${FINANCES}/goals/${id}`,
+  //     DELETE: (id: string) => `${FINANCES}/goals/${id}`,
+  //   },
+
+  //   // Multi-Class Assets
+  //   ASSETS: {
+  //     DIGITAL: `${FINANCES}/assets/digital`,
+  //     EQUITY: `${FINANCES}/assets/equity`,
+  //     SUMMARY: `${FINANCES}/assets/summary`,
+  //   },
+
+  //   // Dashboard Summaries
+  //   SUMMARIES: {
+  //     OVERVIEW: `${FINANCES}/summaries/overview`,
+  //     GENERATE_STATEMENT: `${FINANCES}/summaries/statements/generate`,
+  //   },
+  // },
+
   // Finances & Ledger Subsystems (/api/v1/finances/*)
   FINANCES: {
     ROOT: FINANCES,
@@ -100,11 +183,11 @@ export const ENDPOINTS = {
       DELETE: (id: string) => `${FINANCES}/expenses/${id}`,
     },
 
-    // Split Contacts & Obligations
+    // Split Contacts & Obligations (Aligned with api-server)
     SPLITS: {
       CONTACTS: `${FINANCES}/splits/contacts`,
       CONTACT_DETAIL: (id: string) => `${FINANCES}/splits/contacts/${id}`,
-      SHARES_PENDING: `${FINANCES}/splits/shares/pending`,
+      SHARES_PENDING: `${FINANCES}/splits/pending`, // FIXED: was /splits/shares/pending
       SETTLE_SHARE: (id: string) => `${FINANCES}/splits/shares/${id}/settle`,
     },
 
@@ -117,11 +200,11 @@ export const ENDPOINTS = {
       DELETE: (id: string) => `${FINANCES}/goals/${id}`,
     },
 
-    // Multi-Class Assets
+    // Multi-Class Assets (Aligned with api-server)
     ASSETS: {
       DIGITAL: `${FINANCES}/assets/digital`,
-      EQUITY: `${FINANCES}/assets/equity`,
-      SUMMARY: `${FINANCES}/assets/summary`,
+      EQUITIES: `${FINANCES}/assets/equities`, // FIXED: was /assets/equity
+      SUMMARY: `${FINANCES}/assets/portfolio-summary`, // FIXED: was /assets/summary
     },
 
     // Dashboard Summaries
