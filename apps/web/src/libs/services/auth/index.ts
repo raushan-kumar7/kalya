@@ -54,13 +54,21 @@ export class AuthService {
     newUserCallbackURL?: string;
     errorCallbackURL?: string;
   }): Promise<void> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const toAbsolute = (url?: string, fallback = '') => {
+      const target = url || fallback;
+      return target.startsWith('http://') || target.startsWith('https://')
+        ? target
+        : `${origin}${target.startsWith('/') ? target : `/${target}`}`;
+    };
+
     const res = await http.post<{ url?: string; redirect?: boolean }>(
       ENDPOINTS.AUTH.SIGN_IN_SOCIAL,
       {
         provider: 'google',
-        callbackURL: options?.callbackURL || '/dashboard',
-        newUserCallbackURL: options?.newUserCallbackURL || '/dashboard',
-        errorCallbackURL: options?.errorCallbackURL || '/auth/sign-in?error=oauth_failed',
+        callbackURL: toAbsolute(options?.callbackURL, '/dashboard'),
+        newUserCallbackURL: toAbsolute(options?.newUserCallbackURL, '/dashboard'),
+        errorCallbackURL: toAbsolute(options?.errorCallbackURL, '/auth/sign-in?error=oauth_failed'),
       }
     );
 
@@ -80,14 +88,22 @@ export class AuthService {
     newUserCallbackURL?: string;
     errorCallbackURL?: string;
   }): Promise<void> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const toAbsolute = (url?: string, fallback = '') => {
+      const target = url || fallback;
+      return target.startsWith('http://') || target.startsWith('https://')
+        ? target
+        : `${origin}${target.startsWith('/') ? target : `/${target}`}`;
+    };
+
     const res = await http.post<{ url?: string; redirect?: boolean }>(
       ENDPOINTS.AUTH.SIGN_IN_SOCIAL,
       {
         provider: 'google',
         requestSignUp: true,
-        callbackURL: options?.callbackURL || '/dashboard',
-        newUserCallbackURL: options?.newUserCallbackURL || '/onboarding',
-        errorCallbackURL: options?.errorCallbackURL || '/auth/sign-up?error=oauth_failed',
+        callbackURL: toAbsolute(options?.callbackURL, '/dashboard'),
+        newUserCallbackURL: toAbsolute(options?.newUserCallbackURL, '/onboarding'),
+        errorCallbackURL: toAbsolute(options?.errorCallbackURL, '/auth/sign-up?error=oauth_failed'),
       }
     );
 
@@ -116,6 +132,7 @@ export class AuthService {
       timezone: dto.timezone,
       currency: dto.currency,
       image: dto.image,
+      callbackURL: '/dashboard',
     };
 
     return http.post<AuthResponse>(ENDPOINTS.AUTH.SIGN_UP_EMAIL, payload);
@@ -150,9 +167,16 @@ export class AuthService {
   static async forgotPassword(
     dto: ForgotPasswordDto
   ): Promise<{ message?: string; status?: boolean }> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const redirectTo = dto.redirectTo
+      ? dto.redirectTo.startsWith('http')
+        ? dto.redirectTo
+        : `${origin}${dto.redirectTo.startsWith('/') ? dto.redirectTo : `/${dto.redirectTo}`}`
+      : `${origin}/auth/reset-password`;
+
     return http.post<{ message?: string; status?: boolean }>(ENDPOINTS.AUTH.FORGOT_PASSWORD, {
       email: dto.email.trim().toLowerCase(),
-      redirectTo: dto.redirectTo,
+      redirectTo,
     });
   }
 
@@ -184,8 +208,34 @@ export class AuthService {
     dto: VerifyEmailDto | string
   ): Promise<{ message?: string; status?: boolean }> {
     const token = typeof dto === 'string' ? dto : dto.token;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const callbackURL = `${origin}/auth/verify-email?status=verified`;
+
     return http.get<{ message?: string; status?: boolean }>(
-      `${ENDPOINTS.AUTH.VERIFY_EMAIL}?token=${encodeURIComponent(token)}`
+      `${ENDPOINTS.AUTH.VERIFY_EMAIL}?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(callbackURL)}`
+    );
+  }
+
+  /**
+   * Dispatches or resends an account verification email link.
+   */
+  static async sendVerificationEmail(params: {
+    email: string;
+    callbackURL?: string;
+  }): Promise<{ message?: string; status?: boolean }> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const callbackURL = params.callbackURL
+      ? params.callbackURL.startsWith('http')
+        ? params.callbackURL
+        : `${origin}${params.callbackURL.startsWith('/') ? params.callbackURL : `/${params.callbackURL}`}`
+      : `${origin}/auth/verify-email?status=verified`;
+
+    return http.post<{ message?: string; status?: boolean }>(
+      ENDPOINTS.AUTH.SEND_VERIFICATION_EMAIL,
+      {
+        email: params.email.trim().toLowerCase(),
+        callbackURL,
+      }
     );
   }
 

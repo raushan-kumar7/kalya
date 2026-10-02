@@ -44,7 +44,15 @@ export const buildApp = (): FastifyInstance => {
   app.register(cors, {
     origin: env.server.corsAllowedOrigins,
     methods: env.server.corsAllowedMethods,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'X-Client-Timestamp',
+      'Cookie',
+    ],
     credentials: true,
     maxAge: 86400,
   });

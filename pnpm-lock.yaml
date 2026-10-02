@@ -287,6 +287,9 @@ importers:
 
   packages/email:
     dependencies:
+      '@kalya/env':
+        specifier: workspace:*
+        version: link:../env
       lucide-react:
         specifier: ^1.48.0
         version: 1.48.0(react@19.3.0)

@@ -33,7 +33,7 @@ export const ResetPassword = ({
         <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
           Password Reset Request
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hello {userName}, we received a request to reset the password associated with your Kalya
           account. Click below to choose a new password.
         </Text>

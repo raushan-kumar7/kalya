@@ -39,7 +39,7 @@ export const GoalOffTrackAlert = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Goal Schedule Alert
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hi {userName}, based on your recent monthly deposits, your savings pace for{' '}
           <strong>{goalName}</strong> is falling behind the target timeline.
         </Text>
@@ -52,7 +52,7 @@ export const GoalOffTrackAlert = ({
         <Text className="m-0 font-numeric text-[32px] font-bold text-brand-warning leading-tight">
           {recommendedMonthlyPlan}
         </Text>
-        <Text className="m-0 font-body text-[12px] text-brand-textSecondary mt-1">
+        <Text className="m-0 font-body text-caption text-brand-textSecondary mt-1">
           An increase of +{shortfallAmount} from your current plan ({currentMonthlyPlan})
         </Text>
       </Section>

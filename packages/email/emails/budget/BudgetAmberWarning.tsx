@@ -43,7 +43,7 @@ export const BudgetAmberWarning = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Approaching Budget Limit
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hi {userName}, you have spent <strong>{percentSpent.toFixed(1)}%</strong> of your
           allocated <strong>{bucketName}</strong> budget for this month.
         </Text>
@@ -81,7 +81,7 @@ export const BudgetAmberWarning = ({
           />
         </div>
 
-        <Text className="m-0 font-body text-[12px] text-brand-textSecondary text-center">
+        <Text className="m-0 font-body text-caption text-brand-textSecondary text-center">
           <strong>{remainingAmount}</strong> remaining for the next {daysRemainingInMonth} days.
         </Text>
       </Section>

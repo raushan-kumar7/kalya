@@ -16,8 +16,8 @@ export const Callout = ({
   }[tone];
 
   return (
-    <Section className={`${bgClass} rounded-[10px] py-[14px] px-4 mb-3`}>
-      <Text className="m-0 font-body text-[13px] leading-[19px] text-brand-textPrimary">
+    <Section className={`${bgClass} rounded-[10px] py-3.5 px-4 mb-3`}>
+      <Text className="m-0 font-body text-[13px] leading-4.75 text-brand-textPrimary">
         {children}
       </Text>
     </Section>

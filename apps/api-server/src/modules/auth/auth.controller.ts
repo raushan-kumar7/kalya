@@ -16,7 +16,18 @@ export class AuthController {
    */
   handleAuthRequest = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const url = new URL(request.url, `http://${request.headers.host}`);
+      let requestUrl = request.url;
+      if (
+        requestUrl.includes('/auth/forget-password') ||
+        requestUrl.includes('/auth/forgot-password')
+      ) {
+        requestUrl = requestUrl.replace(
+          /\/auth\/(?:forget|forgot)-password/,
+          '/auth/request-password-reset'
+        );
+      }
+
+      const url = new URL(requestUrl, `http://${request.headers.host}`);
 
       const response = await this.auth.handler(
         new Request(url.toString(), {

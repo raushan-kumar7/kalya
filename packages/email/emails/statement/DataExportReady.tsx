@@ -33,7 +33,7 @@ export const DataExportReady = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Your Data Export is Ready
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hi {userName}, the data export you requested has finished compiling and is now available
           for secure download.
         </Text>

@@ -29,7 +29,7 @@ export const PolicyUpdateNotice = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Terms & Privacy Updates
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hello {userName}, we are updating our Terms of Service and Privacy Policy to provide
           greater clarity on how we protect your personal financial records.
         </Text>

@@ -19,10 +19,10 @@ export const ListRow = ({
   return (
     <Row className={last ? 'mb-0' : 'mb-2.5'}>
       <Column width="22" className="align-top">
-        <Icon size={14} color={color} strokeWidth={2.5} className="block mt-[3px]" />
+        <Icon size={14} color={color} strokeWidth={2.5} className="block mt-0.75" />
       </Column>
       <Column className="align-top">
-        <Text className="m-0 font-body text-[13px] leading-[19px] text-brand-textSecondary">
+        <Text className="m-0 font-body text-[13px] leading-4.75 text-brand-textSecondary">
           {text}
         </Text>
       </Column>

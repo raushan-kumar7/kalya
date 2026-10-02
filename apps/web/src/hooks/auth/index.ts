@@ -14,6 +14,7 @@ import { runAction, type RunActionOptions } from '@/libs/run-actions';
 import type {
   AuthResponse,
   AvailabilityResponse,
+  AvailabilityStatus,
   ChangePasswordDto,
   CheckAvailabilityDto,
   ForgotPasswordDto,
@@ -87,6 +88,125 @@ export function useCheckAvailabilityQuery(
     staleTime: 1000 * 30, // 30 seconds
     ...options,
   });
+}
+
+export type UsernameAvailabilityStatus = AvailabilityStatus;
+
+export interface UseUsernameAvailabilityReturn {
+  status: AvailabilityStatus;
+  isChecking: boolean;
+  isAvailable: boolean;
+  message: string | null;
+}
+
+/**
+ * Real-time username availability check hook with debouncing and client-side pre-validation.
+ */
+export function useUsernameAvailability(rawUsername: string): UseUsernameAvailabilityReturn {
+  const [debouncedUsername, setDebouncedUsername] = React.useState(rawUsername);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedUsername(rawUsername);
+    }, 350);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [rawUsername]);
+
+  const trimmed = (rawUsername ?? '').trim();
+  const debouncedTrimmed = (debouncedUsername ?? '').trim().toLowerCase();
+
+  // Local synchronous validation rules matching UsernameSchema (3-30 chars, alphanumeric + underscores)
+  const isTooShort = trimmed.length > 0 && trimmed.length < 3;
+  const isTooLong = trimmed.length > 30;
+  const hasInvalidChars = trimmed.length > 0 && !/^[a-zA-Z0-9_]+$/.test(trimmed);
+
+  const shouldQuery =
+    debouncedTrimmed.length >= 3 &&
+    debouncedTrimmed.length <= 30 &&
+    /^[a-zA-Z0-9_]+$/.test(debouncedTrimmed);
+
+  const query = useCheckAvailabilityQuery('username', debouncedTrimmed, {
+    enabled: shouldQuery,
+  });
+
+  const isDebouncing =
+    trimmed !== debouncedTrimmed && trimmed.length >= 3 && !hasInvalidChars && !isTooLong;
+  const isChecking = isDebouncing || (shouldQuery && query.isLoading);
+
+  if (!trimmed) {
+    return {
+      status: 'idle',
+      isChecking: false,
+      isAvailable: false,
+      message: null,
+    };
+  }
+
+  if (isTooShort) {
+    return {
+      status: 'invalid',
+      isChecking: false,
+      isAvailable: false,
+      message: 'Username must be at least 3 characters',
+    };
+  }
+
+  if (isTooLong) {
+    return {
+      status: 'invalid',
+      isChecking: false,
+      isAvailable: false,
+      message: 'Username cannot exceed 30 characters',
+    };
+  }
+
+  if (hasInvalidChars) {
+    return {
+      status: 'invalid',
+      isChecking: false,
+      isAvailable: false,
+      message: 'Only letters, numbers, and underscores allowed',
+    };
+  }
+
+  if (isChecking) {
+    return {
+      status: 'checking',
+      isChecking: true,
+      isAvailable: false,
+      message: 'Checking availability…',
+    };
+  }
+
+  if (query.isError) {
+    return {
+      status: 'error',
+      isChecking: false,
+      isAvailable: false,
+      message: 'Could not check username availability',
+    };
+  }
+
+  if (query.data) {
+    return {
+      status: query.data.available ? 'available' : 'taken',
+      isChecking: false,
+      isAvailable: query.data.available,
+      message:
+        query.data.message ??
+        (query.data.available ? 'Username is available' : 'Username is already taken'),
+    };
+  }
+
+  return {
+    status: 'idle',
+    isChecking: false,
+    isAvailable: false,
+    message: null,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -404,6 +524,48 @@ export function useAuth() {
     [resetPasswordMutation]
   );
 
+  const [isResendingVerification, setIsResendingVerification] = React.useState(false);
+
+  /**
+   * Resends verification email with toast notifications
+   */
+  const resendVerificationEmail = React.useCallback(
+    async (
+      params: { email: string; callbackURL?: string },
+      options?: RunActionOptions<{ message?: string; status?: boolean }>
+    ) => {
+      setIsResendingVerification(true);
+      return runAction(
+        async () => {
+          return AuthService.sendVerificationEmail(params);
+        },
+        {
+          loading: 'Sending verification link…',
+          success: 'Verification email sent! Please check your inbox.',
+          ...options,
+        }
+      ).finally(() => {
+        setIsResendingVerification(false);
+      });
+    },
+    []
+  );
+
+  /**
+   * Completes password reset using token and new password
+   */
+  const confirmPasswordReset = React.useCallback(
+    async (
+      token: string,
+      dto: { password?: string; newPassword?: string },
+      options?: RunActionOptions<{ message?: string; status?: boolean }>
+    ) => {
+      const newPassword = dto.newPassword || dto.password || '';
+      return resetPassword({ token, newPassword }, options);
+    },
+    [resetPassword]
+  );
+
   /**
    * Refetches and refreshes the current session from the server
    */
@@ -445,7 +607,10 @@ export function useAuth() {
     signInWithGoogle,
     signUpWithGoogle,
     forgotPassword,
+    requestPasswordReset: forgotPassword,
     resetPassword,
+    confirmPasswordReset,
+    resendVerificationEmail,
     refreshSession,
 
     // Raw Mutations
@@ -463,5 +628,9 @@ export function useAuth() {
     isSigningOut: signOutMutation.isPending,
     isSigningInWithGoogle,
     isSigningUpWithGoogle,
+    isRequestingPasswordReset: forgotPasswordMutation.isPending,
+    isResettingPassword: resetPasswordMutation.isPending,
+    isResendingVerification,
+    isVerifyingEmail: verifyEmailMutation.isPending,
   };
 }

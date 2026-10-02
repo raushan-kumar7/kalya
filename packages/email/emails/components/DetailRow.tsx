@@ -16,7 +16,7 @@ export const DetailRow = ({
     }`}
   >
     <Column>
-      <Text className="m-0 font-body text-[12px] text-brand-textMuted">{label}</Text>
+      <Text className="m-0 font-body text-caption text-brand-textMuted">{label}</Text>
     </Column>
     <Column align="right">
       <Text className="m-0 font-numeric text-[13px] text-brand-textPrimary">{value}</Text>

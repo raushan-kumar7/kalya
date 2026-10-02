@@ -34,30 +34,47 @@ export async function handleSendVerificationEmail(
   payload: SendVerificationEmailPayload,
   _request?: Request | null
 ): Promise<void> {
-  const { user, url } = payload;
+  const { user, url, token } = payload;
   const userName = resolveDisplayName(user);
   const tz = resolveUserTimezone(user.timezone);
 
-  void getMailer()
-    .sendTemplate({
+  const clientBaseUrl = env.app.clientUrl.replace(/\/+$/, '');
+  const apiBaseUrl = (env.auth.baseUrl || 'http://localhost:3600').replace(/\/+$/, '');
+  const callbackURL = `${clientBaseUrl}/auth/verify-email?status=verified&email=${encodeURIComponent(user.email)}`;
+  const verificationUrl = `${apiBaseUrl}/api/${env.app.apiVersion}/auth/verify-email?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(callbackURL)}`;
+
+  log.info('Sending verification email', {
+    action: 'SENDING_VERIFICATION_EMAIL',
+    userId: user.id,
+    to: user.email,
+    verificationUrl,
+  });
+
+  try {
+    await getMailer().sendTemplate({
       template: VerifyEmail,
       props: {
         userName,
         userEmail: user.email,
-        verificationUrl: url,
+        verificationUrl,
         expiresInHours: 24,
         signUpTime: formatDateTime(new Date(), tz),
       },
       to: user.email,
       subject: 'Verify your Kalya account',
-    })
-    .catch((err) => {
-      log.error(err, {
-        action: 'VERIFY_EMAIL_FAILED',
-        userId: user.id,
-        to: user.email,
-      });
     });
+    log.info('Verification email sent', {
+      action: 'VERIFICATION_EMAIL_SENT',
+      userId: user.id,
+      to: user.email,
+    });
+  } catch (err) {
+    log.error(err, {
+      action: 'VERIFY_EMAIL_FAILED',
+      userId: user.id,
+      to: user.email,
+    });
+  }
 }
 
 /**

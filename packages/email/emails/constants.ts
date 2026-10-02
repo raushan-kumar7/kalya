@@ -1,4 +1,20 @@
-export const BASE_URL = '';
+import { env } from '@kalya/env';
+
+declare const process:
+  | {
+      env?: Record<string, string | undefined>;
+    }
+  | undefined;
+
+/**
+ * Base URL for static assets and web links used in email templates.
+ * Uses centralized @kalya/env application configuration.
+ */
+export const BASE_URL =
+  (typeof process !== 'undefined' && process.env?.EMAIL_ASSETS_URL?.replace(/\/+$/, '')) ||
+  env.app.clientUrl.replace(/\/+$/, '');
+
+export const getBaseUrl = (): string => BASE_URL;
 
 export const EMAILS_CONFIG = {
   font: {

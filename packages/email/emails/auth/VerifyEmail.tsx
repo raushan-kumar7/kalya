@@ -39,7 +39,7 @@ export const VerifyEmail = ({
         <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
           Verify your email address
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Welcome to Kalya, {userName}! Please verify your email to secure your account and start
           consolidating your wealth across budgets, investments, and expenses.
         </Text>

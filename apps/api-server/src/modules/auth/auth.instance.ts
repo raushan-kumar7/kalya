@@ -35,6 +35,7 @@ export const createAuth = (db: DatabaseClient) => {
     secret: env.auth.secretKey,
     baseURL: env.auth.baseUrl || env.app.clientUrl,
     basePath: `/api/${env.app.apiVersion}/auth`,
+    trustedOrigins: env.server.corsAllowedOrigins,
     socialProviders: {
       google: {
         clientId: env.auth.googleClientId as string,
@@ -48,17 +49,21 @@ export const createAuth = (db: DatabaseClient) => {
         trustedProviders: ['google'],
       },
     },
-    emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: true,
-      minPasswordLength: AUTH_LIMITS.MIN_PASSWORD_LENGTH,
-      maxPasswordLength: AUTH_LIMITS.MAX_PASSWORD_LENGTH,
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
       sendVerificationEmail: async (
         data: SendVerificationEmailPayload,
         request?: Request | null
       ) => {
         await handleSendVerificationEmail(data, request);
       },
+    },
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: true,
+      minPasswordLength: AUTH_LIMITS.MIN_PASSWORD_LENGTH,
+      maxPasswordLength: AUTH_LIMITS.MAX_PASSWORD_LENGTH,
       sendResetPassword: async (data: SendResetPasswordPayload, request?: Request | null) => {
         await handleSendResetPassword(data, request);
       },
@@ -138,8 +143,8 @@ export const createAuth = (db: DatabaseClient) => {
     ],
     user: {
       additionalFields: {
-        first_name: { type: 'string', required: true, input: true },
-        last_name: { type: 'string', required: true, input: true },
+        first_name: { type: 'string', required: false, input: true },
+        last_name: { type: 'string', required: false, input: true },
         middle_name: { type: 'string', required: false, input: true },
         gender: { type: 'string', required: false, input: true },
         dateOfBirth: { type: 'string', required: false, input: true },

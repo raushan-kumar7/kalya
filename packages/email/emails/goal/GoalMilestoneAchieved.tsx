@@ -45,7 +45,7 @@ export const GoalMilestoneAchieved = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           {title}
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Outstanding progress, {userName}! Your consistent contributions have brought you another
           step closer to your financial independence.
         </Text>
@@ -59,7 +59,7 @@ export const GoalMilestoneAchieved = ({
         <Text className="m-0 font-numeric text-[32px] font-bold text-brand-primary leading-tight">
           {currentProgress}
         </Text>
-        <Text className="m-0 font-body text-[12px] text-brand-textSecondary mt-1">
+        <Text className="m-0 font-body text-caption text-brand-textSecondary mt-1">
           Target: {targetAmount} ({milestonePercent}% Completed)
         </Text>
 

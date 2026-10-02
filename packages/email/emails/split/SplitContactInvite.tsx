@@ -29,7 +29,7 @@ export const SplitContactInvite = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Join {inviterName} on Kalya
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           <strong>{inviterName}</strong> uses Kalya to manage personal finances, split household
           bills, and settle group payments seamlessly.
         </Text>
@@ -39,10 +39,10 @@ export const SplitContactInvite = ({
         <Text className="m-0 font-body text-[13px] text-brand-textMuted uppercase tracking-wider mb-1">
           Shared Ledger Ready
         </Text>
-        <Text className="m-0 font-numeric text-[28px] font-bold text-brand-primary leading-tight">
+        <Text className="m-0 font-numeric text-display-md font-bold text-brand-primary leading-tight">
           {pendingBalance}
         </Text>
-        <Text className="m-0 font-body text-[12px] text-brand-textSecondary mt-1">
+        <Text className="m-0 font-body text-caption text-brand-textSecondary mt-1">
           in pending split expenses waiting for you
         </Text>
       </Section>

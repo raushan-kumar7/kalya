@@ -47,7 +47,7 @@ export const MonthlyFinancialStatement = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           {monthName} {year} Wealth Digest
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hi {userName}, here is your consolidated financial summary for {monthName}.
         </Text>
       </Section>
@@ -59,7 +59,7 @@ export const MonthlyFinancialStatement = ({
             <Text className="m-0 font-body text-[11px] text-brand-textMuted uppercase tracking-wider mb-1">
               Total Inflow
             </Text>
-            <Text className="m-0 font-numeric text-[18px] font-bold text-brand-primary">
+            <Text className="m-0 font-numeric text-body-lg font-bold text-brand-primary">
               {totalIncome}
             </Text>
           </Column>
@@ -67,14 +67,14 @@ export const MonthlyFinancialStatement = ({
             <Text className="m-0 font-body text-[11px] text-brand-textMuted uppercase tracking-wider mb-1">
               Total Outflow
             </Text>
-            <Text className="m-0 font-numeric text-[18px] font-bold text-brand-textPrimary">
+            <Text className="m-0 font-numeric text-body-lg font-bold text-brand-textPrimary">
               {totalExpenses}
             </Text>
           </Column>
         </Row>
         <Row className="pt-3 border-t border-solid border-brand-border text-center">
           <Column>
-            <Text className="m-0 font-body text-[12px] text-brand-textSecondary">
+            <Text className="m-0 font-body text-caption text-brand-textSecondary">
               Net Savings: <strong className="text-brand-success">{netSavings}</strong> (
               {savingsRate} savings rate)
             </Text>

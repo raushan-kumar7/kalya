@@ -60,6 +60,8 @@ export function extractErrorMessage(err: unknown, fallback = 'Operation failed')
   return fallback;
 }
 
+export const getErrorMessage = extractErrorMessage;
+
 /**
  * Universal Action Runner
  *

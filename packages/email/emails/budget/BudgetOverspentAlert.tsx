@@ -39,7 +39,7 @@ export const BudgetOverspentAlert = ({
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Budget Limit Exceeded
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hi {userName}, your total spending in <strong>{bucketName}</strong> has exceeded the
           allocated budget limit for {period}.
         </Text>
@@ -53,7 +53,7 @@ export const BudgetOverspentAlert = ({
         <Text className="m-0 font-numeric text-[32px] font-bold text-brand-danger leading-tight">
           +{overspentAmount}
         </Text>
-        <Text className="m-0 font-body text-[12px] text-brand-textSecondary mt-1">
+        <Text className="m-0 font-body text-caption text-brand-textSecondary mt-1">
           Total Spent: {spentAmount} of {budgetLimit}
         </Text>
       </Section>

@@ -37,7 +37,7 @@ export const NewDeviceLogin = ({
         <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
           New Sign-In Detected
         </Heading>
-        <Text className="m-0 font-body text-[15px] leading-[24px] text-brand-textSecondary mb-6">
+        <Text className="m-0 font-body text-[15px] leading-6 text-brand-textSecondary mb-6">
           Hello {userName}, we detected a sign-in to your Kalya account from a device or location we
           haven't seen before.
         </Text>

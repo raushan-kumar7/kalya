@@ -37,9 +37,6 @@ axiosInstance.interceptors.request.use(
       delete config.headers['Content-Type'];
     }
 
-    // Attach client request tracking
-    config.headers['X-Client-Timestamp'] = new Date().toISOString();
-
     // Ensure relative paths not starting with /api or /health get prefixed with /api/${API_VERSION}
     if (
       config.url &&

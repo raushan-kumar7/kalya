@@ -18,12 +18,6 @@ export const Layout = ({ preview, children }: LayoutProps) => {
       </Head>
       <Preview>{preview}</Preview>
 
-      {/* Hidden preheader spacer — pads out client auto-preview text */}
-      <div className="hidden overflow-hidden leading-[1px] max-h-0 max-w-0 opacity-0">
-        {preview}
-        {'\u00A0\u200C'.repeat(80)}
-      </div>
-
       <Tailwind
         config={{
           theme: {
@@ -41,7 +35,7 @@ export const Layout = ({ preview, children }: LayoutProps) => {
         }}
       >
         <Body className="bg-brand-bg m-0 py-6 font-body text-brand-textPrimary">
-          <Container className="bg-brand-surface max-w-[560px] mx-auto rounded-xl overflow-hidden border border-solid border-brand-border">
+          <Container className="bg-brand-surface max-w-140 mx-auto rounded-xl overflow-hidden border border-solid border-brand-border">
             <Header />
 
             <Section className="px-10 pb-8">{children}</Section>

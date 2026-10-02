@@ -8,8 +8,8 @@ export const FallbackLinkBox = ({
   url: string;
   label?: string;
 }) => (
-  <Section className="bg-brand-surfaceRaised border border-solid border-brand-border rounded-[10px] py-[14px] px-4 my-6">
+  <Section className="bg-brand-surfaceRaised border border-solid border-brand-border rounded-[10px] py-3.5 px-4 my-6">
     <Text className="m-0 mb-1 font-body text-[11px] text-brand-textMuted">{label}</Text>
-    <Text className="m-0 font-numeric text-[12px] text-brand-info break-all">{url}</Text>
+    <Text className="m-0 font-numeric text-caption text-brand-info break-all">{url}</Text>
   </Section>
 );

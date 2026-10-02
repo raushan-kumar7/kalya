@@ -34,7 +34,7 @@ export async function handleSendResetPassword(
   payload: SendResetPasswordPayload,
   request?: Request | null
 ): Promise<void> {
-  const { user, url } = payload;
+  const { user, url, token } = payload;
   const client = parseClientInfo(
     request?.headers?.get('user-agent'),
     request?.headers?.get('x-forwarded-for'),
@@ -47,27 +47,42 @@ export async function handleSendResetPassword(
   const userName = resolveDisplayName(user);
   const tz = resolveUserTimezone(user.timezone || client.geo.timezone);
 
-  void getMailer()
-    .sendTemplate({
+  const clientBaseUrl = env.app.clientUrl.replace(/\/+$/, '');
+  const resetUrl = `${clientBaseUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
+
+  log.info('Sending password reset email', {
+    action: 'SENDING_RESET_PASSWORD_EMAIL',
+    userId: user.id,
+    to: user.email,
+    resetUrl,
+  });
+
+  try {
+    await getMailer().sendTemplate({
       template: ResetPassword,
       props: {
         userName,
         userEmail: user.email,
-        resetUrl: url,
+        resetUrl,
         expiresInMinutes: 30,
         requestedAt: formatDateTime(new Date(), tz),
         ipAddress: String(ip),
       },
       to: user.email,
       subject: 'Reset your Kalya account password',
-    })
-    .catch((err) => {
-      log.error(err, {
-        action: 'RESET_PASSWORD_EMAIL_FAILED',
-        userId: user.id,
-        to: user.email,
-      });
     });
+    log.info('Password reset email sent', {
+      action: 'RESET_PASSWORD_EMAIL_SENT',
+      userId: user.id,
+      to: user.email,
+    });
+  } catch (err) {
+    log.error(err, {
+      action: 'RESET_PASSWORD_EMAIL_FAILED',
+      userId: user.id,
+      to: user.email,
+    });
+  }
 }
 
 /**
