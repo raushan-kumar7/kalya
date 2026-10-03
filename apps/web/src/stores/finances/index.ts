@@ -33,6 +33,10 @@ export const useFinancesStore = create<FinancesStore>()(
 
       setCachedPortfolioSummary: (cachedPortfolioSummary) => set({ cachedPortfolioSummary }),
 
+      setActiveBucketId: (activeBucketId) => set({ activeBucketId }),
+
+      setActiveCategoryId: (activeCategoryId) => set({ activeCategoryId }),
+
       setActiveExpenseId: (activeExpenseId) => set({ activeExpenseId }),
 
       setActiveBudgetId: (activeBudgetId) => set({ activeBudgetId }),
@@ -46,8 +50,12 @@ export const useFinancesStore = create<FinancesStore>()(
       openModal: (activeModal, contextId) =>
         set((state) => {
           const updates: Partial<FinancesState> = { activeModal };
+          if (activeModal === 'edit-bucket' && contextId) updates.activeBucketId = contextId;
+          if (activeModal === 'edit-category' && contextId) updates.activeCategoryId = contextId;
           if (activeModal === 'edit-expense' && contextId) updates.activeExpenseId = contextId;
           if (activeModal === 'settle-split' && contextId) updates.activeSplitShareId = contextId;
+          if (activeModal === 'edit-split-contact' && contextId)
+            updates.activeContactId = contextId;
           return { ...state, ...updates };
         }),
 
@@ -82,7 +90,10 @@ export const useExpenseFilters = () => useFinancesStore((s) => s.expenseFilters)
 export const useCachedOverview = () => useFinancesStore((s) => s.cachedOverview);
 export const useCachedPortfolioSummary = () => useFinancesStore((s) => s.cachedPortfolioSummary);
 export const useActiveFinanceModal = () => useFinancesStore((s) => s.activeModal);
+export const useActiveBucketId = () => useFinancesStore((s) => s.activeBucketId);
+export const useActiveCategoryId = () => useFinancesStore((s) => s.activeCategoryId);
 export const useActiveExpenseId = () => useFinancesStore((s) => s.activeExpenseId);
 export const useActiveBudgetId = () => useFinancesStore((s) => s.activeBudgetId);
 export const useActiveGoalId = () => useFinancesStore((s) => s.activeGoalId);
 export const useActiveSplitShareId = () => useFinancesStore((s) => s.activeSplitShareId);
+export const useActiveContactId = () => useFinancesStore((s) => s.activeContactId);

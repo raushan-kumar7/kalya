@@ -34,6 +34,14 @@ export interface RequestEmailChangeResponse {
   pending: boolean;
 }
 
+export interface GetUsersParams {
+  search?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+  includeSelf?: boolean;
+}
+
 /**
  * User Profile & Account Management Service
  *
@@ -41,6 +49,23 @@ export interface RequestEmailChangeResponse {
  * username handles, avatars, active sessions, and account lifecycle procedures.
  */
 export class UserService {
+  /**
+   * Lists or searches platform users (authenticated callers only).
+   */
+  static async getUsers(params?: GetUsersParams): Promise<User[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.q) query.set('q', params.q);
+    if (params?.limit !== undefined) query.set('limit', String(params.limit));
+    if (params?.offset !== undefined) query.set('offset', String(params.offset));
+    if (params?.includeSelf !== undefined) query.set('includeSelf', String(params.includeSelf));
+
+    const qs = query.toString();
+    const endpoint = qs ? `${ENDPOINTS.USERS.ROOT}?${qs}` : ENDPOINTS.USERS.ROOT;
+
+    return http.get<User[]>(endpoint);
+  }
+
   /**
    * Retrieves profile details for the currently authenticated user.
    */

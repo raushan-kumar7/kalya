@@ -14,6 +14,8 @@ import {
  * Route declarations for user profile and session management endpoints.
  *
  * @description Registers versioned Fastify route endpoints for user profile queries, mutations, avatar uploads, and session management.
+ * Trailing-slash variants (`/users` and `/users/`) are handled globally by Fastify's
+ * `routerOptions.ignoreTrailingSlash`, so each route is declared exactly once.
  *
  * @param {UserController} controller - Instantiated user controller handling HTTP logic.
  * @returns {FastifyPluginAsyncZod} Fastify plugin configuring routes with Zod type provider.
@@ -21,6 +23,40 @@ import {
 export const createUserRoutes = (controller: UserController): FastifyPluginAsyncZod => {
   return async (fastify) => {
     const basePrefix = `/api/${env.app.apiVersion}/users`;
+
+    // 0. List / Search Platform Users (Authenticated Only)
+    const listUsersConfig = {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['User Profile'],
+        summary: 'List or search platform users (authenticated)',
+        querystring: z
+          .object({
+            search: z.string().optional(),
+            q: z.string().optional(),
+            limit: z.coerce.number().min(1).max(100).optional().default(20),
+            offset: z.coerce.number().min(0).optional().default(0),
+            // NOTE: z.coerce.boolean() treats "false" as true, so parse the string explicitly.
+            includeSelf: z
+              .enum(['true', 'false'])
+              .optional()
+              .default('false')
+              .transform((v) => v === 'true'),
+          })
+          .optional(),
+        response: {
+          200: standardResponseSchema(z.array(UserSchema)),
+        },
+      },
+      handler: controller.getUsers,
+    };
+
+    fastify.get(basePrefix, listUsersConfig);
+    // Alias kept for clients calling /users/search; hidden from Swagger to avoid duplicate docs.
+    fastify.get(`${basePrefix}/search`, {
+      ...listUsersConfig,
+      schema: { ...listUsersConfig.schema, hide: true },
+    });
 
     // 1. Get Current User Profile
     fastify.get(`${basePrefix}/me`, {
@@ -36,7 +72,7 @@ export const createUserRoutes = (controller: UserController): FastifyPluginAsync
     });
 
     // 2. Update Profile Details
-    fastify.patch(`${basePrefix}/`, {
+    const updateProfileConfig = {
       preHandler: [fastify.authenticate],
       schema: {
         tags: ['User Profile'],
@@ -47,6 +83,12 @@ export const createUserRoutes = (controller: UserController): FastifyPluginAsync
         },
       },
       handler: controller.updateMe,
+    };
+
+    fastify.patch(basePrefix, updateProfileConfig);
+    fastify.patch(`${basePrefix}/me`, {
+      ...updateProfileConfig,
+      schema: { ...updateProfileConfig.schema, hide: true },
     });
 
     // 3. Update Username Handle
@@ -172,7 +214,8 @@ export const createUserRoutes = (controller: UserController): FastifyPluginAsync
         response: {
           200: standardResponseSchema(
             z.object({
-              scheduledDate: z.date(),
+              // coerce so both Date objects and ISO strings from the controller serialize correctly
+              scheduledDate: z.coerce.date(),
               gracePeriodDays: z.number(),
             })
           ),
@@ -219,6 +262,8 @@ export const createUserRoutes = (controller: UserController): FastifyPluginAsync
     });
 
     // 13. Admin Broadcast Policy Update
+    // TODO: add an admin-role guard (e.g. a `requireAdmin` preHandler) after `authenticate`.
+    // Without it, any logged-in user can email every verified user.
     fastify.post(`${basePrefix}/admin/broadcast-policy`, {
       preHandler: [fastify.authenticate],
       schema: {

@@ -34,6 +34,8 @@ export const ENDPOINTS = {
   // User Profile & Account Management (/api/v1/users/*)
   USERS: {
     ROOT: USERS,
+    LIST: USERS,
+    SEARCH: `${USERS}/search`,
     ME: `${USERS}/me`,
     UPDATE_PROFILE: USERS,
     UPDATE_USERNAME: `${USERS}/username`,

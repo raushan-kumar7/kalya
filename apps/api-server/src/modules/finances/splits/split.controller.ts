@@ -48,4 +48,13 @@ export class SplitController {
     const updated = await this.splitService.settleShare(userId, request.params.id, request.body);
     return ApiResponse.ok(reply, updated, 'Split expense settled successfully');
   };
+
+  deleteContact = async (
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) => {
+    const userId = request.user!.id;
+    await this.splitService.deleteContact(userId, request.params.id);
+    return ApiResponse.ok(reply, { success: true }, 'Contact deleted successfully');
+  };
 }

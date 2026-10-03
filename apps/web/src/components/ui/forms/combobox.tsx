@@ -29,6 +29,10 @@ export interface ComboboxProps {
   size?: ControlSize;
   clearable?: boolean;
   renderOption?: (option: ComboboxOption, selected: boolean) => React.ReactNode;
+  /** Fires on every keystroke in the search box (use for server-side search) */
+  onSearchChange?: (search: string) => void;
+  /** Set to false when `options` are already filtered by the server */
+  filterLocally?: boolean;
 }
 
 export function Combobox({
@@ -44,12 +48,14 @@ export function Combobox({
   size = 'default',
   clearable = true,
   renderOption,
+  onSearchChange,
+  filterLocally = true,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
 
   const filteredOptions = React.useMemo(() => {
-    if (!search) return options;
+    if (!search || !filterLocally) return options;
     const lower = search.toLowerCase();
     return options.filter(
       (option) =>
@@ -57,7 +63,7 @@ export function Combobox({
         option.description?.toLowerCase().includes(lower) ||
         option.group?.toLowerCase().includes(lower)
     );
-  }, [options, search]);
+  }, [options, search, filterLocally]);
 
   const selectedOption = React.useMemo(() => {
     return options.find((option) => option.value === value);
@@ -80,6 +86,7 @@ export function Combobox({
     setOpen(newOpen);
     if (!newOpen) {
       setSearch('');
+      onSearchChange?.('');
     }
   };
 
@@ -142,7 +149,11 @@ export function Combobox({
             className="flex h-7 w-full rounded-xs bg-transparent text-body-sm text-text-primary outline-none placeholder:text-text-muted disabled:cursor-not-allowed disabled:opacity-50"
             placeholder={searchPlaceholder}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearch(val);
+              onSearchChange?.(val);
+            }}
             autoFocus
           />
         </div>

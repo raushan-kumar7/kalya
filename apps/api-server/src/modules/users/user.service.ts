@@ -9,7 +9,9 @@ import {
   desc,
   eq,
   gt,
+  like,
   ne,
+  or,
   schema,
   type SessionRow,
   type UserRow,
@@ -79,6 +81,57 @@ export class UserService {
           ? row.updatedAt.toISOString()
           : new Date(row.updatedAt).toISOString(),
     };
+  }
+
+  /**
+   * Retrieves platform users, optionally filtered by a search query string.
+   *
+   * @description Queries database for registered users, matching name, username, email, or phone.
+   *
+   * @param {Object} [options] - Search and pagination options.
+   * @param {string} [options.query] - Case-insensitive partial matching term.
+   * @param {number} [options.limit=50] - Maximum records to return.
+   * @param {number} [options.offset=0] - Number of records to skip.
+   * @param {string} [options.excludeUserId] - Optional user ID to exclude (e.g. current user).
+   * @returns {Promise<User[]>} Array of formatted User entities.
+   */
+  async getUsers(options?: {
+    query?: string;
+    limit?: number;
+    offset?: number;
+    excludeUserId?: string;
+  }): Promise<User[]> {
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
+    const conditions = [];
+
+    if (options?.excludeUserId) {
+      conditions.push(ne(schema.user.id, options.excludeUserId));
+    }
+
+    const rawSearch = options?.query?.trim();
+    if (rawSearch && rawSearch.length > 0) {
+      const searchTerm = rawSearch.startsWith('@') ? rawSearch.slice(1) : rawSearch;
+      const pattern = `%${searchTerm}%`;
+      conditions.push(
+        or(
+          like(schema.user.name, pattern),
+          like(schema.user.username, pattern),
+          like(schema.user.displayUsername, pattern),
+          like(schema.user.email, pattern),
+          like(schema.user.phone, pattern)
+        )
+      );
+    }
+
+    const rows = await this.db
+      .select()
+      .from(schema.user)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .limit(limit)
+      .offset(offset);
+
+    return rows.map((row) => this.formatUser(row));
   }
 
   /**

@@ -2,12 +2,18 @@ import { PortfolioSummaryResponse } from '@/libs/services/finances';
 import { ExpenseFilterQueryDto, MonthlyFinancialOverview } from '@kalya/types';
 
 export type FinanceModalType =
+  | 'add-bucket'
+  | 'edit-bucket'
+  | 'add-category'
+  | 'edit-category'
   | 'add-expense'
   | 'edit-expense'
   | 'add-income'
   | 'create-budget'
   | 'add-goal'
   | 'settle-split'
+  | 'add-split-contact'
+  | 'edit-split-contact'
   | 'add-digital-asset'
   | 'add-equity-asset'
   | 'seed-defaults'
@@ -28,6 +34,8 @@ export interface FinancesState {
   cachedPortfolioSummary: PortfolioSummaryResponse | null;
 
   // Selected item contexts for drawers & modals
+  activeBucketId: string | null;
+  activeCategoryId: string | null;
   activeExpenseId: string | null;
   activeBudgetId: string | null;
   activeGoalId: string | null;
@@ -56,6 +64,8 @@ export interface FinancesActions {
   setCachedPortfolioSummary: (summary: PortfolioSummaryResponse | null) => void;
 
   // Context selection actions
+  setActiveBucketId: (id: string | null) => void;
+  setActiveCategoryId: (id: string | null) => void;
   setActiveExpenseId: (id: string | null) => void;
   setActiveBudgetId: (id: string | null) => void;
   setActiveGoalId: (id: string | null) => void;
@@ -91,6 +101,8 @@ export const INITIAL_STATE: FinancesState = {
   expenseFilters: INITIAL_EXPENSE_FILTERS,
   cachedOverview: null,
   cachedPortfolioSummary: null,
+  activeBucketId: null,
+  activeCategoryId: null,
   activeExpenseId: null,
   activeBudgetId: null,
   activeGoalId: null,

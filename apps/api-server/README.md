@@ -259,6 +259,7 @@ Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya
 
 | Method   | Endpoint                               | Auth Guard     | Description                                                  |
 | -------- | -------------------------------------- | -------------- | ------------------------------------------------------------ |
+| `GET`    | `/api/v1/users`                        | `authenticate` | List or search platform users (`?q=`, `?search=`, `?limit=`) |
 | `GET`    | `/api/v1/users/me`                     | `authenticate` | Retrieve authenticated user profile                          |
 | `PATCH`  | `/api/v1/users/`                       | `authenticate` | Update current user profile fields                           |
 | `PATCH`  | `/api/v1/users/username`               | `authenticate` | Change unique username handle                                |

@@ -24,6 +24,37 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   /**
+   * Retrieves all platform users or searches users by query string for authenticated callers.
+   *
+   * @description Authenticated endpoint allowing users to search directory or list registered users.
+   */
+  getUsers = async (
+    request: FastifyRequest<{
+      Querystring: {
+        search?: string;
+        q?: string;
+        limit?: number;
+        offset?: number;
+        includeSelf?: boolean;
+      };
+    }>,
+    reply: FastifyReply
+  ) => {
+    const currentUserId = this.assertAuthenticatedUserId(request);
+    const { search, q, limit, offset, includeSelf } = request.query ?? {};
+    const query = search || q;
+
+    const users = await this.userService.getUsers({
+      query,
+      limit,
+      offset,
+      excludeUserId: includeSelf ? undefined : currentUserId,
+    });
+
+    return ApiResponse.ok(reply, users, 'Users retrieved successfully');
+  };
+
+  /**
    * Retrieves the current authenticated user profile.
    *
    * @description Extracts user identity from request context and responds with full profile details in standard API envelope.

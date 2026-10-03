@@ -11,6 +11,7 @@ import {
 import {
   UserService,
   type CancelDeletionResponse,
+  type GetUsersParams,
   type RequestEmailChangeResponse,
   type RevokeOtherSessionsResponse,
   type RevokeSessionResponse,
@@ -30,6 +31,8 @@ import type { Session, UpdateProfileDto, UpdateUsernameDto, User } from '@kalya/
 export const userKeys = {
   all: ['users'] as const,
   me: () => [...userKeys.all, 'me'] as const,
+  list: (params?: GetUsersParams) => [...userKeys.all, 'list', params] as const,
+  search: (query?: string) => [...userKeys.all, 'search', query] as const,
   sessions: () => [...userKeys.all, 'sessions'] as const,
   suggestUsername: (name?: string) => [...userKeys.all, 'suggest-username', name] as const,
 };
@@ -37,6 +40,98 @@ export const userKeys = {
 /* ------------------------------------------------------------------ */
 /* Query Hooks                                                        */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Query hook retrieving platform users (authenticated callers only).
+ */
+export function useUsersQuery(
+  params?: GetUsersParams,
+  options?: Omit<UseQueryOptions<User[], Error>, 'queryKey' | 'queryFn'>
+) {
+  const setUsers = useUserStore((s) => s.setUsers);
+
+  return useQuery({
+    queryKey: userKeys.list(params),
+    queryFn: async () => {
+      const users = await UserService.getUsers(params);
+      setUsers(users || []);
+      return users || [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    ...options,
+  });
+}
+
+export interface UseUserSearchOptions {
+  manualOnly?: boolean;
+  debounceMs?: number;
+  includeSelf?: boolean;
+  limit?: number;
+}
+
+/**
+ * Debounced real-time user directory search hook.
+ */
+export function useUserSearch(query: string, options: UseUserSearchOptions = {}) {
+  const { manualOnly = false, debounceMs = 300, includeSelf = false, limit = 20 } = options;
+  const [debouncedQuery, setDebouncedQuery] = React.useState(query);
+  const [isDebouncing, setIsDebouncing] = React.useState(false);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    if (manualOnly) return;
+
+    setIsDebouncing(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    timerRef.current = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setIsDebouncing(false);
+    }, debounceMs);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [query, debounceMs, manualOnly]);
+
+  const searchNow = React.useCallback(
+    (overrideQuery?: string) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setIsDebouncing(false);
+      setDebouncedQuery((overrideQuery ?? query).trim());
+    },
+    [query]
+  );
+
+  const enabled = debouncedQuery.length >= 2;
+
+  const { data, isLoading, error, refetch } = useQuery<User[], Error>({
+    queryKey: userKeys.search(debouncedQuery),
+    queryFn: async () => {
+      try {
+        const results = await UserService.getUsers({
+          q: debouncedQuery,
+          limit,
+          includeSelf,
+        });
+        return results || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  return {
+    results: data ?? [],
+    isSearching: enabled && isLoading,
+    isDebouncing,
+    error,
+    searchNow,
+    refetch,
+  };
+}
 
 /**
  * Query hook retrieving current user's profile.
@@ -310,6 +405,7 @@ export function useUser() {
   const queryClient = useQueryClient();
   const profile = useUserStore((s) => s.profile);
   const sessions = useUserStore((s) => s.sessions);
+  const users = useUserStore((s) => s.users);
   const isUpdatingProfileStore = useUserStore((s) => s.isUpdatingProfile);
   const isUploadingAvatarStore = useUserStore((s) => s.isUploadingAvatar);
   const error = useUserStore((s) => s.error);
@@ -515,10 +611,24 @@ export function useUser() {
     });
   }, [queryClient]);
 
+  /**
+   * Manually refetches platform users from API
+   */
+  const refetchUsers = React.useCallback(
+    async (params?: GetUsersParams) => {
+      return queryClient.fetchQuery({
+        queryKey: userKeys.list(params),
+        queryFn: () => UserService.getUsers(params),
+      });
+    },
+    [queryClient]
+  );
+
   return {
     // State
     profile,
     sessions,
+    users,
     isLoading:
       updateProfileMutation.isPending ||
       updateUsernameMutation.isPending ||
@@ -540,6 +650,7 @@ export function useUser() {
     requestEmailChange,
     refetchProfile,
     refetchSessions,
+    refetchUsers,
 
     // Raw Mutations
     updateProfileMutation,

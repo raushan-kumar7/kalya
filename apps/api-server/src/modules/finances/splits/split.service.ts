@@ -46,10 +46,13 @@ export class SplitService extends BaseFinanceService {
   }
 
   async listPendingShares(userId: string) {
-    return this.db
-      .select()
-      .from(splitExpense)
-      .where(and(eq(splitExpense.userId, userId), eq(splitExpense.settled, false)));
+    return this.db.query.splitExpense.findMany({
+      where: and(eq(splitExpense.userId, userId), eq(splitExpense.settled, false)),
+      with: {
+        expense: true,
+        member: true,
+      },
+    });
   }
 
   async settleShare(userId: string, shareId: string, dto: SettleSplitExpenseDto) {
@@ -85,5 +88,23 @@ export class SplitService extends BaseFinanceService {
       .returning();
 
     return updated;
+  }
+
+  async deleteContact(userId: string, id: string) {
+    await this.assertEntityOwnership(async () => {
+      const [row] = await this.db
+        .select()
+        .from(splitContactMember)
+        .where(and(eq(splitContactMember.id, id), eq(splitContactMember.userId, userId)))
+        .limit(1);
+      return row;
+    }, 'Split Contact');
+
+    const [deleted] = await this.db
+      .delete(splitContactMember)
+      .where(and(eq(splitContactMember.id, id), eq(splitContactMember.userId, userId)))
+      .returning();
+
+    return deleted;
   }
 }

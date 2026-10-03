@@ -35,6 +35,15 @@ export const createSplitRoutes = (controller: SplitController): FastifyPluginAsy
       handler: controller.updateContact,
     });
 
+    fastify.delete('/contacts/:id', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'Delete split contact member',
+        params: z.object({ id: z.string().min(1) }),
+      },
+      handler: controller.deleteContact,
+    });
+
     fastify.get('/pending', {
       schema: { tags: ['Finances - Splits'], summary: 'List unsettled split expense shares' },
       handler: controller.listPending,

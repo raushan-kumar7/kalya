@@ -6,6 +6,8 @@ export interface UserState {
   profile: User | null;
   /** Active concurrent sessions */
   sessions: Session[];
+  /** Directory of platform users */
+  users: User[];
   /** General user operation loading status */
   isLoading: boolean;
   /** Specific profile update loading state */
@@ -25,6 +27,8 @@ export interface UserActions {
   setSessions: (sessions: Session[]) => void;
   /** Removes a session from the in-memory list */
   removeSession: (sessionId: string) => void;
+  /** Replaces list of platform users */
+  setUsers: (users: User[]) => void;
   /** Sets general loading state */
   setLoading: (isLoading: boolean) => void;
   /** Sets profile updating state */
@@ -42,6 +46,7 @@ export type UserStore = UserState & UserActions;
 const INITIAL_STATE: UserState = {
   profile: null,
   sessions: [],
+  users: [],
   isLoading: false,
   isUpdatingProfile: false,
   isUploadingAvatar: false,
@@ -73,6 +78,12 @@ export const useUserStore = create<UserStore>()((set) => ({
       sessions: state.sessions.filter((s) => s.id !== sessionId),
     })),
 
+  setUsers: (users) =>
+    set({
+      users,
+      error: null,
+    }),
+
   setLoading: (isLoading) => set({ isLoading }),
 
   setIsUpdatingProfile: (isUpdatingProfile) => set({ isUpdatingProfile }),
@@ -90,6 +101,7 @@ export const useUserStore = create<UserStore>()((set) => ({
 
 export const useUserProfile = () => useUserStore((s) => s.profile);
 export const useUserSessions = () => useUserStore((s) => s.sessions);
+export const useUsers = () => useUserStore((s) => s.users);
 export const useUserLoading = () => useUserStore((s) => s.isLoading);
 export const useUserUpdatingProfile = () => useUserStore((s) => s.isUpdatingProfile);
 export const useUserUploadingAvatar = () => useUserStore((s) => s.isUploadingAvatar);

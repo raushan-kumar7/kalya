@@ -20,4 +20,16 @@ export const FinanceService = {
   summaries: SummaryService,
 };
 
+export {
+  AssetService,
+  BucketService,
+  BudgetService,
+  CategoryService,
+  ExpenseService,
+  GoalService,
+  IncomeService,
+  SplitService,
+  SummaryService,
+};
+
 export * from './helper';

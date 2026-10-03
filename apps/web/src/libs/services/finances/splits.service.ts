@@ -24,6 +24,10 @@ export class SplitService {
     return http.patch<SplitContactMember>(ENDPOINTS.FINANCES.SPLITS.CONTACT_DETAIL(id), dto);
   }
 
+  static async deleteContact(id: string): Promise<{ success: boolean }> {
+    return http.delete<{ success: boolean }>(ENDPOINTS.FINANCES.SPLITS.CONTACT_DETAIL(id));
+  }
+
   static async listPending(): Promise<
     (SplitExpense & { expense: Expense; member: SplitContactMember })[]
   > {
