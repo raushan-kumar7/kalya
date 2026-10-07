@@ -4,3 +4,4 @@ export * from './category';
 export * from './splits';
 export * from './transactions';
 export * from './budget';
+export * from './goal';

@@ -6,13 +6,16 @@ import { roundMoney } from './money';
 export function calculateGoalPace(
   targetAmount: number,
   currentProgress: number,
-  targetDate: string | Date
+  targetDate: string | Date,
+  monthlyContributionPlan: number = 0
 ): {
   progressPercentage: number;
   remainingAmount: number;
   monthsRemaining: number;
   recommendedMonthly: number;
   isOnTrack: boolean;
+  isOverdue: boolean;
+  projectedMonths?: number;
 } {
   const safeTarget = roundMoney(targetAmount);
   const safeProgress = roundMoney(currentProgress);
@@ -23,10 +26,28 @@ export function calculateGoalPace(
   const target = new Date(targetDate);
   const diffMonths =
     (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
-  const monthsRemaining = Math.max(1, diffMonths);
+  const isOverdue = diffMonths < 0 && remainingAmount > 0;
+  const monthsRemaining = Math.max(0, diffMonths);
 
-  const recommendedMonthly = roundMoney(remainingAmount / monthsRemaining);
-  const isOnTrack = progressPercentage >= 100 || safeProgress >= recommendedMonthly;
+  const recommendedMonthly =
+    monthsRemaining > 0 ? roundMoney(remainingAmount / monthsRemaining) : remainingAmount;
+
+  const safeMonthlyPlan = roundMoney(monthlyContributionPlan);
+  // On track if 100% completed, or if not overdue and planned saving meets/exceeds recommended
+  // Or if no plan yet specified but progress is already at target
+  const isOnTrack =
+    progressPercentage >= 100 ||
+    (!isOverdue &&
+      (safeMonthlyPlan > 0
+        ? safeMonthlyPlan >= recommendedMonthly
+        : safeProgress >= recommendedMonthly));
+
+  const projectedMonths =
+    remainingAmount <= 0
+      ? 0
+      : safeMonthlyPlan > 0
+        ? Math.ceil(remainingAmount / safeMonthlyPlan)
+        : undefined;
 
   return {
     progressPercentage,
@@ -34,5 +55,7 @@ export function calculateGoalPace(
     monthsRemaining,
     recommendedMonthly,
     isOnTrack,
+    isOverdue,
+    projectedMonths,
   };
 }

@@ -12,6 +12,7 @@ export type FinanceModalType =
   | 'add-budget'
   | 'edit-budget'
   | 'add-goal'
+  | 'edit-goal'
   | 'settle-split'
   | 'add-split-contact'
   | 'edit-split-contact'

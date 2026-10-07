@@ -57,6 +57,7 @@ export const useFinancesStore = create<FinancesStore>()(
           if (activeModal === 'settle-split' && contextId) updates.activeSplitShareId = contextId;
           if (activeModal === 'edit-split-contact' && contextId)
             updates.activeContactId = contextId;
+          if (activeModal === 'edit-goal' && contextId) updates.activeGoalId = contextId;
           return { ...state, ...updates };
         }),
 

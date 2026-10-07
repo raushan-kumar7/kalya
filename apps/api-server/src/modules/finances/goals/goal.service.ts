@@ -16,7 +16,12 @@ export class GoalService extends BaseFinanceService {
 
     return rows.map((g) => ({
       ...g,
-      pace: calculateGoalPace(g.targetAmount ?? 0, g.currentProgress ?? 0, g.targetDate),
+      pace: calculateGoalPace(
+        g.targetAmount ?? 0,
+        g.currentProgress ?? 0,
+        g.targetDate,
+        g.monthlyContributionPlan ?? 0
+      ),
     }));
   }
 
@@ -32,7 +37,12 @@ export class GoalService extends BaseFinanceService {
 
     return {
       ...g,
-      pace: calculateGoalPace(g.targetAmount ?? 0, g.currentProgress ?? 0, g.targetDate),
+      pace: calculateGoalPace(
+        g.targetAmount ?? 0,
+        g.currentProgress ?? 0,
+        g.targetDate,
+        g.monthlyContributionPlan ?? 0
+      ),
     };
   }
 

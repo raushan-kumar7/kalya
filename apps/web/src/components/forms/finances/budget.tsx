@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Calculator,
   Calendar,
+  IndianRupee,
   Layers,
   Sparkles,
   Target,
@@ -298,18 +299,34 @@ export function BudgetForm({
             error={errors.amount?.message}
             description="Total spending ceiling allowed for this period"
           >
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-numeric text-body-sm font-semibold text-text-muted">
-                ₹
-              </span>
+            <div>
               <Input
                 type="number"
                 step="any"
                 min="1"
                 placeholder="0"
-                className="pl-7 font-numeric"
+                trailingIcon={<IndianRupee className="h-4 w-4 text-text-muted" />}
+                className="font-numeric text-body-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 {...register('amount', { valueAsNumber: true })}
               />
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-text-muted mr-1">Presets:</span>
+                {[
+                  { label: '₹10,000', val: 10000 },
+                  { label: '₹25,000', val: 25000 },
+                  { label: '₹50,000', val: 50000 },
+                  { label: '₹1 Lakh', val: 100000 },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => setValue('amount', p.val, { shouldValidate: true })}
+                    className="rounded-md border border-border bg-surface-raised px-2 py-0.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-primary/50 hover:bg-primary-subtle hover:text-primary cursor-pointer"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </Field>
         </div>
