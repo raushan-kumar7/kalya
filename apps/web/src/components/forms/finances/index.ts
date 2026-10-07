@@ -5,3 +5,6 @@ export * from './splits';
 export * from './transactions';
 export * from './budget';
 export * from './goal';
+export * from './gold-silver';
+export * from './equity';
+export * from './mutual-fund';

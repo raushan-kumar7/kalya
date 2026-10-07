@@ -160,6 +160,65 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const classes = cn(buttonVariants({ variant, size, fullWidth, className }));
 
     if (asChild) {
+      const hasExtraContent = Boolean(isLoading || resolvedLeadingIcon || resolvedTrailingIcon);
+      const isValidChildElement =
+        React.isValidElement(children) && children.type !== React.Fragment;
+
+      if (!hasExtraContent && isValidChildElement) {
+        return (
+          <Slot
+            className={classes}
+            ref={ref}
+            aria-busy={isLoading || undefined}
+            aria-disabled={disabled || isLoading || undefined}
+            {...props}
+          >
+            {children}
+          </Slot>
+        );
+      }
+
+      if (isValidChildElement) {
+        const childElement = children as React.ReactElement<{ children?: React.ReactNode }>;
+        return (
+          <Slot
+            className={classes}
+            ref={ref}
+            aria-busy={isLoading || undefined}
+            aria-disabled={disabled || isLoading || undefined}
+            {...props}
+          >
+            {React.cloneElement(childElement, {
+              children: (
+                <>
+                  {isLoading ? (
+                    <>
+                      <Spinner size="xs" variant={spinnerVariant} />
+                      {childElement.props.children && (
+                        <span className="opacity-80">{childElement.props.children}</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {resolvedLeadingIcon && iconPosition === 'left' && (
+                        <span className="shrink-0 flex items-center">{resolvedLeadingIcon}</span>
+                      )}
+                      {childElement.props.children}
+                      {resolvedTrailingIcon && iconPosition === 'left' && (
+                        <span className="shrink-0 flex items-center">{resolvedTrailingIcon}</span>
+                      )}
+                      {resolvedLeadingIcon && iconPosition === 'right' && (
+                        <span className="shrink-0 flex items-center">{resolvedLeadingIcon}</span>
+                      )}
+                    </>
+                  )}
+                </>
+              ),
+            })}
+          </Slot>
+        );
+      }
+
       return (
         <Slot
           className={classes}
@@ -168,7 +227,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           aria-disabled={disabled || isLoading || undefined}
           {...props}
         >
-          {renderContent()}
+          <span>{renderContent()}</span>
         </Slot>
       );
     }

@@ -1,5 +1,7 @@
 export * from './shared';
 export * from './use-assets';
+export * from './use-gold-silver';
+export * from './use-equities';
 export * from './use-buckets';
 export * from './use-budgets';
 export * from './use-categories';
