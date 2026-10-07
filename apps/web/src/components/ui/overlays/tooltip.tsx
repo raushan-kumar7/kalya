@@ -5,6 +5,16 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '@/libs/utils';
 
 /**
+ * Shared visual surface for every tooltip in the app (Radix tooltips AND chart tooltips),
+ * so hover hints look identical everywhere.
+ */
+export const tooltipSurfaceClass = cn(
+  'bg-primary text-on-primary text-caption font-body font-medium',
+  'max-w-xs rounded-md px-3 py-1.5 leading-snug',
+  'shadow-raised ring-1 shadow-black/15 ring-black/10 select-none'
+);
+
+/**
  * Snappier open, gentler close — tooltips should appear almost
  * instantly on hover but not flash away on exit.
  */

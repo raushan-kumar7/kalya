@@ -5,3 +5,4 @@ export * from './timestamp';
 export * from './timing';
 export * from './name';
 export * from './cron';
+export * from './snake-case';

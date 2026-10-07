@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useFinances } from '@/hooks/finances';
+import {
+  useBucketsQuery,
+  useCategoriesQuery,
+  useCategoryActions,
+  useFinanceModal,
+} from '@/hooks/finances';
 import { CategoryCard, CreateCategoryCard, CategoryCardSkeleton } from './card';
 import { CategoryForm } from '@/components/forms/finances';
 import {
@@ -21,31 +26,31 @@ import type { CreateCategoryInput, UpdateCategoryInput } from '@kalya/validation
 const SKELETON_COUNT = 6;
 
 export function Categories() {
+  // Queries
   const {
-    // 1. Data, loading, error, refetch
-    categories,
-    isCategoriesLoading,
-    categoriesError,
-    refetchCategories,
-    buckets,
+    data: categories = [],
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useCategoriesQuery();
 
-    // 2. Action methods
+  const { data: buckets = [] } = useBucketsQuery();
+
+  // Actions
+  const {
     createCategory,
     updateCategory,
     deleteCategory,
     seedDefaultCategories,
+    isDeleting,
+    isSeeding,
+  } = useCategoryActions();
 
-    // 3. Modal orchestration
-    activeModal,
-    openModal,
-    closeModal,
-    activeCategoryId,
-    setActiveCategoryId,
-  } = useFinances();
+  // Modal
+  const { activeModal, openModal, closeModal, activeCategoryId, setActiveCategoryId } =
+    useFinanceModal();
 
   const [pendingDelete, setPendingDelete] = useState<Category | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const builtInCategories = useMemo(() => {
     return categories.filter((c) => c.origin === 'built-in');
@@ -114,24 +119,14 @@ export function Categories() {
 
   const handleConfirmDelete = async () => {
     if (!pendingDelete) return;
-    setIsDeleting(true);
-    try {
-      const res = await deleteCategory(pendingDelete.id);
-      if (res.success) {
-        setPendingDelete(null);
-      }
-    } finally {
-      setIsDeleting(false);
+    const res = await deleteCategory(pendingDelete.id);
+    if (res.success) {
+      setPendingDelete(null);
     }
   };
 
   const handleSeedDefaults = async () => {
-    setIsSeeding(true);
-    try {
-      await seedDefaultCategories();
-    } finally {
-      setIsSeeding(false);
-    }
+    await seedDefaultCategories();
   };
 
   return (

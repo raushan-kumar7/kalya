@@ -1,80 +1,128 @@
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '@kalya/types';
+import { useCallback } from 'react';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  useMutation,
-  UseMutationOptions,
-  useQuery,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import { financeKeys } from './keys';
-import { CategoryService } from '@/libs/services/finances/categories.service';
+  financeKeys,
+  invalidateAfterTaxonomyRemoval,
+  QueryOverrides,
+  STALE,
+  SuccessResponse,
+} from './shared';
+import { CategoryService } from '@/libs/services/finances';
+import { Category, CreateCategoryDto, UpdateCategoryDto } from '@kalya/types';
+import { RunActionOptions, runAction } from '@/libs';
 
-export function useCategoriesQuery(
-  bucketId?: string,
-  options?: Omit<UseQueryOptions<Category[], Error>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryKey: financeKeys.categories(bucketId),
-    queryFn: () => CategoryService.list(bucketId),
-    staleTime: 1000 * 60 * 10,
-    ...options,
+/* ── Queries ─────────────────────────────────────────────── */
+
+export const categoryQueries = {
+  list: (bucketId?: string) =>
+    queryOptions({
+      queryKey: financeKeys.categories.list(bucketId),
+      queryFn: () => CategoryService.list(bucketId),
+      staleTime: STALE.long,
+    }),
+};
+
+export function useCategoriesQuery(bucketId?: string, options?: QueryOverrides<Category[]>) {
+  return useQuery({ ...categoryQueries.list(bucketId), ...options });
+}
+
+/* ── Mutations ───────────────────────────────────────────── */
+
+const invalidateCategories = (qc: ReturnType<typeof useQueryClient>) =>
+  qc.invalidateQueries({ queryKey: financeKeys.categories.all() });
+
+export function useSeedDefaultCategoriesMutation() {
+  const qc = useQueryClient();
+  return useMutation<Category[], Error, void>({
+    mutationFn: () => CategoryService.seedDefaults(),
+    onSuccess: () => invalidateCategories(qc),
   });
 }
 
-export function useSeedDefaultCategoriesMutation(
-  options?: UseMutationOptions<Category[], Error, void>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: CategoryService.seedDefaults,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.categories() });
-      options?.onSuccess?.(data, ...args);
-    },
+export function useCreateCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation<Category, Error, CreateCategoryDto>({
+    mutationFn: (dto) => CategoryService.create(dto),
+    onSuccess: () => invalidateCategories(qc),
   });
 }
 
-export function useCreateCategoryMutation(
-  options?: UseMutationOptions<Category, Error, CreateCategoryDto>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: CategoryService.create,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.categories() });
-      options?.onSuccess?.(data, ...args);
-    },
-  });
-}
-
-export function useUpdateCategoryMutation(
-  options?: UseMutationOptions<Category, Error, { id: string; dto: UpdateCategoryDto }>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
+export function useUpdateCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation<Category, Error, { id: string; dto: UpdateCategoryDto }>({
     mutationFn: ({ id, dto }) => CategoryService.update(id, dto),
-    onSuccess: (data, variables, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.categories() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.categoryDetail(variables.id) });
-      options?.onSuccess?.(data, variables, ...args);
+    onSuccess: () => invalidateCategories(qc),
+  });
+}
+
+export function useDeleteCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation<SuccessResponse, Error, string>({
+    mutationFn: (id) => CategoryService.delete(id),
+    onSuccess: async (_data, id) => {
+      qc.removeQueries({ queryKey: financeKeys.categories.detail(id) });
+      await Promise.all([invalidateCategories(qc), invalidateAfterTaxonomyRemoval(qc)]);
     },
   });
 }
 
-export function useDeleteCategoryMutation(
-  options?: UseMutationOptions<{ success: boolean }, Error, string>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: CategoryService.delete,
-    onSuccess: (data, id, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.categories() });
-      queryClient.removeQueries({ queryKey: financeKeys.categoryDetail(id) });
-      options?.onSuccess?.(data, id, ...args);
-    },
-  });
+/* ── Actions (toast-integrated) ──────────────────────────── */
+
+export function useCategoryActions() {
+  const { mutateAsync: createAsync, isPending: isCreating } = useCreateCategoryMutation();
+  const { mutateAsync: updateAsync, isPending: isUpdating } = useUpdateCategoryMutation();
+  const { mutateAsync: deleteAsync, isPending: isDeleting } = useDeleteCategoryMutation();
+  const { mutateAsync: seedAsync, isPending: isSeeding } = useSeedDefaultCategoriesMutation();
+
+  const createCategory = useCallback(
+    (dto: CreateCategoryDto, options?: RunActionOptions<Category>) =>
+      runAction(() => createAsync(dto), {
+        loading: 'Creating category…',
+        success: 'Category created successfully!',
+        ...options,
+      }),
+    [createAsync]
+  );
+
+  const updateCategory = useCallback(
+    (id: string, dto: UpdateCategoryDto, options?: RunActionOptions<Category>) =>
+      runAction(() => updateAsync({ id, dto }), {
+        loading: 'Updating category…',
+        success: 'Category updated successfully!',
+        ...options,
+      }),
+    [updateAsync]
+  );
+
+  const deleteCategory = useCallback(
+    (id: string, options?: RunActionOptions<SuccessResponse>) =>
+      runAction(() => deleteAsync(id), {
+        loading: 'Deleting category…',
+        success: 'Category deleted successfully!',
+        ...options,
+      }),
+    [deleteAsync]
+  );
+
+  const seedDefaultCategories = useCallback(
+    (options?: RunActionOptions<Category[]>) =>
+      runAction(() => seedAsync(), {
+        loading: 'Seeding standard categories…',
+        success: 'Default categories created!',
+        ...options,
+      }),
+    [seedAsync]
+  );
+
+  return {
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    seedDefaultCategories,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isSeeding,
+    isSubmitting: isCreating || isUpdating || isDeleting || isSeeding,
+  };
 }

@@ -6,84 +6,108 @@ import {
   EquityAsset,
   EquityAssetFilterQueryDto,
 } from '@kalya/types';
-import {
-  useMutation,
-  UseMutationOptions,
-  useQuery,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import { financeKeys } from './keys';
-import { AssetService } from '@/libs/services/finances/assets.service';
-import { PortfolioSummaryResponse } from '@/libs/services/finances';
-import { useFinancesStore } from '@/stores/finances';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { financeKeys, QueryOverrides, STALE } from './shared';
+import { AssetService, PortfolioSummaryResponse } from '@/libs/services/finances';
+import { useCallback } from 'react';
+import { runAction, RunActionOptions } from '@/libs';
+
+/* ── Queries ─────────────────────────────────────────────── */
+
+export const assetQueries = {
+  digital: (query?: DigitalAssetFilterQueryDto) =>
+    queryOptions({
+      queryKey: financeKeys.assets.digital(query),
+      queryFn: () => AssetService.listDigital(query),
+      staleTime: STALE.medium,
+    }),
+  equities: (query?: EquityAssetFilterQueryDto) =>
+    queryOptions({
+      queryKey: financeKeys.assets.equities(query),
+      queryFn: () => AssetService.listEquities(query),
+      staleTime: STALE.medium,
+    }),
+  portfolio: () =>
+    queryOptions({
+      queryKey: financeKeys.assets.portfolio(),
+      queryFn: () => AssetService.getPortfolioSummary(),
+      staleTime: STALE.medium,
+    }),
+};
 
 export function useDigitalAssetsQuery(
   query?: DigitalAssetFilterQueryDto,
-  options?: Omit<UseQueryOptions<DigitalAsset[], Error>, 'queryKey' | 'queryFn'>
+  options?: QueryOverrides<DigitalAsset[]>
 ) {
-  return useQuery({
-    queryKey: financeKeys.assetsDigital(query),
-    queryFn: () => AssetService.listDigital(query),
-    staleTime: 1000 * 60 * 5,
-    ...options,
-  });
+  return useQuery({ ...assetQueries.digital(query), ...options });
 }
 
 export function useEquityAssetsQuery(
   query?: EquityAssetFilterQueryDto,
-  options?: Omit<UseQueryOptions<EquityAsset[], Error>, 'queryKey' | 'queryFn'>
+  options?: QueryOverrides<EquityAsset[]>
 ) {
-  return useQuery({
-    queryKey: financeKeys.assetsEquities(query),
-    queryFn: () => AssetService.listEquities(query),
-    staleTime: 1000 * 60 * 5,
-    ...options,
+  return useQuery({ ...assetQueries.equities(query), ...options });
+}
+
+export function usePortfolioSummaryQuery(options?: QueryOverrides<PortfolioSummaryResponse>) {
+  return useQuery({ ...assetQueries.portfolio(), ...options });
+}
+
+/* ── Mutations ───────────────────────────────────────────── */
+
+// Any asset change can alter lists and the portfolio summary.
+const invalidateAssets = (qc: ReturnType<typeof useQueryClient>) =>
+  qc.invalidateQueries({ queryKey: financeKeys.assets.all() });
+
+export function useCreateDigitalAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<DigitalAsset, Error, CreateDigitalAssetDto>({
+    mutationFn: (dto) => AssetService.createDigital(dto),
+    onSuccess: () => invalidateAssets(qc),
   });
 }
 
-export function usePortfolioSummaryQuery(
-  options?: Omit<UseQueryOptions<PortfolioSummaryResponse, Error>, 'queryKey' | 'queryFn'>
-) {
-  const setCached = useFinancesStore((s) => s.setCachedPortfolioSummary);
-  return useQuery({
-    queryKey: financeKeys.assetsPortfolio(),
-    queryFn: async () => {
-      const res = await AssetService.getPortfolioSummary();
-      setCached(res);
-      return res;
-    },
-    staleTime: 1000 * 60 * 5,
-    ...options,
+export function useCreateEquityAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<EquityAsset, Error, CreateEquityAssetDto>({
+    mutationFn: (dto) => AssetService.createEquity(dto),
+    onSuccess: () => invalidateAssets(qc),
   });
 }
 
-export function useCreateDigitalAssetMutation(
-  options?: UseMutationOptions<DigitalAsset, Error, CreateDigitalAssetDto>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: AssetService.createDigital,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.assetsDigital() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.assetsPortfolio() });
-      options?.onSuccess?.(data, ...args);
-    },
-  });
-}
+/* ── Actions (toast-integrated) ──────────────────────────── */
 
-export function useCreateEquityAssetMutation(
-  options?: UseMutationOptions<EquityAsset, Error, CreateEquityAssetDto>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: AssetService.createEquity,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.assetsEquities() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.assetsPortfolio() });
-      options?.onSuccess?.(data, ...args);
-    },
-  });
+export function useAssetActions() {
+  const { mutateAsync: createDigitalAsync, isPending: isCreatingDigital } =
+    useCreateDigitalAssetMutation();
+  const { mutateAsync: createEquityAsync, isPending: isCreatingEquity } =
+    useCreateEquityAssetMutation();
+
+  const createDigitalAsset = useCallback(
+    (dto: CreateDigitalAssetDto, options?: RunActionOptions<DigitalAsset>) =>
+      runAction(() => createDigitalAsync(dto), {
+        loading: 'Adding digital asset…',
+        success: 'Digital asset added!',
+        ...options,
+      }),
+    [createDigitalAsync]
+  );
+
+  const createEquityAsset = useCallback(
+    (dto: CreateEquityAssetDto, options?: RunActionOptions<EquityAsset>) =>
+      runAction(() => createEquityAsync(dto), {
+        loading: 'Adding equity asset…',
+        success: 'Equity asset added!',
+        ...options,
+      }),
+    [createEquityAsync]
+  );
+
+  return {
+    createDigitalAsset,
+    createEquityAsset,
+    isCreatingDigital,
+    isCreatingEquity,
+    isSubmitting: isCreatingDigital || isCreatingEquity,
+  };
 }

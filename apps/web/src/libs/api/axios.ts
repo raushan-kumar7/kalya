@@ -9,6 +9,7 @@ import axios, {
 } from 'axios';
 import { ApiError, type ApiErrorDetail, type StandardResponse } from './types';
 import { useAuthStore } from '@/stores/auth';
+import { toSnake } from '@kalya/utils';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3600';
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
@@ -85,6 +86,10 @@ axiosInstance.interceptors.response.use(
     if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
       // Retain the unboxed data directly
       response.data = data.data;
+    }
+
+    if ((response.config?.url ?? '').includes('/finances/')) {
+      response.data = toSnake(response.data);
     }
     return response;
   },

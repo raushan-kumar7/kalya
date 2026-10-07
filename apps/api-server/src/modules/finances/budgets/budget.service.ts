@@ -1,4 +1,16 @@
-import { and, eq, budget, bucket, income, expense, category, inArray, sum } from '@kalya/db';
+import {
+  and,
+  eq,
+  budget,
+  bucket,
+  income,
+  expense,
+  category,
+  inArray,
+  sum,
+  gte,
+  lte,
+} from '@kalya/db';
 import { BudgetFilterQueryDto, CreateBudgetDto, UpdateBudgetDto } from '@kalya/types';
 import { BaseFinanceService } from '../common';
 import { calculateBudgetStatus, roundMoney } from '@kalya/utils';
@@ -115,10 +127,29 @@ export class BudgetService extends BaseFinanceService {
       return { ...budgetRecord, spent: 0, status: 'under' };
     }
 
+    // Look up linked income month to scope expenses for the period
+    const [incomeRecord] = await this.db
+      .select({ month: income.month })
+      .from(income)
+      .where(and(eq(income.id, budgetRecord.incomeId), eq(income.userId, userId)))
+      .limit(1);
+
+    const expenseConditions = [
+      eq(expense.userId, userId),
+      inArray(expense.categoryId, categoryIds),
+    ];
+
+    if (incomeRecord?.month && budgetRecord.period === 'monthly') {
+      expenseConditions.push(
+        gte(expense.date, `${incomeRecord.month}-01`),
+        lte(expense.date, `${incomeRecord.month}-31`)
+      );
+    }
+
     const [spendResult] = await this.db
       .select({ totalSpent: sum(expense.yourShare) })
       .from(expense)
-      .where(and(eq(expense.userId, userId), inArray(expense.categoryId, categoryIds)));
+      .where(and(...expenseConditions));
 
     const totalSpent = Number(spendResult?.totalSpent ?? 0);
     const health = calculateBudgetStatus(

@@ -1,68 +1,106 @@
+import { useCallback } from 'react';
+import { RunActionOptions, runAction } from '@/libs';
+import { IncomeService } from '@/libs/services/finances';
 import { CreateIncomeDto, Income, IncomeFilterQueryDto, UpdateIncomeDto } from '@kalya/types';
+import { queryOptions, useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
-  useMutation,
-  UseMutationOptions,
-  useQuery,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import { financeKeys } from './keys';
-import { IncomeService } from '@/libs/services/finances/income.service';
+  financeKeys,
+  STALE,
+  QueryOverrides,
+  invalidateAfterIncomeChange,
+  SuccessResponse,
+} from './shared';
 
-export function useIncomeQuery(
-  query?: IncomeFilterQueryDto,
-  options?: Omit<UseQueryOptions<Income[], Error>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryKey: financeKeys.income(query),
-    queryFn: () => IncomeService.list(query),
-    staleTime: 1000 * 60 * 5,
-    ...options,
+/* ── Queries ─────────────────────────────────────────────── */
+
+export const incomeQueries = {
+  list: (query?: IncomeFilterQueryDto) =>
+    queryOptions({
+      queryKey: financeKeys.income.list(query),
+      queryFn: () => IncomeService.list(query),
+      staleTime: STALE.medium,
+    }),
+};
+
+export function useIncomeQuery(query?: IncomeFilterQueryDto, options?: QueryOverrides<Income[]>) {
+  return useQuery({ ...incomeQueries.list(query), ...options });
+}
+
+/* ── Mutations ───────────────────────────────────────────── */
+
+export function useCreateIncomeMutation() {
+  const qc = useQueryClient();
+  return useMutation<Income, Error, CreateIncomeDto>({
+    mutationFn: (dto) => IncomeService.create(dto),
+    onSuccess: () => invalidateAfterIncomeChange(qc),
   });
 }
 
-export function useCreateIncomeMutation(
-  options?: UseMutationOptions<Income, Error, CreateIncomeDto>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: IncomeService.create,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.income() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.overview(data.month) });
-      options?.onSuccess?.(data, ...args);
-    },
-  });
-}
-
-export function useUpdateIncomeMutation(
-  options?: UseMutationOptions<Income, Error, { id: string; dto: UpdateIncomeDto }>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
+export function useUpdateIncomeMutation() {
+  const qc = useQueryClient();
+  return useMutation<Income, Error, { id: string; dto: UpdateIncomeDto }>({
     mutationFn: ({ id, dto }) => IncomeService.update(id, dto),
-    onSuccess: (data, variables, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.income() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.incomeDetail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: financeKeys.overview(data.month) });
-      options?.onSuccess?.(data, variables, ...args);
+    // Invalidates ALL summaries, so both the old and new month are refreshed
+    // if the month was changed by the update.
+    onSuccess: () => invalidateAfterIncomeChange(qc),
+  });
+}
+
+export function useDeleteIncomeMutation() {
+  const qc = useQueryClient();
+  return useMutation<SuccessResponse, Error, string>({
+    mutationFn: (id) => IncomeService.delete(id),
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: financeKeys.income.detail(id) });
+      return invalidateAfterIncomeChange(qc);
     },
   });
 }
 
-export function useDeleteIncomeMutation(
-  options?: UseMutationOptions<{ success: boolean }, Error, string>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: IncomeService.delete,
-    onSuccess: (data, id, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.income() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.all });
-      options?.onSuccess?.(data, id, ...args);
-    },
-  });
+/* ── Actions (toast-integrated) ──────────────────────────── */
+
+export function useIncomeActions() {
+  const { mutateAsync: createAsync, isPending: isCreating } = useCreateIncomeMutation();
+  const { mutateAsync: updateAsync, isPending: isUpdating } = useUpdateIncomeMutation();
+  const { mutateAsync: deleteAsync, isPending: isDeleting } = useDeleteIncomeMutation();
+
+  const logIncome = useCallback(
+    (dto: CreateIncomeDto, options?: RunActionOptions<Income>) =>
+      runAction(() => createAsync(dto), {
+        loading: 'Registering income…',
+        success: 'Monthly income logged!',
+        ...options,
+      }),
+    [createAsync]
+  );
+
+  const updateIncome = useCallback(
+    (id: string, dto: UpdateIncomeDto, options?: RunActionOptions<Income>) =>
+      runAction(() => updateAsync({ id, dto }), {
+        loading: 'Updating income…',
+        success: 'Income updated successfully!',
+        ...options,
+      }),
+    [updateAsync]
+  );
+
+  const deleteIncome = useCallback(
+    (id: string, options?: RunActionOptions<SuccessResponse>) =>
+      runAction(() => deleteAsync(id), {
+        loading: 'Deleting income…',
+        success: 'Income deleted successfully!',
+        ...options,
+      }),
+    [deleteAsync]
+  );
+
+  return {
+    logIncome,
+    updateIncome,
+    deleteIncome,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isSubmitting: isCreating || isUpdating || isDeleting,
+  };
 }

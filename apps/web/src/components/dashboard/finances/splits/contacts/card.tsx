@@ -4,7 +4,6 @@ import React from 'react';
 import type { SplitContactMember } from '@kalya/types';
 import type { UpdateSplitContactMemberInput } from '@kalya/validations';
 import { CreateEntityCard, EntityCard, FooterRow } from '@/components/shared';
-import { cn } from '@/libs/utils';
 import { formatCardDate } from '@kalya/utils';
 import {
   Banknote,

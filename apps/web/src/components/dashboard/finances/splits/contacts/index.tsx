@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useFinances } from '@/hooks/finances';
+import { useFinanceModal, useSplitContactActions, useSplitContactsQuery } from '@/hooks/finances';
 import { SplitContactCard, CreateSplitContactCard, SplitContactCardSkeleton } from './card';
 import { SplitContactForm } from '@/components/forms/finances';
 import {
@@ -31,29 +31,18 @@ const SKELETON_COUNT = 6;
 type FilterTab = 'all' | 'linked' | 'external';
 
 export function SplitContacts() {
-  const {
-    // 1. Data, loading, error, refetch
-    contacts,
-    isLoading,
-    error,
-
-    // 2. Action methods
-    createSplitContact,
-    updateSplitContact,
-    deleteSplitContact,
-
-    // 3. Modal orchestration
-    activeModal,
-    openModal,
-    closeModal,
-    activeContactId,
-    setActiveContactId,
-  } = useFinances();
+  // Queries
+  const { data: contacts = [], isLoading, error, refetch } = useSplitContactsQuery();
+  // Actions
+  const { createContact, updateContact, deleteContact, isCreating, isUpdating, isDeleting } =
+    useSplitContactActions();
+  // Modal
+  const { activeModal, openModal, closeModal, activeContactId, setActiveContactId } =
+    useFinanceModal();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [pendingDelete, setPendingDelete] = useState<SplitContactMember | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Active contact selected for edit mode
   const editingContact = useMemo(() => {
@@ -97,13 +86,13 @@ export function SplitContacts() {
     payload: CreateSplitContactMemberInput | UpdateSplitContactMemberInput
   ) => {
     if (activeModal === 'edit-split-contact' && activeContactId) {
-      const res = await updateSplitContact(activeContactId, payload as UpdateSplitContactMemberDto);
+      const res = await updateContact(activeContactId, payload as UpdateSplitContactMemberDto);
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to update contact');
       }
       setActiveContactId(null);
     } else {
-      const res = await createSplitContact(payload as CreateSplitContactMemberDto);
+      const res = await createContact(payload as CreateSplitContactMemberDto);
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to create contact');
       }
@@ -112,14 +101,9 @@ export function SplitContacts() {
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
-    setIsDeleting(true);
-    try {
-      const res = await deleteSplitContact(pendingDelete.id);
-      if (res.success) {
-        setPendingDelete(null);
-      }
-    } finally {
-      setIsDeleting(false);
+    const res = await deleteContact(pendingDelete.id);
+    if (res.success) {
+      setPendingDelete(null);
     }
   };
 
@@ -134,7 +118,7 @@ export function SplitContacts() {
               {isLoading ? (
                 'Loading contacts…'
               ) : error ? (
-                <span className="text-danger">{error}</span>
+                <span className="text-danger">{error.message}</span>
               ) : (
                 `${contacts.length} ${contacts.length === 1 ? 'contact' : 'contacts'}${
                   linkedCount > 0 ? ` · ${linkedCount} linked to Kalya accounts` : ''

@@ -63,6 +63,8 @@ export interface FinanceFormModalProps<
   cancelLabel?: string;
   /** Explicit loading state for submission (defaults to form.formState.isSubmitting) */
   isSubmitting?: boolean;
+  /** Disable the primary submit button (e.g. when allocations are unbalanced) */
+  submitDisabled?: boolean;
   /** Modal width size preset (defaults to 'md') */
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   /** Optional interactive element that triggers the modal */
@@ -100,6 +102,7 @@ export function FinanceFormModal<
   submitLabel = 'Save',
   cancelLabel = 'Cancel',
   isSubmitting,
+  submitDisabled = false,
   size = 'md',
   trigger,
   resetOnClose = false,
@@ -148,7 +151,11 @@ export function FinanceFormModal<
                   </Button>
                 </ModalClose>
 
-                <Button type="submit" isLoading={submitting}>
+                <Button
+                  type="submit"
+                  isLoading={submitting}
+                  disabled={submitting || submitDisabled}
+                >
                   {submitLabel}
                 </Button>
               </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useFinances } from '@/hooks/finances';
+import { useBucketActions, useBucketsQuery, useFinanceModal } from '@/hooks/finances';
 import {
   BucketCard,
   CreateCustomBucketCard,
@@ -27,30 +27,23 @@ import type { CreateBucketInput, UpdateBucketInput } from '@kalya/validations';
 const SKELETON_COUNT = 3;
 
 export function Buckets() {
+  // Queries
   const {
-    // 1. Data, loading, error, refetch
-    buckets,
-    isBucketsLoading,
-    bucketsError,
-    refetchBuckets,
+    data: buckets = [],
+    isLoading: isBucketsLoading,
+    error: bucketsError,
+    refetch: refetchBuckets,
+  } = useBucketsQuery();
 
-    // 2. Action methods
-    createBucket,
-    updateBucket,
-    deleteBucket,
-    seedDefaults,
+  // Actions
+  const { createBucket, updateBucket, deleteBucket, seedDefaultBuckets, isDeleting, isSeeding } =
+    useBucketActions();
 
-    // 3. Modal orchestration
-    activeModal,
-    openModal,
-    closeModal,
-    activeBucketId,
-    setActiveBucketId,
-  } = useFinances();
+  // Modal
+  const { activeModal, openModal, closeModal, activeBucketId, setActiveBucketId } =
+    useFinanceModal();
 
   const [pendingDelete, setPendingDelete] = useState<Bucket | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const builtInBuckets = useMemo(() => {
     return buckets.filter((b) => b.origin === 'built-in');
@@ -120,60 +113,52 @@ export function Buckets() {
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
-    setIsDeleting(true);
-    try {
-      const res = await deleteBucket(pendingDelete.id);
-      if (res.success) {
-        setPendingDelete(null);
-      }
-    } finally {
-      setIsDeleting(false);
+    const res = await deleteBucket(pendingDelete.id);
+    if (res.success) {
+      setPendingDelete(null);
     }
   };
 
   const handleSeed = async () => {
-    setIsSeeding(true);
-    try {
-      await seedDefaults();
-    } finally {
-      setIsSeeding(false);
-    }
+    await seedDefaultBuckets();
   };
 
   return (
     <section className="flex h-full min-h-0 flex-col space-y-6">
       {/* Top Header Row */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-display text-display-md text-text-primary">Buckets</h2>
-          <p className="text-body-sm text-text-secondary mt-1">
-            {isBucketsLoading
-              ? 'Loading buckets…'
-              : bucketsError
-                ? bucketsError.message
-                : `${buckets.length} ${buckets.length === 1 ? 'bucket' : 'buckets'} · ${allocatedPercent}% allocated`}
-          </p>
-        </div>
+      <div className="shrink-0 space-y-5 mt-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-display-md text-text-primary">Buckets</h2>
+            <p className="text-body-sm text-text-secondary mt-1">
+              {isBucketsLoading
+                ? 'Loading buckets…'
+                : bucketsError
+                  ? bucketsError.message
+                  : `${buckets.length} ${buckets.length === 1 ? 'bucket' : 'buckets'} · ${allocatedPercent}% allocated`}
+            </p>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSeed}
-            disabled={isSeeding || isBucketsLoading}
-            isLoading={isSeeding}
-          >
-            Reset to 50/30/20
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => openModal('add-bucket')}
-            className="gap-1.5"
-            disabled={isBucketsLoading}
-          >
-            <Sparkles size={16} />
-            New Bucket
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeed}
+              disabled={isSeeding || isBucketsLoading}
+              isLoading={isSeeding}
+            >
+              Reset to 50/30/20
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => openModal('add-bucket')}
+              className="gap-1.5"
+              disabled={isBucketsLoading}
+            >
+              <Sparkles size={16} />
+              New Bucket
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -193,7 +178,7 @@ export function Buckets() {
       {/* Scrollable Content Zone */}
       <div className="min-h-0 flex-1 space-y-8 overflow-y-auto pb-8">
         {/* Built-in Empty State */}
-        {!isBucketsLoading && builtInBuckets.length === 0 && (
+        {!isBucketsLoading && builtInBuckets.length === 0 ? (
           <EmptyState
             icon={<PiggyBank className="text-text-muted" size={28} />}
             title="No built-in buckets yet"
@@ -214,46 +199,50 @@ export function Buckets() {
               </Button>
             }
           />
+        ) : (
+          <>
+            {/* Built-in Buckets Section */}
+            <div>
+              <h3 className="text-body-sm text-text-muted mb-3 font-medium">Built-in Buckets</h3>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+                {isBucketsLoading
+                  ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                      <BucketCardSkeleton key={i} />
+                    ))
+                  : builtInBuckets.map((b) => (
+                      <BucketCard
+                        key={b.id}
+                        bucket={b}
+                        onEdit={(bucket) => {
+                          setActiveBucketId(bucket.id);
+                          openModal('edit-bucket', bucket.id);
+                        }}
+                      />
+                    ))}
+              </div>
+            </div>
+
+            {/* Custom Buckets Section */}
+            <div>
+              <h3 className="text-body-sm text-text-muted mb-3 font-medium">Custom Buckets</h3>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+                <CreateCustomBucketCard onClick={() => openModal('add-bucket')} />
+                {!isBucketsLoading &&
+                  customBuckets.map((b) => (
+                    <BucketCard
+                      key={b.id}
+                      bucket={b}
+                      onEdit={(bucket) => {
+                        setActiveBucketId(bucket.id);
+                        openModal('edit-bucket', bucket.id);
+                      }}
+                      onDelete={(bucket) => setPendingDelete(bucket)}
+                    />
+                  ))}
+              </div>
+            </div>
+          </>
         )}
-
-        {/* Built-in Buckets Section */}
-        <div>
-          <h3 className="text-body-sm text-text-muted mb-3 font-medium">Built-in Buckets</h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
-            {isBucketsLoading
-              ? Array.from({ length: SKELETON_COUNT }).map((_, i) => <BucketCardSkeleton key={i} />)
-              : builtInBuckets.map((b) => (
-                  <BucketCard
-                    key={b.id}
-                    bucket={b}
-                    onEdit={(bucket) => {
-                      setActiveBucketId(bucket.id);
-                      openModal('edit-bucket', bucket.id);
-                    }}
-                  />
-                ))}
-          </div>
-        </div>
-
-        {/* Custom Buckets Section */}
-        <div>
-          <h3 className="text-body-sm text-text-muted mb-3 font-medium">Custom Buckets</h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
-            <CreateCustomBucketCard onClick={() => openModal('add-bucket')} />
-            {!isBucketsLoading &&
-              customBuckets.map((b) => (
-                <BucketCard
-                  key={b.id}
-                  bucket={b}
-                  onEdit={(bucket) => {
-                    setActiveBucketId(bucket.id);
-                    openModal('edit-bucket', bucket.id);
-                  }}
-                  onDelete={(bucket) => setPendingDelete(bucket)}
-                />
-              ))}
-          </div>
-        </div>
       </div>
 
       {/* Shared Form Modal for Creating & Editing Buckets */}

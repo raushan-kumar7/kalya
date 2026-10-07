@@ -52,6 +52,7 @@ export const useFinancesStore = create<FinancesStore>()(
           const updates: Partial<FinancesState> = { activeModal };
           if (activeModal === 'edit-bucket' && contextId) updates.activeBucketId = contextId;
           if (activeModal === 'edit-category' && contextId) updates.activeCategoryId = contextId;
+          if (activeModal === 'edit-budget' && contextId) updates.activeBucketId = contextId;
           if (activeModal === 'edit-expense' && contextId) updates.activeExpenseId = contextId;
           if (activeModal === 'settle-split' && contextId) updates.activeSplitShareId = contextId;
           if (activeModal === 'edit-split-contact' && contextId)

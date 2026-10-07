@@ -1,93 +1,122 @@
+import { useCallback } from 'react';
+import { RunActionOptions, runAction } from '@/libs';
+import { ExpenseService } from '@/libs/services/finances';
+import { ExpenseFilterQueryDto, Expense, CreateExpenseDto, UpdateExpenseDto } from '@kalya/types';
+import { queryOptions, useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
-  CreateExpenseDto,
-  Expense,
-  ExpenseFilterQueryDto,
-  SplitExpense,
-  UpdateExpenseDto,
-} from '@kalya/types';
-import {
-  useMutation,
-  UseMutationOptions,
-  useQuery,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import { financeKeys } from './keys';
-import { ExpenseService } from '@/libs/services/finances/expenses.service';
+  financeKeys,
+  STALE,
+  QueryOverrides,
+  ExpenseDetail,
+  invalidateAfterExpenseChange,
+  SuccessResponse,
+} from './shared';
+
+/* ── Queries ─────────────────────────────────────────────── */
+
+export const expenseQueries = {
+  list: (query?: ExpenseFilterQueryDto) =>
+    queryOptions({
+      queryKey: financeKeys.expenses.list(query),
+      queryFn: () => ExpenseService.list(query),
+      staleTime: STALE.short,
+    }),
+  detail: (id: string) =>
+    queryOptions({
+      queryKey: financeKeys.expenses.detail(id),
+      queryFn: () => ExpenseService.getById(id),
+      enabled: Boolean(id),
+    }),
+};
 
 export function useExpensesQuery(
   query?: ExpenseFilterQueryDto,
-  options?: Omit<UseQueryOptions<Expense[], Error>, 'queryKey' | 'queryFn'>
+  options?: QueryOverrides<Expense[]>
 ) {
+  return useQuery({ ...expenseQueries.list(query), ...options });
+}
+
+export function useExpenseDetailQuery(id: string, options?: QueryOverrides<ExpenseDetail>) {
   return useQuery({
-    queryKey: financeKeys.expenses(query),
-    queryFn: () => ExpenseService.list(query),
-    staleTime: 1000 * 60 * 2,
+    ...expenseQueries.detail(id),
     ...options,
+    enabled: Boolean(id) && (options?.enabled ?? true),
   });
 }
 
-export function useExpenseDetailQuery(
-  id: string,
-  options?: Omit<
-    UseQueryOptions<Expense & { splits: SplitExpense[] }, Error>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery({
-    queryKey: financeKeys.expenseDetail(id),
-    queryFn: () => ExpenseService.getById(id),
-    enabled: Boolean(id && options?.enabled !== false),
-    ...options,
+/* ── Mutations ───────────────────────────────────────────── */
+
+export function useCreateExpenseMutation() {
+  const qc = useQueryClient();
+  return useMutation<Expense, Error, CreateExpenseDto>({
+    mutationFn: (dto) => ExpenseService.create(dto),
+    onSuccess: () => invalidateAfterExpenseChange(qc),
   });
 }
 
-export function useCreateExpenseMutation(
-  options?: UseMutationOptions<Expense, Error, CreateExpenseDto>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: ExpenseService.create,
-    onSuccess: (data, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.expenses() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.budgets() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.splitsPending() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.all });
-      options?.onSuccess?.(data, ...args);
-    },
-  });
-}
-
-export function useUpdateExpenseMutation(
-  options?: UseMutationOptions<Expense, Error, { id: string; dto: UpdateExpenseDto }>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
+export function useUpdateExpenseMutation() {
+  const qc = useQueryClient();
+  return useMutation<Expense, Error, { id: string; dto: UpdateExpenseDto }>({
     mutationFn: ({ id, dto }) => ExpenseService.update(id, dto),
-    onSuccess: (data, variables, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.expenses() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.expenseDetail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: financeKeys.budgets() });
-      options?.onSuccess?.(data, variables, ...args);
+    onSuccess: () => invalidateAfterExpenseChange(qc),
+  });
+}
+
+export function useDeleteExpenseMutation() {
+  const qc = useQueryClient();
+  return useMutation<SuccessResponse, Error, string>({
+    mutationFn: (id) => ExpenseService.delete(id),
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: financeKeys.expenses.detail(id) });
+      return invalidateAfterExpenseChange(qc);
     },
   });
 }
 
-export function useDeleteExpenseMutation(
-  options?: UseMutationOptions<{ success: boolean }, Error, string>
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...options,
-    mutationFn: ExpenseService.delete,
-    onSuccess: (data, id, ...args) => {
-      queryClient.invalidateQueries({ queryKey: financeKeys.expenses() });
-      queryClient.removeQueries({ queryKey: financeKeys.expenseDetail(id) });
-      queryClient.invalidateQueries({ queryKey: financeKeys.budgets() });
-      queryClient.invalidateQueries({ queryKey: financeKeys.splitsPending() });
-      options?.onSuccess?.(data, id, ...args);
-    },
-  });
+/* ── Actions (toast-integrated) ──────────────────────────── */
+
+export function useExpenseActions() {
+  const { mutateAsync: createAsync, isPending: isCreating } = useCreateExpenseMutation();
+  const { mutateAsync: updateAsync, isPending: isUpdating } = useUpdateExpenseMutation();
+  const { mutateAsync: deleteAsync, isPending: isDeleting } = useDeleteExpenseMutation();
+
+  const createExpense = useCallback(
+    (dto: CreateExpenseDto, options?: RunActionOptions<Expense>) =>
+      runAction(() => createAsync(dto), {
+        loading: 'Recording expense…',
+        success: 'Expense logged successfully!',
+        ...options,
+      }),
+    [createAsync]
+  );
+
+  const updateExpense = useCallback(
+    (id: string, dto: UpdateExpenseDto, options?: RunActionOptions<Expense>) =>
+      runAction(() => updateAsync({ id, dto }), {
+        loading: 'Updating expense…',
+        success: 'Expense updated successfully!',
+        ...options,
+      }),
+    [updateAsync]
+  );
+
+  const deleteExpense = useCallback(
+    (id: string, options?: RunActionOptions<SuccessResponse>) =>
+      runAction(() => deleteAsync(id), {
+        loading: 'Deleting expense…',
+        success: 'Expense deleted successfully!',
+        ...options,
+      }),
+    [deleteAsync]
+  );
+
+  return {
+    createExpense,
+    updateExpense,
+    deleteExpense,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isSubmitting: isCreating || isUpdating || isDeleting,
+  };
 }

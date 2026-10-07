@@ -149,3 +149,8 @@ export function formatCalendarDateOrDash(value?: string | null): string {
   const date = fromISO(value);
   return date ? formatCalendarDate(date) : '—';
 }
+
+/** Shifts a "YYYY-MM" string by N months (negative goes back). */
+export function shiftMonth(month: string, delta: number): string {
+  return Temporal.PlainYearMonth.from(month).add({ months: delta }).toString();
+}

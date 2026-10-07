@@ -199,3 +199,25 @@ export function formatDuration(totalSeconds: number): string {
 
   return '0 seconds';
 }
+
+/**
+ * Formats an instant as a time only (e.g., "9:05 PM") in an optional IANA timezone.
+ */
+export function formatTimeOnly(date: TimestampInput, tz?: string): string {
+  const zdt = toInstant(date).toZonedDateTimeISO(tz ?? 'UTC');
+  return zdt.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+/**
+ * Returns the "YYYY-MM-DD" calendar date of an instant in a given timezone.
+ */
+export function getDateInTz(date: TimestampInput, tz?: string): string {
+  return toInstant(date)
+    .toZonedDateTimeISO(tz ?? 'UTC')
+    .toPlainDate()
+    .toString();
+}

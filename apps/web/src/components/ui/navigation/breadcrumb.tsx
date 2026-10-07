@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import { FOCUS_RING, TRANSITIONS_CSS } from '@/components/ui/constants';
@@ -39,16 +40,20 @@ export interface BreadcrumbLinkProps extends React.ComponentPropsWithoutRef<'a'>
 }
 
 const BreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkProps>(
-  ({ className, ...props }, ref) => (
-    <a
-      ref={ref}
-      className={cn(
-        'transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-xs',
-        className
-      )}
-      {...props}
-    />
-  )
+  ({ asChild, className, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'a';
+
+    return (
+      <Comp
+        ref={ref}
+        className={cn(
+          'transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-xs',
+          className
+        )}
+        {...props}
+      />
+    );
+  }
 );
 BreadcrumbLink.displayName = 'BreadcrumbLink';
 

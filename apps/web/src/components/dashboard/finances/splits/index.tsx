@@ -2,11 +2,9 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useFinances } from '@/hooks/finances';
 import {
   Button,
   Input,
-  Badge,
   Progress,
   EmptyState,
   Modal,
@@ -16,27 +14,18 @@ import {
   ModalDescription,
   ModalBody,
   ModalFooter,
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
 } from '@/components/ui';
 import {
   AlertCircle,
-  ArrowUpDown,
   Banknote,
   Building2,
   Calendar,
   Check,
   CheckCircle2,
-  Clock,
-  ExternalLink,
-  Mail,
-  Phone,
   QrCode,
   Receipt,
   RotateCw,
   Search,
-  SlidersHorizontal,
   Sparkles,
   User,
   UserCheck,
@@ -45,265 +34,178 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { roundMoney } from '@kalya/utils';
+import { formatTimeAgo, Temporal } from '@kalya/utils';
 import { resolveContactColor, getContactInitials } from './contacts/card';
-import type { Expense, SettlementMethod, SplitContactMember, SplitExpense } from '@kalya/types';
+import type { SettlementMethod, SplitContactMember } from '@kalya/types';
+import {
+  usePendingSplitSharesQuery,
+  useSplitContactsQuery,
+  useSplitShareActions,
+} from '@/hooks/finances';
+import {
+  type UnsettledSplitItem,
+  type FilterTab,
+  type SortOption,
+  type SettleState,
+  formatInr,
+  formatSplitDate,
+  getOwed,
+  getSettled,
+  getRemaining,
+  isLinkedMember,
+  buildPersonGroups,
+  computeSplitsStats,
+  filterAndSortGroups,
+  computeSettleTarget,
+  validateSettlementAmount,
+  planFifoSettlement,
+  inr,
+  fmtDate,
+} from './helper';
 
-// Re-export contacts module for backward compatibility
+// Re-export contacts and calculation helpers for convenience and backward compatibility
 export * from './contacts';
+export * from './helper';
 
-export type UnsettledSplitItem = SplitExpense & {
-  expense: Expense;
-  member: SplitContactMember;
-};
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
-type FilterTab = 'all' | 'unpaid' | 'partial' | 'linked';
-type SortOption = 'highest' | 'lowest' | 'newest' | 'oldest' | 'name';
-
-function safeFormatDate(value?: string | null): string {
-  if (!value) return '—';
-  try {
-    const d = new Date(value);
-    if (!isNaN(d.getTime())) {
-      return d.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
-    }
-    return String(value);
-  } catch {
-    return String(value);
-  }
-}
-
-/**
- * Universal Balances & Settlements Dashboard View.
- * Displays real-time unsettled split shares, high-level metrics, filtering/sorting,
- * and an interactive payment settlement dialog.
- */
 export function BalancesAndSettlements() {
+  // Queries
   const {
-    unsettledSplits,
-    unsettledLoading,
-    unsettledError,
-    isPendingSplitsRefetching,
-    refetchUnsettledSplits,
-    settleSplit,
-    isSettlingSplit,
-    contacts,
-  } = useFinances();
+    data: pendingShares = [],
+    isLoading: unsettledLoading,
+    isRefetching: isPendingSplitsRefetching,
+    error: pendingQueryError,
+    refetch: refetchUnsettledSplits,
+  } = usePendingSplitSharesQuery();
 
-  // Search & Filters
+  const { data: contacts = [] } = useSplitContactsQuery();
+
+  // Actions
+  const { settleShare, isSettling: isSettlingSplit } = useSplitShareActions();
+
+  // Toolbar
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<SortOption>('highest');
 
-  // Settlement Dialog state
-  const [activeShareToSettle, setActiveShareToSettle] = useState<UnsettledSplitItem | null>(null);
-  const [settleAmount, setSettleAmount] = useState<string>('');
+  // Dialogs
+  const [detailsKey, setDetailsKey] = useState<string | null>(null);
+  const [settleState, setSettleState] = useState<SettleState | null>(null);
+  const [settleAmount, setSettleAmount] = useState('');
   const [settleMethod, setSettleMethod] = useState<SettlementMethod>('upi');
   const [settleError, setSettleError] = useState<string | null>(null);
 
-  // High-level aggregate metrics
-  const stats = useMemo(() => {
-    let totalObligation = 0;
-    let totalSettled = 0;
-    let totalOutstanding = 0;
-    let partialCount = 0;
-    let unpaidCount = 0;
-    let linkedCount = 0;
-    const distinctMembers = new Set<string>();
+  const unsettledError = pendingQueryError?.message ?? null;
+  const allItems = (pendingShares ?? []) as UnsettledSplitItem[];
 
-    for (const item of unsettledSplits) {
-      const owed = Number(item.amount ?? 0);
-      const settled = Number(item.settled_amount ?? (item as any).settledAmount ?? 0);
-      const remaining = Math.max(0, owed - settled);
+  // Unfiltered groups: source of truth for the dialogs and KPI cards
+  const allGroups = useMemo(() => buildPersonGroups(allItems), [allItems]);
 
-      totalObligation += owed;
-      totalSettled += settled;
-      totalOutstanding += remaining;
+  const stats = useMemo(
+    () => computeSplitsStats(allGroups, allItems.length),
+    [allGroups, allItems.length]
+  );
 
-      if (settled > 0 && settled < owed) {
-        partialCount += 1;
-      } else if (settled === 0) {
-        unpaidCount += 1;
-      }
+  // Filter shares -> group by person -> sort people
+  const visibleGroups = useMemo(
+    () => filterAndSortGroups(allItems, filterTab, searchQuery, sortBy),
+    [allItems, filterTab, searchQuery, sortBy]
+  );
 
-      const isLinked = Boolean(item.member?.is_linked ?? (item.member as any)?.isLinked);
-      if (isLinked) {
-        linkedCount += 1;
-      }
+  // Resolve dialog targets from live data so they refresh after each settlement
+  const detailsGroup = useMemo(
+    () => allGroups.find((g) => g.key === detailsKey) ?? null,
+    [allGroups, detailsKey]
+  );
 
-      if (item.split_member_id) {
-        distinctMembers.add(item.split_member_id);
-      }
-    }
+  const settleTarget = useMemo(
+    () => computeSettleTarget(allGroups, settleState),
+    [allGroups, settleState]
+  );
 
-    const recoveryRate =
-      totalObligation > 0 ? Math.min(100, Math.round((totalSettled / totalObligation) * 100)) : 0;
+  /* ------------------------------ handlers ------------------------------ */
 
-    return {
-      totalObligation: roundMoney(totalObligation),
-      totalSettled: roundMoney(totalSettled),
-      totalOutstanding: roundMoney(totalOutstanding),
-      uniquePeopleCount: distinctMembers.size,
-      partialCount,
-      unpaidCount,
-      linkedCount,
-      recoveryRate,
-    };
-  }, [unsettledSplits]);
+  const openSettle = (groupKey: string, itemId?: string) => {
+    const target = computeSettleTarget(allGroups, { groupKey, itemId });
+    if (!target) return;
 
-  // Filtered and Sorted Shares
-  const filteredShares = useMemo(() => {
-    let list = [...(unsettledSplits as UnsettledSplitItem[])];
-
-    // Filter by tab
-    if (filterTab === 'unpaid') {
-      list = list.filter((item) => {
-        const settled = Number(item.settled_amount ?? (item as any).settledAmount ?? 0);
-        return settled === 0;
-      });
-    } else if (filterTab === 'partial') {
-      list = list.filter((item) => {
-        const settled = Number(item.settled_amount ?? (item as any).settledAmount ?? 0);
-        const owed = Number(item.amount ?? 0);
-        return settled > 0 && settled < owed;
-      });
-    } else if (filterTab === 'linked') {
-      list = list.filter((item) => {
-        return Boolean(item.member?.is_linked ?? (item.member as any)?.isLinked);
-      });
-    }
-
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter((item) => {
-        const memberName = item.member?.name?.toLowerCase() ?? '';
-        const memberEmail = item.member?.email?.toLowerCase() ?? '';
-        const memberPhone = item.member?.phone?.toLowerCase() ?? '';
-        const expenseDesc = item.expense?.description?.toLowerCase() ?? '';
-        return (
-          memberName.includes(q) ||
-          memberEmail.includes(q) ||
-          memberPhone.includes(q) ||
-          expenseDesc.includes(q)
-        );
-      });
-    }
-
-    // Sorting
-    list.sort((a, b) => {
-      const owedA = Number(a.amount ?? 0);
-      const settledA = Number(a.settled_amount ?? (a as any).settledAmount ?? 0);
-      const remainingA = Math.max(0, owedA - settledA);
-
-      const owedB = Number(b.amount ?? 0);
-      const settledB = Number(b.settled_amount ?? (b as any).settledAmount ?? 0);
-      const remainingB = Math.max(0, owedB - settledB);
-
-      switch (sortBy) {
-        case 'highest':
-          return remainingB - remainingA;
-        case 'lowest':
-          return remainingA - remainingB;
-        case 'newest': {
-          const dateA = new Date(a.expense?.date || 0).getTime();
-          const dateB = new Date(b.expense?.date || 0).getTime();
-          return dateB - dateA;
-        }
-        case 'oldest': {
-          const dateA = new Date(a.expense?.date || 0).getTime();
-          const dateB = new Date(b.expense?.date || 0).getTime();
-          return dateA - dateB;
-        }
-        case 'name': {
-          const nameA = a.member?.name || '';
-          const nameB = b.member?.name || '';
-          return nameA.localeCompare(nameB);
-        }
-        default:
-          return 0;
-      }
-    });
-
-    return list;
-  }, [unsettledSplits, filterTab, searchQuery, sortBy]);
-
-  // Handle opening settlement modal
-  const handleOpenSettle = (share: UnsettledSplitItem) => {
-    const owed = Number(share.amount ?? 0);
-    const settled = Number(share.settled_amount ?? (share as any).settledAmount ?? 0);
-    const remaining = Math.max(0, owed - settled);
-
-    setActiveShareToSettle(share);
-    setSettleAmount(String(roundMoney(remaining)));
+    setDetailsKey(null);
+    setSettleState({ groupKey, itemId });
+    setSettleAmount(String(target.remaining));
     setSettleMethod('upi');
     setSettleError(null);
   };
 
-  // Close settlement modal
-  const handleCloseSettle = () => {
-    setActiveShareToSettle(null);
+  const closeSettle = () => {
+    setSettleState(null);
     setSettleAmount('');
     setSettleError(null);
   };
 
-  // Confirm settlement submission
-  const handleConfirmSettle = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!activeShareToSettle) return;
+  const confirmSettle = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!settleTarget) return;
 
-    const amountNum = parseFloat(settleAmount);
-    const owed = Number(activeShareToSettle.amount ?? 0);
-    const settled = Number(
-      activeShareToSettle.settled_amount ?? (activeShareToSettle as any).settledAmount ?? 0
-    );
-    const remaining = Math.max(0, owed - settled);
-
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setSettleError('Please enter a valid amount greater than ₹0');
+    const validation = validateSettlementAmount(settleAmount, settleTarget.remaining);
+    if (!validation.isValid) {
+      setSettleError(validation.error);
       return;
     }
-
-    if (amountNum > remaining + 0.01) {
-      setSettleError(
-        `Amount cannot exceed the remaining balance of ₹${remaining.toLocaleString('en-IN')}`
-      );
-      return;
-    }
-
     setSettleError(null);
 
+    const allocations = planFifoSettlement(settleTarget.items, validation.amount);
+    if (allocations.length === 0) return;
+
+    const settledAt = Temporal.Now.instant().toString();
+
     try {
-      await settleSplit(activeShareToSettle.id, {
-        settled_amount: roundMoney(amountNum),
-        settled_via: settleMethod,
-        settled_at: new Date().toISOString(),
-      });
-      handleCloseSettle();
+      for (const alloc of allocations) {
+        await settleShare(alloc.itemId, {
+          settled_amount: alloc.amount,
+          settled_via: settleMethod,
+          settled_at: settledAt,
+        });
+      }
+      closeSettle();
     } catch {
-      // Error notifications are already handled by runAction in useFinances hook
+      // The hook already shows the error toast. Keep the dialog open so the person can retry;
+      // shares already recorded drop out of the remaining balance after the refetch.
+      setSettleError('Some payments could not be recorded. Check the balance and try again.');
     }
   };
 
-  // Compute remaining for currently active dialog share
-  const activeShareRemaining = useMemo(() => {
-    if (!activeShareToSettle) return 0;
-    const owed = Number(activeShareToSettle.amount ?? 0);
-    const settled = Number(
-      activeShareToSettle.settled_amount ?? (activeShareToSettle as any).settledAmount ?? 0
+  /* -------------------------------- render ------------------------------- */
+
+  const tabClass = (active: boolean) =>
+    cn(
+      'rounded-md px-3 py-1 text-caption font-medium transition-colors',
+      active
+        ? 'bg-surface text-text-primary shadow-xs'
+        : 'text-text-muted hover:text-text-secondary'
     );
-    return Math.max(0, owed - settled);
-  }, [activeShareToSettle]);
+
+  const methodOptions: {
+    id: SettlementMethod;
+    label: string;
+    hint: string;
+    icon: React.ReactNode;
+  }[] = [
+    { id: 'upi', label: 'UPI / QR', hint: 'GPay, PhonePe', icon: <QrCode className="h-5 w-5" /> },
+    { id: 'cash', label: 'Cash', hint: 'Hand-to-hand', icon: <Banknote className="h-5 w-5" /> },
+    {
+      id: 'bank_transfer',
+      label: 'Net Banking',
+      hint: 'NEFT / IMPS',
+      icon: <Building2 className="h-5 w-5" />,
+    },
+  ];
 
   return (
     <section className="flex h-full min-h-0 flex-col space-y-6">
-      {/* ------------------------------------------------------------------ */}
-      {/* 1. Header Section                                                  */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Header */}
       <div className="mt-4 shrink-0 space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -315,12 +217,12 @@ export function BalancesAndSettlements() {
                 'Loading balances…'
               ) : unsettledError ? (
                 <span className="text-danger">{unsettledError}</span>
-              ) : unsettledSplits.length === 0 ? (
+              ) : stats.shareCount === 0 ? (
                 'All caught up · No outstanding balances'
               ) : (
-                `₹${stats.totalOutstanding.toLocaleString('en-IN')} outstanding across ${
-                  unsettledSplits.length
-                } ${unsettledSplits.length === 1 ? 'split share' : 'split shares'}`
+                `${inr(stats.totalOutstanding)} outstanding from ${stats.peopleCount} ${
+                  stats.peopleCount === 1 ? 'person' : 'people'
+                } · ${stats.shareCount} ${stats.shareCount === 1 ? 'share' : 'shares'}`
               )}
             </p>
           </div>
@@ -339,7 +241,6 @@ export function BalancesAndSettlements() {
               />
               <span className="hidden sm:inline">Refresh</span>
             </Button>
-
             <Link href="/dashboard/splits/contacts">
               <Button variant="outline" size="sm" className="gap-1.5">
                 <Users size={15} className="shrink-0" />
@@ -349,66 +250,29 @@ export function BalancesAndSettlements() {
           </div>
         </div>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* 2. Hero Summary KPI Cards                                          */}
-        {/* ------------------------------------------------------------------ */}
+        {/* KPI cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Card 1: Total Outstanding */}
-          <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-caption font-medium text-text-muted">Total Outstanding</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning-subtle text-warning">
-                <Wallet className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="font-display text-display-xs font-bold text-text-primary">
-                ₹{stats.totalOutstanding.toLocaleString('en-IN')}
-              </div>
-              <p className="text-caption text-text-secondary mt-1">
-                Owed by {stats.uniquePeopleCount}{' '}
-                {stats.uniquePeopleCount === 1 ? 'person' : 'people'}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Pending Shares */}
-          <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-caption font-medium text-text-muted">Unsettled Shares</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
-                <Receipt className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="font-display text-display-xs font-bold text-text-primary">
-                {unsettledSplits.length}
-              </div>
-              <p className="text-caption text-text-secondary mt-1">
-                {stats.unpaidCount} unpaid · {stats.partialCount} partial
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Recovered So Far */}
-          <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-caption font-medium text-text-muted">Collected So Far</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success-subtle text-success">
-                <CheckCircle2 className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="font-display text-display-xs font-bold text-text-primary">
-                ₹{stats.totalSettled.toLocaleString('en-IN')}
-              </div>
-              <p className="text-caption text-text-secondary mt-1">
-                From ₹{stats.totalObligation.toLocaleString('en-IN')} total obligation
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Recovery Progress */}
+          <KpiCard
+            label="Total Outstanding"
+            value={inr(stats.totalOutstanding)}
+            note={`Owed by ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`}
+            icon={<Wallet className="h-4 w-4" />}
+            tone="bg-warning-subtle text-warning"
+          />
+          <KpiCard
+            label="Unsettled Shares"
+            value={String(stats.shareCount)}
+            note={`${stats.unpaidCount} unpaid · ${stats.partialCount} partial`}
+            icon={<Receipt className="h-4 w-4" />}
+            tone="bg-primary-subtle text-primary"
+          />
+          <KpiCard
+            label="Collected So Far"
+            value={inr(stats.totalSettled)}
+            note={`From ${inr(stats.totalObligation)} total obligation`}
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            tone="bg-success-subtle text-success"
+          />
           <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-caption font-medium text-text-muted">Recovery Rate</span>
@@ -428,71 +292,44 @@ export function BalancesAndSettlements() {
           </div>
         </div>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* 3. Toolbar: Search + Filter Tabs + Sort Selector                   */}
-        {/* ------------------------------------------------------------------ */}
-        {!unsettledLoading && unsettledSplits.length > 0 && (
+        {/* Toolbar */}
+        {!unsettledLoading && stats.shareCount > 0 && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Filter Tabs */}
             <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface-raised p-1">
               <button
                 type="button"
                 onClick={() => setFilterTab('all')}
-                className={cn(
-                  'rounded-md px-3 py-1 text-caption font-medium transition-colors',
-                  filterTab === 'all'
-                    ? 'bg-surface text-text-primary shadow-xs'
-                    : 'text-text-muted hover:text-text-secondary'
-                )}
+                className={tabClass(filterTab === 'all')}
               >
-                All ({unsettledSplits.length})
+                All ({stats.peopleCount})
               </button>
-
               <button
                 type="button"
                 onClick={() => setFilterTab('unpaid')}
-                className={cn(
-                  'rounded-md px-3 py-1 text-caption font-medium transition-colors',
-                  filterTab === 'unpaid'
-                    ? 'bg-surface text-text-primary shadow-xs'
-                    : 'text-text-muted hover:text-text-secondary'
-                )}
+                className={tabClass(filterTab === 'unpaid')}
               >
                 Unpaid ({stats.unpaidCount})
               </button>
-
               {stats.partialCount > 0 && (
                 <button
                   type="button"
                   onClick={() => setFilterTab('partial')}
-                  className={cn(
-                    'rounded-md px-3 py-1 text-caption font-medium transition-colors',
-                    filterTab === 'partial'
-                      ? 'bg-surface text-text-primary shadow-xs'
-                      : 'text-text-muted hover:text-text-secondary'
-                  )}
+                  className={tabClass(filterTab === 'partial')}
                 >
                   Partially Settled ({stats.partialCount})
                 </button>
               )}
-
-              {stats.linkedCount > 0 && (
+              {stats.linkedPeople > 0 && (
                 <button
                   type="button"
                   onClick={() => setFilterTab('linked')}
-                  className={cn(
-                    'rounded-md px-3 py-1 text-caption font-medium transition-colors',
-                    filterTab === 'linked'
-                      ? 'bg-surface text-text-primary shadow-xs'
-                      : 'text-text-muted hover:text-text-secondary'
-                  )}
+                  className={tabClass(filterTab === 'linked')}
                 >
-                  Linked Accounts ({stats.linkedCount})
+                  Linked Accounts ({stats.linkedPeople})
                 </button>
               )}
             </div>
 
-            {/* Search Input & Sort Dropdown */}
             <div className="flex items-center gap-2.5">
               <div className="relative w-full sm:w-64">
                 <Input
@@ -516,70 +353,47 @@ export function BalancesAndSettlements() {
                   className="h-9 text-body-sm"
                 />
               </div>
-
-              {/* Sort Selector */}
-              <div className="relative shrink-0">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="h-9 cursor-pointer rounded-lg border border-border bg-surface px-3 py-1.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="highest">Highest balance</option>
-                  <option value="lowest">Lowest balance</option>
-                  <option value="newest">Newest expense</option>
-                  <option value="oldest">Oldest expense</option>
-                  <option value="name">Contact name (A-Z)</option>
-                </select>
-              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                aria-label="Sort balances"
+                className="h-9 shrink-0 cursor-pointer rounded-lg border border-border bg-surface px-3 py-1.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="highest">Highest balance</option>
+                <option value="lowest">Lowest balance</option>
+                <option value="newest">Newest expense</option>
+                <option value="oldest">Oldest expense</option>
+                <option value="name">Contact name (A-Z)</option>
+              </select>
             </div>
           </div>
         )}
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 4. Content Area: Skeletons, Error, Empty, or Cards Grid            */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Content */}
       <div className="flex-1">
-        {/* Loading Skeletons */}
         {unsettledLoading && (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-            {Array.from({ length: 6 }).map((_, idx) => (
+            {Array.from({ length: 3 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex animate-pulse flex-col justify-between rounded-xl border border-border bg-surface p-5"
+                className="flex animate-pulse flex-col gap-5 rounded-xl border border-border bg-surface p-5"
               >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-surface-raised" />
-                      <div className="space-y-1.5">
-                        <div className="h-4 w-28 rounded bg-surface-raised" />
-                        <div className="h-3 w-20 rounded bg-surface-raised" />
-                      </div>
-                    </div>
-                    <div className="h-6 w-16 rounded-full bg-surface-raised" />
-                  </div>
-
-                  <div className="rounded-lg bg-surface-raised/50 p-3 space-y-2">
-                    <div className="h-4 w-3/4 rounded bg-surface-raised" />
-                    <div className="h-3 w-1/2 rounded bg-surface-raised" />
-                  </div>
-
-                  <div className="space-y-1.5 pt-2">
-                    <div className="h-6 w-24 rounded bg-surface-raised" />
-                    <div className="h-2 w-full rounded-full bg-surface-raised" />
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-surface-raised" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-28 rounded bg-surface-raised" />
+                    <div className="h-3 w-20 rounded bg-surface-raised" />
                   </div>
                 </div>
-
-                <div className="mt-5 pt-4 border-t border-border/50">
-                  <div className="h-9 w-full rounded-lg bg-surface-raised" />
-                </div>
+                <div className="mx-auto h-10 w-32 rounded bg-surface-raised" />
+                <div className="h-2 w-full rounded-full bg-surface-raised" />
+                <div className="h-9 w-full rounded-lg bg-surface-raised" />
               </div>
             ))}
           </div>
         )}
 
-        {/* Query Error State */}
         {!unsettledLoading && unsettledError && (
           <div className="flex flex-col items-center justify-center rounded-xl border border-danger/20 bg-danger-subtle/30 p-8 text-center">
             <AlertCircle className="h-8 w-8 text-danger" />
@@ -599,12 +413,11 @@ export function BalancesAndSettlements() {
           </div>
         )}
 
-        {/* Global Empty State (0 total unsettled items) */}
-        {!unsettledLoading && !unsettledError && unsettledSplits.length === 0 && (
+        {!unsettledLoading && !unsettledError && stats.shareCount === 0 && (
           <EmptyState
             icon={<CheckCircle2 className="h-8 w-8 text-success" />}
             title="All settled up!"
-            description="You have no outstanding split expenses right now. Everyone is squared away and all balances are settled."
+            description="You have no outstanding split expenses right now. Everyone is squared away."
             action={
               <Link href="/dashboard/splits/contacts">
                 <Button variant="outline" leadingIcon={<Users className="h-4 w-4" />}>
@@ -615,18 +428,17 @@ export function BalancesAndSettlements() {
           />
         )}
 
-        {/* Search / Filter Empty State */}
         {!unsettledLoading &&
           !unsettledError &&
-          unsettledSplits.length > 0 &&
-          filteredShares.length === 0 && (
+          stats.shareCount > 0 &&
+          visibleGroups.length === 0 && (
             <EmptyState
               icon={<Search className="h-7 w-7 text-text-muted" />}
               title="No matching balances"
               description={
                 searchQuery
-                  ? `No split balances match "${searchQuery}". Try a different keyword or reset filters.`
-                  : 'No split balances found under this filter.'
+                  ? `No balances match "${searchQuery}". Try a different keyword or clear the filters.`
+                  : 'No balances found under this filter.'
               }
               action={
                 <Button
@@ -644,145 +456,114 @@ export function BalancesAndSettlements() {
             />
           )}
 
-        {/* Split Shares Grid */}
-        {!unsettledLoading && !unsettledError && filteredShares.length > 0 && (
+        {/* One card per person */}
+        {!unsettledLoading && !unsettledError && visibleGroups.length > 0 && (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-            {filteredShares.map((item) => {
-              const owed = Number(item.amount ?? 0);
-              const settled = Number(item.settled_amount ?? (item as any).settledAmount ?? 0);
-              const remaining = Math.max(0, owed - settled);
-              const progressPct = owed > 0 ? Math.min(100, Math.round((settled / owed) * 100)) : 0;
-
-              const isLinked = Boolean(item.member?.is_linked ?? (item.member as any)?.isLinked);
-              const memberName = item.member?.name?.trim() || 'Unnamed Contact';
-              const initials = getContactInitials(item.member?.name);
-              const color = resolveContactColor(
-                item.member?.id || item.member?.name || item.member?.email
-              );
+            {visibleGroups.map((g) => {
+              const name = g.member?.name?.trim() || 'Unnamed Contact';
+              const color = resolveContactColor(g.member?.id || g.member?.name || g.member?.email);
+              const linked = isLinkedMember(g.member);
+              const count = g.items.length;
+              const isPartial = g.settled > 0;
+              const hasOldest = g.oldestTime > 0 && g.oldestTime !== Number.MAX_SAFE_INTEGER;
 
               return (
                 <div
-                  key={item.id}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                  key={g.key}
+                  className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 >
-                  {/* Top color accent stripe */}
                   <div
-                    className="h-1 w-full opacity-80 transition-opacity group-hover:opacity-100"
+                    className="h-1 w-full opacity-80 group-hover:opacity-100"
                     style={{ backgroundColor: color }}
                   />
 
-                  <div className="p-5 space-y-4">
-                    {/* Header: Member Avatar, Name, and Link Status */}
+                  <div className="flex flex-1 flex-col p-5">
+                    {/* Person */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-on-primary ring-2 ring-surface shadow-xs overflow-hidden"
-                          style={{ backgroundColor: color }}
-                        >
-                          {item.member?.image ? (
-                            <img
-                              src={item.member.image}
-                              alt={memberName}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <span className="font-display text-body-sm font-semibold tracking-wider">
-                              {initials || <User className="h-5 w-5" />}
-                            </span>
-                          )}
-                        </div>
-
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar member={g.member} name={name} color={color} />
                         <div className="min-w-0">
                           <h4 className="font-display text-body-md font-semibold text-text-primary truncate">
-                            {memberName}
+                            {name}
                           </h4>
                           <p className="text-caption text-text-muted truncate">
-                            {item.member?.email || item.member?.phone || 'External contact'}
+                            {g.member?.email || g.member?.phone || 'External contact'}
                           </p>
                         </div>
                       </div>
-
-                      {isLinked ? (
-                        <span className="text-caption bg-success-subtle text-success border border-success/30 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium shrink-0">
+                      {linked ? (
+                        <span className="text-caption bg-success-subtle text-success border border-success/30 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium">
                           <UserCheck size={11} />
                           Linked
                         </span>
                       ) : (
-                        <span className="text-caption bg-surface-raised text-text-muted border border-border/50 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium shrink-0">
+                        <span className="text-caption bg-surface-raised text-text-muted border border-border/50 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium">
                           <User size={11} />
                           External
                         </span>
                       )}
                     </div>
 
-                    {/* Expense Context Box */}
-                    <div className="rounded-lg border border-border/50 bg-surface-raised/40 p-3 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-body-sm font-medium text-text-primary truncate">
-                          {item.expense?.description || 'Shared Expense'}
-                        </span>
-                        <span className="font-numeric text-caption font-medium text-text-secondary shrink-0">
-                          ₹{Number(item.expense?.amount ?? 0).toLocaleString('en-IN')} total
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-caption text-text-muted">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} className="shrink-0" />
-                          <span>{safeFormatDate(item.expense?.date)}</span>
-                        </span>
-                        {item.expense?.split_type && (
-                          <span className="capitalize text-[11px] px-1.5 py-0.2 rounded bg-surface border border-border/40">
-                            {item.expense.split_type}
+                    {/* Centered total */}
+                    <div className="my-5 rounded-lg border border-border/50 bg-surface-raised/40 px-4 py-4">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="flex items-center gap-2">
+                          <span className="text-caption text-text-muted">Total remaining</span>
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                              isPartial
+                                ? 'bg-primary-subtle text-primary'
+                                : 'bg-warning-subtle text-warning'
+                            )}
+                          >
+                            {isPartial ? 'Partial' : 'Unpaid'}
                           </span>
-                        )}
+                        </div>
+                        <span className="mt-1 font-display text-display-md font-bold text-text-primary leading-tight">
+                          {inr(g.remaining)}
+                        </span>
+                        <span className="mt-1 text-caption text-text-secondary">
+                          across {count} {count === 1 ? 'expense' : 'expenses'}
+                          {isPartial && ` · ${inr(g.settled)} paid`}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Balance Highlight & Progress */}
-                    <div className="space-y-2 pt-1">
-                      <div className="flex items-baseline justify-between">
-                        <div>
-                          <span className="text-caption text-text-muted block">Remaining Owed</span>
-                          <span className="font-display text-display-sm font-bold text-text-primary">
-                            ₹{remaining.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-caption text-text-muted block">Total Share</span>
-                          <span className="font-numeric text-body-sm font-medium text-text-secondary">
-                            ₹{owed.toLocaleString('en-IN')}
-                          </span>
-                        </div>
+                    {/* Progress */}
+                    <div className="mt-auto space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-text-muted">
+                        <span>{g.progressPct}% settled</span>
+                        <span className="font-numeric">of {inr(g.owed)}</span>
                       </div>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[11px] text-text-muted">
-                          <span>{progressPct}% Settled</span>
-                          {settled > 0 && (
-                            <span className="text-success font-numeric">
-                              ₹{settled.toLocaleString('en-IN')} paid
-                            </span>
-                          )}
-                        </div>
-                        <Progress value={progressPct} className="h-1.5 bg-surface-raised" />
-                      </div>
+                      <Progress value={g.progressPct} className="h-1.5 bg-surface-raised" />
+                      {hasOldest && (
+                        <p className="flex items-center gap-1 pt-1 text-[11px] text-text-muted">
+                          <Calendar size={11} className="shrink-0" />
+                          Oldest expense {formatTimeAgo(g.oldestTime)}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Card Action Button */}
-                  <div className="p-5 pt-0">
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 gap-2.5 p-5 pt-0">
                     <Button
-                      onClick={() => handleOpenSettle(item)}
-                      className="w-full gap-1.5"
+                      variant="outline"
                       size="sm"
+                      onClick={() => setDetailsKey(g.key)}
+                      aria-label={`View expenses for ${name}`}
+                    >
+                      {count === 1 ? 'View' : `View all (${count})`}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => openSettle(g.key)}
+                      aria-label={`Settle ${inr(g.remaining)} with ${name}`}
                     >
                       <CheckCircle2 size={15} />
-                      Settle Balance
+                      {count === 1 ? 'Settle' : 'Settle all'}
                     </Button>
                   </div>
                 </div>
@@ -792,31 +573,99 @@ export function BalancesAndSettlements() {
         )}
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 5. Settlement Dialog Modal                                         */}
-      {/* ------------------------------------------------------------------ */}
-      <Modal
-        open={Boolean(activeShareToSettle)}
-        onOpenChange={(open) => {
-          if (!open) handleCloseSettle();
-        }}
-      >
+      {/* Details dialog: every unsettled share for one person */}
+      <Modal open={Boolean(detailsGroup)} onOpenChange={(open) => !open && setDetailsKey(null)}>
         <ModalContent size="md">
-          <ModalHeader tone="success" icon={<CheckCircle2 className="h-5 w-5" />}>
-            <ModalTitle>Record Settlement</ModalTitle>
+          <ModalHeader icon={<Receipt className="h-5 w-5" />}>
+            <ModalTitle>{detailsGroup?.member?.name || 'Contact'}</ModalTitle>
             <ModalDescription>
-              Record payment reimbursement received from{' '}
-              <strong className="text-text-primary">
-                {activeShareToSettle?.member?.name || 'this contact'}
-              </strong>
-              .
+              {detailsGroup &&
+                `${inr(detailsGroup.remaining)} remaining across ${detailsGroup.items.length} ${
+                  detailsGroup.items.length === 1 ? 'expense' : 'expenses'
+                }`}
             </ModalDescription>
           </ModalHeader>
 
-          {activeShareToSettle && (
-            <form onSubmit={handleConfirmSettle}>
+          {detailsGroup && (
+            <>
+              <ModalBody className="max-h-[60vh] space-y-2.5 overflow-y-auto">
+                {[...detailsGroup.items].reverse().map((item) => {
+                  const remaining = getRemaining(item);
+                  const settled = getSettled(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-surface-raised/40 p-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-medium text-text-primary truncate">
+                          {item.expense?.description || 'Shared Expense'}
+                        </p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-caption text-text-muted">
+                          <Calendar size={12} className="shrink-0" />
+                          {fmtDate(item.expense?.date)}
+                          {item.expense?.split_type && (
+                            <span className="rounded border border-border/40 bg-surface px-1.5 text-[11px] capitalize">
+                              {item.expense.split_type}
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-caption text-text-secondary">
+                          Share {inr(getOwed(item))}
+                          {settled > 0 && (
+                            <span className="text-success"> · {inr(settled)} paid</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className="font-display text-body-md font-bold text-text-primary">
+                          {inr(remaining)}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openSettle(detailsGroup.key, item.id)}
+                        >
+                          Settle
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="ghost" onClick={() => setDetailsKey(null)}>
+                  Close
+                </Button>
+                <Button className="gap-1.5" onClick={() => openSettle(detailsGroup.key)}>
+                  <CheckCircle2 size={15} />
+                  Settle all ({inr(detailsGroup.remaining)})
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Settlement dialog: one share or the whole person */}
+      <Modal open={Boolean(settleTarget)} onOpenChange={(open) => !open && closeSettle()}>
+        <ModalContent size="md">
+          <ModalHeader tone="success" icon={<CheckCircle2 className="h-5 w-5" />}>
+            <ModalTitle>Record settlement</ModalTitle>
+            <ModalDescription>
+              Payment received from{' '}
+              <strong className="text-text-primary">
+                {settleTarget?.group.member?.name || 'this contact'}
+              </strong>
+              {settleTarget && !settleTarget.isSingle && settleTarget.items.length > 1
+                ? `. It's applied to the oldest expenses first.`
+                : '.'}
+            </ModalDescription>
+          </ModalHeader>
+
+          {settleTarget && (
+            <form onSubmit={confirmSettle}>
               <ModalBody className="space-y-5">
-                {/* Summary Context Banner */}
                 <div className="rounded-xl border border-border bg-surface-raised/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -824,67 +673,59 @@ export function BalancesAndSettlements() {
                         className="flex h-8 w-8 items-center justify-center rounded-full text-caption font-semibold text-on-primary"
                         style={{
                           backgroundColor: resolveContactColor(
-                            activeShareToSettle.member?.id || activeShareToSettle.member?.name
+                            settleTarget.group.member?.id || settleTarget.group.member?.name
                           ),
                         }}
                       >
-                        {getContactInitials(activeShareToSettle.member?.name)}
+                        {getContactInitials(settleTarget.group.member?.name)}
                       </div>
                       <div>
                         <span className="font-display text-body-sm font-semibold text-text-primary block">
-                          {activeShareToSettle.member?.name || 'Contact'}
+                          {settleTarget.group.member?.name || 'Contact'}
                         </span>
                         <span className="text-caption text-text-muted">
-                          {activeShareToSettle.member?.email ||
-                            activeShareToSettle.member?.phone ||
+                          {settleTarget.group.member?.email ||
+                            settleTarget.group.member?.phone ||
                             'External'}
                         </span>
                       </div>
                     </div>
-
                     <div className="text-right">
-                      <span className="text-caption text-text-muted block">Remaining Owed</span>
+                      <span className="text-caption text-text-muted block">Remaining owed</span>
                       <span className="font-display text-body-md font-bold text-text-primary">
-                        ₹{activeShareRemaining.toLocaleString('en-IN')}
+                        {inr(settleTarget.remaining)}
                       </span>
                     </div>
                   </div>
-
-                  <div className="border-t border-border/50 pt-2 flex items-center justify-between text-caption text-text-secondary">
-                    <span>{activeShareToSettle.expense?.description}</span>
-                    <span>{safeFormatDate(activeShareToSettle.expense?.date)}</span>
+                  <div className="border-t border-border/50 pt-2 text-caption text-text-secondary">
+                    {settleTarget.items.length === 1
+                      ? `${settleTarget.items[0].expense?.description || 'Shared Expense'} · ${fmtDate(
+                          settleTarget.items[0].expense?.date
+                        )}`
+                      : `${settleTarget.items.length} expenses`}
                   </div>
                 </div>
 
-                {/* Amount to Settle Input */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="settle-amount-input"
                       className="text-body-sm font-medium text-text-primary"
                     >
-                      Settlement Amount (₹)
+                      Amount received (₹)
                     </label>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setSettleAmount(String(roundMoney(activeShareRemaining)))}
-                        className="rounded bg-surface-raised px-2 py-0.5 text-caption font-medium text-text-secondary hover:text-text-primary transition-colors border border-border/60"
-                      >
-                        Full (₹{activeShareRemaining})
-                      </button>
-                      {activeShareRemaining > 10 && (
-                        <button
-                          type="button"
+                      <QuickAmount
+                        label={`Full (${inr(settleTarget.remaining)})`}
+                        onClick={() => setSettleAmount(String(settleTarget.remaining))}
+                      />
+                      {settleTarget.remaining > 10 && (
+                        <QuickAmount
+                          label={`50% (${inr(Math.round(settleTarget.remaining / 2))})`}
                           onClick={() =>
-                            setSettleAmount(
-                              String(roundMoney(Math.round(activeShareRemaining / 2)))
-                            )
+                            setSettleAmount(String(Math.round(settleTarget.remaining / 2)))
                           }
-                          className="rounded bg-surface-raised px-2 py-0.5 text-caption font-medium text-text-secondary hover:text-text-primary transition-colors border border-border/60"
-                        >
-                          50% (₹{Math.round(activeShareRemaining / 2)})
-                        </button>
+                        />
                       )}
                     </div>
                   </div>
@@ -896,9 +737,10 @@ export function BalancesAndSettlements() {
                     <input
                       id="settle-amount-input"
                       type="number"
+                      inputMode="decimal"
                       step="any"
-                      min="1"
-                      max={activeShareRemaining}
+                      min="0.01"
+                      max={settleTarget.remaining}
                       value={settleAmount}
                       onChange={(e) => {
                         setSettleAmount(e.target.value);
@@ -921,59 +763,27 @@ export function BalancesAndSettlements() {
                   )}
                 </div>
 
-                {/* Payment Method Selector */}
                 <div className="space-y-2">
-                  <label className="text-body-sm font-medium text-text-primary">
-                    Settlement Method
-                  </label>
+                  <span className="text-body-sm font-medium text-text-primary">Payment method</span>
                   <div className="grid grid-cols-3 gap-2.5">
-                    {/* UPI Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSettleMethod('upi')}
-                      className={cn(
-                        'flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all',
-                        settleMethod === 'upi'
-                          ? 'border-primary bg-primary-subtle/40 text-primary shadow-xs'
-                          : 'border-border bg-surface text-text-secondary hover:border-border/80 hover:bg-surface-raised'
-                      )}
-                    >
-                      <QrCode className="h-5 w-5" />
-                      <span className="text-caption font-semibold">UPI / QR</span>
-                      <span className="text-[10px] text-text-muted">GPay, PhonePe</span>
-                    </button>
-
-                    {/* Cash Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSettleMethod('cash')}
-                      className={cn(
-                        'flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all',
-                        settleMethod === 'cash'
-                          ? 'border-primary bg-primary-subtle/40 text-primary shadow-xs'
-                          : 'border-border bg-surface text-text-secondary hover:border-border/80 hover:bg-surface-raised'
-                      )}
-                    >
-                      <Banknote className="h-5 w-5" />
-                      <span className="text-caption font-semibold">Cash</span>
-                      <span className="text-[10px] text-text-muted">Hand-to-hand</span>
-                    </button>
-
-                    {/* Bank Transfer Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSettleMethod('bank_transfer')}
-                      className={cn(
-                        'flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all',
-                        settleMethod === 'bank_transfer'
-                          ? 'border-primary bg-primary-subtle/40 text-primary shadow-xs'
-                          : 'border-border bg-surface text-text-secondary hover:border-border/80 hover:bg-surface-raised'
-                      )}
-                    >
-                      <Building2 className="h-5 w-5" />
-                      <span className="text-caption font-semibold">Net Banking</span>
-                      <span className="text-[10px] text-text-muted">NEFT / IMPS</span>
-                    </button>
+                    {methodOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSettleMethod(opt.id)}
+                        aria-pressed={settleMethod === opt.id}
+                        className={cn(
+                          'flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all',
+                          settleMethod === opt.id
+                            ? 'border-primary bg-primary-subtle/40 text-primary shadow-xs'
+                            : 'border-border bg-surface text-text-secondary hover:bg-surface-raised'
+                        )}
+                      >
+                        {opt.icon}
+                        <span className="text-caption font-semibold">{opt.label}</span>
+                        <span className="text-[10px] text-text-muted">{opt.hint}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </ModalBody>
@@ -982,7 +792,7 @@ export function BalancesAndSettlements() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={handleCloseSettle}
+                  onClick={closeSettle}
                   disabled={isSettlingSplit}
                 >
                   Cancel
@@ -994,7 +804,7 @@ export function BalancesAndSettlements() {
                   className="gap-1.5"
                 >
                   <Check size={16} />
-                  Confirm Settlement (₹{settleAmount || '0'})
+                  Confirm settlement ({inr(Number(settleAmount) || 0)})
                 </Button>
               </ModalFooter>
             </form>
@@ -1002,6 +812,79 @@ export function BalancesAndSettlements() {
         </ModalContent>
       </Modal>
     </section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Small presentational pieces                                                */
+/* -------------------------------------------------------------------------- */
+
+function KpiCard(props: {
+  label: string;
+  value: string;
+  note: string;
+  icon: React.ReactNode;
+  tone: string;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
+      <div className="flex items-center justify-between">
+        <span className="text-caption font-medium text-text-muted">{props.label}</span>
+        <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', props.tone)}>
+          {props.icon}
+        </div>
+      </div>
+      <div className="mt-3">
+        <div className="font-display text-display-xs font-bold text-text-primary">
+          {props.value}
+        </div>
+        <p className="text-caption text-text-secondary mt-1">{props.note}</p>
+      </div>
+    </div>
+  );
+}
+
+function Avatar({
+  member,
+  name,
+  color,
+}: {
+  member?: SplitContactMember | null;
+  name: string;
+  color: string;
+}) {
+  const [broken, setBroken] = useState(false);
+  const initials = getContactInitials(member?.name);
+  return (
+    <div
+      className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-on-primary ring-2 ring-surface shadow-xs"
+      style={{ backgroundColor: color }}
+    >
+      {member?.image && !broken ? (
+        <img
+          src={member.image}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <span className="font-display text-body-sm font-semibold tracking-wider">
+          {initials || <User className="h-5 w-5" />}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function QuickAmount({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded border border-border/60 bg-surface-raised px-2 py-0.5 text-caption font-medium text-text-secondary transition-colors hover:text-text-primary"
+    >
+      {label}
+    </button>
   );
 }
 

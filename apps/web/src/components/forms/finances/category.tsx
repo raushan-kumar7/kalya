@@ -243,7 +243,7 @@ export function CategoryForm({
       icon={<Tag className="h-5 w-5" />}
       submitLabel={category ? 'Save Changes' : 'Create Category'}
       isSubmitting={form.formState.isSubmitting}
-      size="lg"
+      size="xl"
     >
       <div className="space-y-4">
         {/* Category Live Preview */}
