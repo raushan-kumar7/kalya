@@ -38,9 +38,12 @@ export class AlertDispatcherService {
         title: dto.title,
         message: dto.message,
         isRead: false,
-        referenceType: dto.reference_type,
-        referenceId: dto.reference_id,
-        metadata: dto.metadata ?? {},
+        referenceType: dto.reference_type ?? null,
+        referenceId: dto.reference_id ?? null,
+        metadata: {
+          ...(dto.metadata ?? {}),
+          ...(dto.severity ? { severity: dto.severity } : {}),
+        },
       })
       .returning();
 

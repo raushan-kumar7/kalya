@@ -88,7 +88,8 @@ axiosInstance.interceptors.response.use(
       response.data = data.data;
     }
 
-    if ((response.config?.url ?? '').includes('/finances/')) {
+    const url = response.config?.url ?? '';
+    if (url.includes('/finances/') || url.includes('/notifications/')) {
       response.data = toSnake(response.data);
     }
     return response;

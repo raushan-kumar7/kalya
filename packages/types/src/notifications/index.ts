@@ -10,6 +10,8 @@ import {
   UUID,
 } from '../core';
 
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+
 /**
  * Alert notification entity recorded in the system.
  * Lifecycle is tracked by `created_at` and `read_at`.
@@ -26,9 +28,11 @@ export interface Alert extends Identifiable {
   /** Whether the notification has been acknowledged/read by the user */
   is_read: boolean;
   /** Target domain table this alert points to */
-  reference_type: AlertReferenceType;
+  reference_type?: AlertReferenceType | null;
   /** Foreign key pointing to the target domain record */
-  reference_id: UUID;
+  reference_id?: UUID | null;
+  /** Severity level for UI badge and urgency */
+  severity?: AlertSeverity;
   /** Contextual JSON payload associated with the alert event */
   metadata: Record<string, JSONValue>;
   /** Timestamp when the alert was triggered/created */
@@ -71,9 +75,11 @@ export interface CreateAlertDto {
   /** Body text */
   message: string;
   /** Related domain table */
-  reference_type: AlertReferenceType;
+  reference_type?: AlertReferenceType | null;
   /** ID in the related table */
-  reference_id: UUID;
+  reference_id?: UUID | null;
+  /** Severity level */
+  severity?: AlertSeverity;
   /** Optional metadata JSON dictionary */
   metadata?: Record<string, JSONValue>;
 }

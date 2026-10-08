@@ -10,6 +10,7 @@ import { Breadcrumb } from '@/components/shared';
 import { ThemeToggle } from '@/components/ui';
 import { cn } from '@/libs/utils';
 import { usePageHeading } from './helper';
+import { useUnreadAlertCountQuery } from '@/hooks/finances';
 
 export interface TopProps {
   /** Signed-in user profile */
@@ -34,6 +35,7 @@ export const Top = ({
   const pathname = usePathname();
   const firstName = user?.first_name || user?.name?.split(' ')[0] || 'there';
   const { title, subtitle, breadcrumbPath, isOverview } = usePageHeading(firstName);
+  const { data: liveUnreadData } = useUnreadAlertCountQuery();
 
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -97,8 +99,8 @@ export const Top = ({
     setMobileSearchOpen(false);
   }, [pathname]);
 
-  const hasUnread =
-    hasNotifications || (unreadNotificationCount !== undefined && unreadNotificationCount > 0);
+  const effectiveUnreadCount = unreadNotificationCount ?? liveUnreadData?.count ?? 0;
+  const hasUnread = hasNotifications || effectiveUnreadCount > 0;
 
   return (
     <header

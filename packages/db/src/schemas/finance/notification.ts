@@ -13,8 +13,8 @@ export const alert = sqliteTable(
     title: text('title').notNull(),
     message: text('message').notNull(),
     isRead: boolCol('is_read', false),
-    referenceType: text('reference_type').notNull(),
-    referenceId: uuidCol('reference_id').notNull(),
+    referenceType: text('reference_type'),
+    referenceId: uuidCol('reference_id'),
     metadata: text('metadata', { mode: 'json' }).notNull().$type<Record<string, unknown>>(),
     createdAt: createdAt(),
 

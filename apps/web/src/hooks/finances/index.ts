@@ -16,3 +16,4 @@ export * from './use-summaries';
 export * from './feed';
 export * from './transactions';
 export * from './overview';
+export * from './use-alerts';

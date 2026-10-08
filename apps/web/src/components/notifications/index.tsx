@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { EASINGS, TRANSITIONS } from '@/libs/animations';
 import { cn } from '@/libs/utils';
+import { useAlertsQuery, useAlertActions, useUnreadAlertCountQuery } from '@/hooks/finances';
 
 export interface NotificationItem {
   id: string;
@@ -36,45 +37,6 @@ export interface NotificationPanelProps {
   onMarkAsRead?: (id: string) => void;
   className?: string;
 }
-
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n-1',
-    title: 'Budget Threshold Reached',
-    message: 'You have reached 85% of your Dining Out monthly budget allocation.',
-    type: 'budget',
-    created_at: '10m ago',
-    is_read: false,
-    href: '/dashboard/budgets',
-  },
-  {
-    id: 'n-2',
-    title: 'Split Bill Settled',
-    message: 'Aarav settled ₹1,450 for "Weekend Brunch" via UPI.',
-    type: 'split',
-    created_at: '2h ago',
-    is_read: false,
-    href: '/dashboard/splits',
-  },
-  {
-    id: 'n-3',
-    title: 'Gold Price Milestone',
-    message: '24K Digital Gold is up +1.8% today at live market rates.',
-    type: 'wealth',
-    created_at: '5h ago',
-    is_read: true,
-    href: '/dashboard/assets/gold-silver',
-  },
-  {
-    id: 'n-4',
-    title: 'Upcoming Utility Bill',
-    message: 'Electricity board bill due in 3 days. Total: ₹2,180.',
-    type: 'bill',
-    created_at: 'Yesterday',
-    is_read: true,
-    href: '/dashboard/transactions',
-  },
-];
 
 const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   budget: AlertTriangle,
@@ -97,26 +59,57 @@ export const NotificationPanel = React.forwardRef<HTMLDivElement, NotificationPa
     { isOpen, onClose, notifications: propNotifications, onMarkAllAsRead, onMarkAsRead, className },
     ref
   ) => {
-    const [items, setItems] = React.useState<NotificationItem[]>(
-      propNotifications ?? DEFAULT_NOTIFICATIONS
-    );
+    const { data: serverAlerts } = useAlertsQuery({ limit: 5 }, { enabled: isOpen });
+    const { data: serverUnreadCount } = useUnreadAlertCountQuery();
+    const { markAsRead: markReadAction, markAllAsRead: markAllAction } = useAlertActions();
+
     const [filter, setFilter] = React.useState<'all' | 'unread'>('all');
 
-    // Keep internal items synchronized if prop changes
-    React.useEffect(() => {
-      if (propNotifications) {
-        setItems(propNotifications);
-      }
-    }, [propNotifications]);
+    const mappedServerItems = React.useMemo<NotificationItem[] | null>(() => {
+      if (!serverAlerts || serverAlerts.length === 0) return null;
+      return serverAlerts.map((a) => ({
+        id: a.id,
+        title: a.title,
+        message: a.message,
+        type:
+          a.type === 'budget_alert'
+            ? 'budget'
+            : a.type === 'split_update'
+              ? 'split'
+              : a.type === 'goal_milestone'
+                ? 'wealth'
+                : 'system',
+        created_at: (a as any).created_at ?? (a as any).createdAt ?? new Date().toISOString(),
+        is_read: Boolean((a as any).is_read ?? (a as any).isRead),
+        href:
+          a.reference_type === 'budget'
+            ? '/dashboard/budgets'
+            : a.reference_type === 'split_expense'
+              ? '/dashboard/splits'
+              : a.reference_type === 'goal'
+                ? '/dashboard/goals'
+                : a.type === 'system'
+                  ? '/dashboard/reports'
+                  : '/dashboard/transactions',
+      }));
+    }, [serverAlerts]);
+
+    const items = propNotifications ?? mappedServerItems ?? [];
 
     const handleMarkAll = () => {
-      setItems((prev) => prev.map((item) => ({ ...item, is_read: true })));
-      onMarkAllAsRead?.();
+      if (onMarkAllAsRead) {
+        onMarkAllAsRead();
+      } else {
+        markAllAction();
+      }
     };
 
     const handleItemClick = (id: string) => {
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
-      onMarkAsRead?.(id);
+      if (onMarkAsRead) {
+        onMarkAsRead(id);
+      } else {
+        markReadAction(id);
+      }
     };
 
     const filteredItems = React.useMemo(() => {
@@ -126,7 +119,7 @@ export const NotificationPanel = React.forwardRef<HTMLDivElement, NotificationPa
       return items;
     }, [items, filter]);
 
-    const unreadCount = items.filter((item) => !item.is_read).length;
+    const unreadCount = serverUnreadCount?.count ?? items.filter((item) => !item.is_read).length;
 
     return (
       <AnimatePresence>

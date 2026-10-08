@@ -76,8 +76,9 @@ export const AlertSchema = z.object({
       `Message cannot exceed ${NOTIFICATION_LIMITS.MAX_MESSAGE_LENGTH} characters`
     ),
   is_read: z.boolean(),
-  reference_type: AlertReferenceTypeSchema,
-  reference_id: UUIDSchema,
+  reference_type: AlertReferenceTypeSchema.nullable().optional(),
+  reference_id: UUIDSchema.nullable().optional(),
+  severity: z.enum(['info', 'warning', 'critical']).optional(),
   metadata: z.record(z.string(), JSONValueSchema),
   created_at: ISOTimestampSchema,
   read_at: ISOTimestampSchema.nullable().optional(),
@@ -100,8 +101,9 @@ export const CreateAlertSchema: z.ZodType<CreateAlertDto> = z.object({
     .trim()
     .min(NOTIFICATION_LIMITS.MIN_MESSAGE_LENGTH, 'Message is required')
     .max(NOTIFICATION_LIMITS.MAX_MESSAGE_LENGTH, 'Message is too long'),
-  reference_type: AlertReferenceTypeSchema,
-  reference_id: UUIDSchema,
+  reference_type: AlertReferenceTypeSchema.nullable().optional(),
+  reference_id: UUIDSchema.nullable().optional(),
+  severity: z.enum(['info', 'warning', 'critical']).optional(),
   metadata: z.record(z.string(), JSONValueSchema).optional(),
 });
 export type CreateAlertInput = z.infer<typeof CreateAlertSchema>;
