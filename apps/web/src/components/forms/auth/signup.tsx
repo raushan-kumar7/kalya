@@ -21,6 +21,7 @@ import { SignUpSchema, type SignUpInput } from '@kalya/validations';
 import type { AuthResponse } from '@kalya/types';
 import { cn } from '@/libs/utils';
 import { useAuth, useUsernameAvailability } from '@/hooks/auth';
+import { AuthService } from '@/libs/services/auth';
 import { Button, Input } from '@/components/ui/forms';
 import { Alert } from '@/components/ui/feedback/alert';
 import { Spinner } from '@/components/ui/states/spinner';
@@ -98,6 +99,7 @@ export const SignUp = ({
     isChecking: isUsernameChecking,
     isAvailable: isUsernameAvailable,
     message: usernameMessage,
+    checkNow: checkUsernameNow,
   } = useUsernameAvailability(username ?? '');
 
   const usernameErrorMessage =
@@ -158,17 +160,8 @@ export const SignUp = ({
   const onSubmit = async (data: SignUpInput) => {
     setServerError(null);
 
-    // Prevent submission while username availability check is still pending
-    if (isUsernameChecking) {
-      setError('username', {
-        type: 'manual',
-        message: 'Please wait while we verify username availability.',
-      });
-      return;
-    }
-
-    // Require available username if check has completed
-    if (!isUsernameAvailable && usernameStatus !== 'error') {
+    // Reject early if username is already confirmed taken or invalid
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') {
       setError('username', {
         type: 'manual',
         message: usernameMessage ?? 'Choose an available username first.',
@@ -188,6 +181,22 @@ export const SignUp = ({
         email: data.email.trim().toLowerCase(),
       };
 
+      // If availability hasn't been confirmed yet (e.g. submitted before debounce timer elapsed), check now
+      if (!isUsernameAvailable) {
+        try {
+          const check = await AuthService.checkUsernameAvailability(payload.username);
+          if (!check.available) {
+            setError('username', {
+              type: 'manual',
+              message: check.message ?? 'This username is already taken.',
+            });
+            return;
+          }
+        } catch {
+          // If check endpoint is unreachable, continue; backend registration will enforce uniqueness
+        }
+      }
+
       const result = await signUp(payload);
 
       if (result.success && result.data) {
@@ -199,8 +208,7 @@ export const SignUp = ({
           searchParams?.get('callbackUrl') ||
           `/auth/verify-email?email=${encodeURIComponent(payload.email)}`;
 
-        router.push(destination);
-        router.refresh();
+        router.replace(destination);
       } else if (result.errorMessage) {
         setServerError(result.errorMessage);
       }
@@ -384,7 +392,11 @@ export const SignUp = ({
               helperText={usernameHelperText}
               autoComplete="username"
               disabled={isBusy}
-              {...register('username')}
+              {...register('username', {
+                onBlur: () => {
+                  checkUsernameNow();
+                },
+              })}
             />
 
             <Input
@@ -445,7 +457,7 @@ export const SignUp = ({
             fullWidth
             animated
             isLoading={isBusy}
-            disabled={isBusy || isUsernameChecking}
+            disabled={isBusy}
             rightIcon={
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             }

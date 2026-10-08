@@ -24,6 +24,7 @@ import {
 import { cn } from '@/libs/utils';
 import { formatInr } from '@kalya/utils';
 import { Button } from '@/components/ui/forms/button';
+import { KpiCard, KpiGrid } from '@/components/shared';
 import {
   Tooltip,
   TooltipContent,
@@ -97,123 +98,87 @@ export function ReportKpiStrip({
   return (
     <div className="flex flex-col gap-3">
       {/* Primary KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <KpiGrid cols={4}>
         {/* Income */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card hover:border-primary/30 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Total Income</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-subtle text-primary">
-              <Wallet className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          {isLoading ? (
-            <div className="mt-2 h-7 w-28 animate-pulse rounded bg-surface-raised" />
-          ) : (
-            <div className="mt-1.5 font-numeric text-body-xl font-bold text-text-primary tracking-tight">
-              {kpis.income.formatted}
-            </div>
-          )}
-          {compareWithPrevious && !isLoading && (
-            <div className="mt-2.5">
-              <ComparisonBadge
-                deltaPct={kpis.income.deltaPct}
-                isPositiveGood={true}
-                previousFormatted={kpis.income.previousFormatted}
-              />
-            </div>
-          )}
-        </div>
+        <KpiCard
+          title="Total Income"
+          value={kpis.income.formatted}
+          icon={Wallet}
+          tone="default"
+          isLoading={isLoading}
+          trend={
+            compareWithPrevious && !isLoading && Number.isFinite(kpis.income.deltaPct)
+              ? {
+                  value: kpis.income.deltaPct,
+                  label: kpis.income.previousFormatted
+                    ? `vs ${kpis.income.previousFormatted}`
+                    : 'vs prev',
+                  invert: false,
+                }
+              : undefined
+          }
+        />
 
         {/* Spent */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card hover:border-danger/30 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Spent (Your Share)</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-danger-subtle text-danger">
-              <Receipt className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          {isLoading ? (
-            <div className="mt-2 h-7 w-28 animate-pulse rounded bg-surface-raised" />
-          ) : (
-            <div className="mt-1.5 font-numeric text-body-xl font-bold text-text-primary tracking-tight">
-              {kpis.spent.formatted}
-            </div>
-          )}
-          {compareWithPrevious && !isLoading && (
-            <div className="mt-2.5">
-              <ComparisonBadge
-                deltaPct={kpis.spent.deltaPct}
-                isPositiveGood={false}
-                previousFormatted={kpis.spent.previousFormatted}
-              />
-            </div>
-          )}
-        </div>
+        <KpiCard
+          title="Spent (Your Share)"
+          value={kpis.spent.formatted}
+          icon={Receipt}
+          tone="negative"
+          isLoading={isLoading}
+          trend={
+            compareWithPrevious && !isLoading && Number.isFinite(kpis.spent.deltaPct)
+              ? {
+                  value: kpis.spent.deltaPct,
+                  label: kpis.spent.previousFormatted
+                    ? `vs ${kpis.spent.previousFormatted}`
+                    : 'vs prev',
+                  invert: true,
+                }
+              : undefined
+          }
+        />
 
         {/* Net Savings */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card hover:border-success/30 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Net Savings</span>
-            <span
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-full',
-                kpis.netSavings.value >= 0
-                  ? 'bg-success-subtle text-success'
-                  : 'bg-danger-subtle text-danger'
-              )}
-            >
-              <PiggyBank className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          {isLoading ? (
-            <div className="mt-2 h-7 w-28 animate-pulse rounded bg-surface-raised" />
-          ) : (
-            <div
-              className={cn(
-                'mt-1.5 font-numeric text-body-xl font-bold tracking-tight',
-                kpis.netSavings.value >= 0 ? 'text-success' : 'text-danger'
-              )}
-            >
-              {kpis.netSavings.formatted}
-            </div>
-          )}
-          {compareWithPrevious && !isLoading && (
-            <div className="mt-2.5">
-              <ComparisonBadge
-                deltaPct={kpis.netSavings.deltaPct}
-                isPositiveGood={true}
-                previousFormatted={kpis.netSavings.previousFormatted}
-              />
-            </div>
-          )}
-        </div>
+        <KpiCard
+          title="Net Savings"
+          value={kpis.netSavings.formatted}
+          icon={PiggyBank}
+          tone={kpis.netSavings.value >= 0 ? 'positive' : 'negative'}
+          isLoading={isLoading}
+          trend={
+            compareWithPrevious && !isLoading && Number.isFinite(kpis.netSavings.deltaPct)
+              ? {
+                  value: kpis.netSavings.deltaPct,
+                  label: kpis.netSavings.previousFormatted
+                    ? `vs ${kpis.netSavings.previousFormatted}`
+                    : 'vs prev',
+                  invert: false,
+                }
+              : undefined
+          }
+        />
 
         {/* Savings Rate */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card hover:border-primary/30 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Savings Rate</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-subtle text-accent">
-              <Percent className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          {isLoading ? (
-            <div className="mt-2 h-7 w-20 animate-pulse rounded bg-surface-raised" />
-          ) : (
-            <div className="mt-1.5 font-numeric text-body-xl font-bold text-text-primary tracking-tight">
-              {kpis.savingsRate.formatted}
-            </div>
-          )}
-          {compareWithPrevious && !isLoading && (
-            <div className="mt-2.5">
-              <ComparisonBadge
-                deltaPct={kpis.savingsRate.deltaPct}
-                isPositiveGood={true}
-                previousFormatted={kpis.savingsRate.previousFormatted}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+        <KpiCard
+          title="Savings Rate"
+          value={kpis.savingsRate.formatted}
+          icon={Percent}
+          tone="accent"
+          isLoading={isLoading}
+          trend={
+            compareWithPrevious && !isLoading && Number.isFinite(kpis.savingsRate.deltaPct)
+              ? {
+                  value: kpis.savingsRate.deltaPct,
+                  label: kpis.savingsRate.previousFormatted
+                    ? `vs ${kpis.savingsRate.previousFormatted}`
+                    : 'vs prev',
+                  invert: false,
+                }
+              : undefined
+          }
+        />
+      </KpiGrid>
 
       {/* Secondary Metrics Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

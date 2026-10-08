@@ -62,6 +62,7 @@ import {
   inr,
   fmtDate,
 } from './helper';
+import { KpiCard, KpiGrid } from '@/components/shared';
 
 // Re-export contacts and calculation helpers for convenience and backward compatibility
 export * from './contacts';
@@ -251,46 +252,37 @@ export function BalancesAndSettlements() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiGrid cols={4}>
           <KpiCard
-            label="Total Outstanding"
+            title="Total Outstanding"
             value={inr(stats.totalOutstanding)}
-            note={`Owed by ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`}
-            icon={<Wallet className="h-4 w-4" />}
-            tone="bg-warning-subtle text-warning"
+            hint={`Owed by ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`}
+            icon={Wallet}
+            tone="warning"
           />
           <KpiCard
-            label="Unsettled Shares"
+            title="Unsettled Shares"
             value={String(stats.shareCount)}
-            note={`${stats.unpaidCount} unpaid · ${stats.partialCount} partial`}
-            icon={<Receipt className="h-4 w-4" />}
-            tone="bg-primary-subtle text-primary"
+            hint={`${stats.unpaidCount} unpaid · ${stats.partialCount} partial`}
+            icon={Receipt}
+            tone="default"
           />
           <KpiCard
-            label="Collected So Far"
+            title="Collected So Far"
             value={inr(stats.totalSettled)}
-            note={`From ${inr(stats.totalObligation)} total obligation`}
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            tone="bg-success-subtle text-success"
+            hint={`From ${inr(stats.totalObligation)} total obligation`}
+            icon={CheckCircle2}
+            tone="positive"
           />
-          <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-caption font-medium text-text-muted">Recovery Rate</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-subtle text-accent">
-                <Sparkles className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3 space-y-2">
-              <div className="flex items-baseline justify-between">
-                <div className="font-display text-display-xs font-bold text-text-primary">
-                  {stats.recoveryRate}%
-                </div>
-                <span className="text-caption text-text-muted">Settled</span>
-              </div>
-              <Progress value={stats.recoveryRate} className="h-1.5 bg-surface-raised" />
-            </div>
-          </div>
-        </div>
+          <KpiCard
+            title="Recovery Rate"
+            value={`${stats.recoveryRate}%`}
+            badge="Settled"
+            icon={Sparkles}
+            tone="accent"
+            footer={<Progress value={stats.recoveryRate} className="h-1.5 bg-surface-raised" />}
+          />
+        </KpiGrid>
 
         {/* Toolbar */}
         {!unsettledLoading && stats.shareCount > 0 && (
@@ -818,31 +810,6 @@ export function BalancesAndSettlements() {
 /* -------------------------------------------------------------------------- */
 /* Small presentational pieces                                                */
 /* -------------------------------------------------------------------------- */
-
-function KpiCard(props: {
-  label: string;
-  value: string;
-  note: string;
-  icon: React.ReactNode;
-  tone: string;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 shadow-xs">
-      <div className="flex items-center justify-between">
-        <span className="text-caption font-medium text-text-muted">{props.label}</span>
-        <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', props.tone)}>
-          {props.icon}
-        </div>
-      </div>
-      <div className="mt-3">
-        <div className="font-display text-display-xs font-bold text-text-primary">
-          {props.value}
-        </div>
-        <p className="text-caption text-text-secondary mt-1">{props.note}</p>
-      </div>
-    </div>
-  );
-}
 
 function Avatar({
   member,

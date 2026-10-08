@@ -16,8 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/overlays/tooltip';
-import { CreateEntityCard, EntityCard, FooterRow } from '@/components/shared';
-import { KpiCard } from '@/components/shared';
+import { CreateEntityCard, EntityCard, FooterRow, KpiCard, KpiGrid } from '@/components/shared';
 import { UsageBadge, usagePct, usageStatus } from './status';
 import { cn } from '@/libs/utils';
 import { formatInr } from '@kalya/utils';
@@ -38,7 +37,7 @@ export function BudgetSummaryStrip({
   const tone = { success: 'positive', warning: 'warning', danger: 'negative' } as const;
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <KpiGrid cols={5}>
       <KpiCard
         title="Budgeted"
         value={formatInr(totals.budgeted)}
@@ -66,6 +65,9 @@ export function BudgetSummaryStrip({
         hint={overall.label}
         icon={PiggyBank}
         tone={tone[overall.tone]}
+        footer={
+          <Progress value={Math.min(100, totals.usedPct)} className="h-1.5 bg-surface-raised" />
+        }
         isLoading={isLoading}
       />
       <KpiCard
@@ -76,7 +78,7 @@ export function BudgetSummaryStrip({
         tone={totals.alertCount > 0 ? 'warning' : 'default'}
         isLoading={isLoading}
       />
-    </div>
+    </KpiGrid>
   );
 }
 

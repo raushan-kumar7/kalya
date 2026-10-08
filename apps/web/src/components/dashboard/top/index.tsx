@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Search, X } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { User } from '@kalya/types';
 import { NotificationPanel } from '@/components/notifications';
@@ -11,10 +10,13 @@ import { ThemeToggle } from '@/components/ui';
 import { cn } from '@/libs/utils';
 import { usePageHeading } from './helper';
 import { useUnreadAlertCountQuery } from '@/hooks/finances';
+import { useSidebar } from '@/hooks/use-sidebar';
+import { SearchPalette } from './search-palette';
+import { SearchTrigger } from './search-trigger';
 
 export interface TopProps {
   /** Signed-in user profile */
-  user?: User | User | null;
+  user?: User | null;
   /** Whether unread alerts/notifications are pending */
   hasNotifications?: boolean;
   /** Explicit unread notification badge count */
@@ -24,7 +26,7 @@ export interface TopProps {
 
 /**
  * Top Navigation Header for the Kalya dashboard layout.
- * Features dynamic greetings, route-aware breadcrumbs, search overlay, and notification flyout.
+ * Features dynamic greetings, route-aware breadcrumbs, mobile sidebar toggle, search overlay, and notification flyout.
  */
 export const Top = ({
   user,
@@ -36,13 +38,47 @@ export const Top = ({
   const firstName = user?.first_name || user?.name?.split(' ')[0] || 'there';
   const { title, subtitle, breadcrumbPath, isOverview } = usePageHeading(firstName);
   const { data: liveUnreadData } = useUnreadAlertCountQuery();
+  const { setMobileOpen } = useSidebar();
 
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Detect platform for keyboard shortcut display (⌘K on macOS, Ctrl K on Windows/Linux)
+  useEffect(() => {
+    setIsMac(typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent));
+  }, []);
+
+  // Global keyboard shortcut to open search palette (⌘K, Ctrl+K, or /)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+        return;
+      }
+
+      if (
+        e.key === '/' &&
+        !searchOpen &&
+        !(
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          (e.target as HTMLElement)?.isContentEditable
+        )
+      ) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [searchOpen]);
 
   // Automatically publish the header's real rendered height as --header-h
   // so subsequent sticky elements (e.g. tabs, filters) stick flush underneath
@@ -61,14 +97,13 @@ export const Top = ({
     return () => ro.disconnect();
   }, [pathname, isOverview]);
 
-  // Handle outside clicks and keyboard escape for popovers
+  // Handle outside clicks and keyboard escape for notifications dropdown
   useEffect(() => {
-    if (!notificationsOpen && !mobileSearchOpen) return;
+    if (!notificationsOpen) return;
 
     const handlePointerDown = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        notificationsOpen &&
         notificationsRef.current &&
         !notificationsRef.current.contains(target) &&
         !notificationButtonRef.current?.contains(target)
@@ -80,7 +115,6 @@ export const Top = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setNotificationsOpen(false);
-        setMobileSearchOpen(false);
       }
     };
 
@@ -91,12 +125,12 @@ export const Top = ({
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [notificationsOpen, mobileSearchOpen]);
+  }, [notificationsOpen]);
 
   // Close notifications and search on route change
   useEffect(() => {
     setNotificationsOpen(false);
-    setMobileSearchOpen(false);
+    setSearchOpen(false);
   }, [pathname]);
 
   const effectiveUnreadCount = unreadNotificationCount ?? liveUnreadData?.count ?? 0;
@@ -107,64 +141,55 @@ export const Top = ({
       ref={headerRef}
       aria-label="Dashboard top navigation"
       className={cn(
-        'border-border/70 bg-bg/85 sticky top-0 z-20 flex items-center justify-between gap-4 border-b px-4 py-3.5 backdrop-blur-md transition-all select-none',
-        'md:px-6 md:py-4',
+        'sticky top-0 z-20 flex items-center justify-between gap-2.5 sm:gap-3 border-b border-border/70 bg-bg/85 px-3 sm:px-6 py-2.5 sm:py-3.5 backdrop-blur-md transition-all select-none',
         className
       )}
     >
       {/* -------------------------------------------------------------- */}
-      {/* 1. LEFT TITLE / BREADCRUMB                                      */}
+      {/* 1. LEFT: MOBILE MENU TRIGGER + TITLE / BREADCRUMB               */}
       {/* -------------------------------------------------------------- */}
-      <div className="flex min-w-0 flex-col justify-center">
-        {isOverview ? (
-          <div className="flex flex-col">
-            <h1 className="font-display text-body-lg sm:text-display-md text-text-primary truncate font-bold tracking-tight">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-caption sm:text-body-sm text-text-secondary hidden sm:block mt-0.5">
-                {subtitle}
-              </p>
-            )}
-          </div>
-        ) : (
-          <Breadcrumb path={breadcrumbPath} description={subtitle ?? undefined} />
-        )}
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        {/* Mobile Sidebar Hamburger Toggle */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation sidebar"
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border/80 bg-surface-raised text-text-secondary shadow-card transition-colors hover:bg-surface hover:text-text-primary active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none! md:hidden"
+        >
+          <Menu size={18} />
+        </button>
+
+        {/* Title or Breadcrumb */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          {isOverview ? (
+            <div className="flex min-w-0 flex-col">
+              <h1 className="truncate font-display text-body-lg font-bold tracking-tight text-text-primary sm:text-display-md">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="mt-0.5 hidden truncate text-caption text-text-secondary sm:block sm:text-body-sm">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="min-w-0">
+              <Breadcrumb
+                path={breadcrumbPath}
+                description={subtitle ?? undefined}
+                descriptionClassName="hidden sm:block"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* -------------------------------------------------------------- */}
       {/* 2. RIGHT SEARCH & ACTIONS                                       */}
       {/* -------------------------------------------------------------- */}
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        {/* Desktop Search Bar */}
-        <div className="relative hidden md:block">
-          <Search
-            className="text-text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            placeholder="Search transactions, budgets, goals…"
-            className={cn(
-              'border-border/80 bg-surface-raised text-body-sm text-text-primary placeholder:text-text-muted',
-              'w-60 rounded-full border py-2 pl-9 pr-10 shadow-xs transition-all duration-150',
-              'focus:border-primary focus:ring-accent/40 focus:ring-2 focus:outline-none lg:w-72'
-            )}
-          />
-          <kbd className="border-border text-caption font-numeric text-text-muted pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border px-1.5 py-0.5 uppercase">
-            ⌘K
-          </kbd>
-        </div>
-
-        {/* Mobile Search Button */}
-        <button
-          type="button"
-          onClick={() => setMobileSearchOpen(true)}
-          aria-label="Open search"
-          className="border-border/80 bg-surface-raised text-text-secondary hover:bg-surface hover:text-text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-xs transition-colors md:hidden"
-        >
-          <Search size={16} />
-        </button>
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        {/* Search: desktop pill + mobile icon button */}
+        <SearchTrigger onClick={() => setSearchOpen(true)} isMac={isMac} />
 
         {/* Notifications Button & Dropdown */}
         <div className="relative">
@@ -175,16 +200,16 @@ export const Top = ({
             aria-label="Toggle notifications"
             aria-expanded={notificationsOpen}
             className={cn(
-              'border-border/80 bg-surface-raised text-text-secondary hover:bg-surface hover:text-text-primary relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-xs transition-all active:scale-95',
-              'focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none',
+              'relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border/80 bg-surface-raised text-text-secondary shadow-card transition-all hover:bg-surface hover:text-text-primary active:scale-95',
+              'focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none!',
               notificationsOpen &&
-                'bg-primary-subtle text-primary border-primary/30 ring-1 ring-primary/20'
+                'border-primary/30 bg-primary-subtle text-primary ring-1 ring-primary/20'
             )}
           >
             <Bell size={16} />
             {hasUnread && (
-              <span className="bg-accent ring-surface-raised absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full ring-2">
-                <span className="bg-accent absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+              <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-accent ring-2 ring-surface-raised">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
               </span>
             )}
           </button>
@@ -197,49 +222,22 @@ export const Top = ({
         </div>
 
         {/* Subtle Vertical Divider */}
-        <div className="bg-border/80 hidden h-5 w-px sm:block" aria-hidden="true" />
+        <div className="hidden h-5 w-px bg-border/80 sm:block" aria-hidden="true" />
 
         {/* Theme Mode Toggle */}
-        <ThemeToggle />
+        <ThemeToggle className="h-9 w-9 shrink-0 rounded-full border border-border/80 bg-surface-raised text-text-secondary shadow-card transition-all hover:bg-surface hover:text-text-primary active:scale-95" />
       </div>
 
       {/* -------------------------------------------------------------- */}
-      {/* 3. MOBILE FULL-WIDTH SEARCH OVERLAY                             */}
+      {/* 3. GLOBAL COMMAND PALETTE SEARCH MODAL                         */}
       {/* -------------------------------------------------------------- */}
-      <AnimatePresence>
-        {mobileSearchOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.16 }}
-            className="bg-bg/95 border-border/80 absolute inset-x-0 top-0 z-30 flex h-full items-center gap-2 border-b px-4 backdrop-blur-md md:hidden"
-          >
-            <div className="relative flex-1">
-              <Search className="text-text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-              <input
-                autoFocus
-                type="search"
-                placeholder="Search Kalya…"
-                className={cn(
-                  'border-border/80 bg-surface-raised text-body-sm text-text-primary placeholder:text-text-muted',
-                  'w-full rounded-full border py-2 pl-9 pr-8 shadow-xs outline-none focus:border-primary focus:ring-2 focus:ring-accent/40'
-                )}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(false)}
-              className="text-body-sm text-text-secondary hover:text-text-primary rounded-lg px-2.5 py-1.5 font-medium transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SearchPalette open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 };
 
 export default Top;
 export * from './helper';
+export * from './search-palette';
+export * from './search-trigger';
+export * from './use-search-data';

@@ -13,6 +13,7 @@ import {
 import { formatCompactInr, formatInr, formatPercent } from '@kalya/utils';
 import { cn } from '@/libs/utils';
 import { Badge } from '@/components/ui/data-display/badge';
+import { KpiCard, KpiGrid } from '@/components/shared';
 import {
   Tooltip,
   TooltipContent,
@@ -48,39 +49,32 @@ export function BudgetHeatTable({ rows, months, isLoading, onSelectCell }: Budge
   return (
     <div className="flex flex-col gap-4">
       {/* Top Banner stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-xl border border-border bg-surface p-3.5 shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-caption text-text-muted font-medium">Overall Adherence</span>
-            <div className="font-numeric text-body-lg font-bold text-success mt-0.5">
-              {withinPct}% On Track
-            </div>
-          </div>
-          <ShieldCheck className="h-5 w-5 text-success opacity-80" />
-        </div>
+      <KpiGrid cols={3}>
+        <KpiCard
+          title="Overall Adherence"
+          value={`${withinPct}%`}
+          badge="On Track"
+          icon={ShieldCheck}
+          tone="positive"
+          size="sm"
+        />
 
-        <div className="rounded-xl border border-border bg-surface p-3.5 shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-caption text-text-muted font-medium">
-              Total Over-Budget Instances
-            </span>
-            <div className="font-numeric text-body-lg font-bold text-danger mt-0.5">
-              {overCount} {overCount === 1 ? 'month' : 'months'}
-            </div>
-          </div>
-          <AlertCircle className="h-5 w-5 text-danger opacity-80" />
-        </div>
+        <KpiCard
+          title="Total Over-Budget Instances"
+          value={`${overCount} ${overCount === 1 ? 'month' : 'months'}`}
+          icon={AlertCircle}
+          tone={overCount > 0 ? 'negative' : 'positive'}
+          size="sm"
+        />
 
-        <div className="rounded-xl border border-border bg-surface p-3.5 shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-caption text-text-muted font-medium">Buckets Monitored</span>
-            <div className="font-numeric text-body-lg font-bold text-text-primary mt-0.5">
-              {rows.length} Buckets
-            </div>
-          </div>
-          <Target className="h-5 w-5 text-primary opacity-80" />
-        </div>
-      </div>
+        <KpiCard
+          title="Buckets Monitored"
+          value={`${rows.length} Buckets`}
+          icon={Target}
+          tone="default"
+          size="sm"
+        />
+      </KpiGrid>
 
       {/* Heatmap Grid Matrix */}
       <div className="rounded-xl border border-border bg-surface shadow-card p-4 overflow-hidden">

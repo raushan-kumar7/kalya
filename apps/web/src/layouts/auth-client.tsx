@@ -174,7 +174,7 @@ export function AuthLayoutClient({ children, className }: AuthLayoutClientProps)
         </header>
 
         {/* Form Body Container */}
-        <div className="relative z-10 mx-auto my-auto w-full max-w-md py-8 sm:max-w-lg">
+        <div className="relative z-10 mx-auto my-auto w-full max-w-md py-8 sm:max-w-2xl">
           {/* Mobile-Only Wordmark */}
           <motion.div
             className="mb-8 flex justify-center lg:hidden"

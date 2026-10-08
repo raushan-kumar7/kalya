@@ -17,6 +17,7 @@ import { formatInr } from '@kalya/utils';
 import { cn } from '@/libs/utils';
 import { Button } from '@/components/ui/forms/button';
 import { Badge } from '@/components/ui/data-display/badge';
+import { KpiCard, KpiGrid } from '@/components/shared';
 import type { SplitFriendBalance, SplitReportTotals } from './types';
 
 interface SplitBalancesTableProps {
@@ -35,63 +36,40 @@ export function SplitBalancesTable({
   return (
     <div className="flex flex-col gap-4">
       {/* Splits KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Total Paid for Friends */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Paid for Friends</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-subtle text-primary">
-              <HandCoins className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <div className="mt-1.5 font-numeric text-body-xl font-bold text-text-primary tracking-tight">
-            {formatInr(totals.paidForFriends)}
-          </div>
-          <p className="mt-1 text-caption text-text-muted">Total you fronted in group bills</p>
-        </div>
-
-        {/* Owed to You */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Owed to You</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success-subtle text-success">
-              <ArrowDownLeft className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <div className="mt-1.5 font-numeric text-body-xl font-bold text-success tracking-tight">
-            {formatInr(totals.owedToYou)}
-          </div>
-          <p className="mt-1 text-caption text-text-muted">Outstanding receivables from friends</p>
-        </div>
-
-        {/* You Owe */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">You Owe</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-danger-subtle text-danger">
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <div className="mt-1.5 font-numeric text-body-xl font-bold text-danger tracking-tight">
-            {formatInr(totals.youOwe)}
-          </div>
-          <p className="mt-1 text-caption text-text-muted">Pending payables to friends</p>
-        </div>
-
-        {/* Total Settled */}
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-text-secondary">Settled Volume</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-subtle text-accent">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <div className="mt-1.5 font-numeric text-body-xl font-bold text-text-primary tracking-tight">
-            {formatInr(totals.settled)}
-          </div>
-          <p className="mt-1 text-caption text-text-muted">Successfully closed split dues</p>
-        </div>
-      </div>
+      <KpiGrid cols={4}>
+        <KpiCard
+          title="Paid for Friends"
+          value={formatInr(totals.paidForFriends)}
+          hint="Total you fronted in group bills"
+          icon={HandCoins}
+          tone="default"
+          isLoading={isLoading}
+        />
+        <KpiCard
+          title="Owed to You"
+          value={formatInr(totals.owedToYou)}
+          hint="Outstanding receivables from friends"
+          icon={ArrowDownLeft}
+          tone="positive"
+          isLoading={isLoading}
+        />
+        <KpiCard
+          title="You Owe"
+          value={formatInr(totals.youOwe)}
+          hint="Pending payables to friends"
+          icon={ArrowUpRight}
+          tone="negative"
+          isLoading={isLoading}
+        />
+        <KpiCard
+          title="Settled Volume"
+          value={formatInr(totals.settled)}
+          hint="Successfully closed split dues"
+          icon={CheckCircle2}
+          tone="accent"
+          isLoading={isLoading}
+        />
+      </KpiGrid>
 
       {/* Per-Friend Balances Table */}
       <div className="rounded-xl border border-border bg-surface shadow-card p-4">

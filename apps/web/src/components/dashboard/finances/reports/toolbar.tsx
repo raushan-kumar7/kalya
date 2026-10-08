@@ -17,6 +17,7 @@ import { cn } from '@/libs/utils';
 import { Button } from '@/components/ui/forms/button';
 import { Switch } from '@/components/ui/forms/switch';
 import { Badge } from '@/components/ui/data-display/badge';
+import { DatePicker } from '@/components/ui/forms/date-picker';
 import type { DateRangePeriod, ReportRangePreset } from './types';
 
 interface ReportsToolbarProps {
@@ -94,20 +95,28 @@ export function ReportsToolbar({
           {/* Custom Date Pickers if preset is custom */}
           {preset === 'custom' && (
             <div className="flex items-center gap-2 animate-in fade-in-50 duration-150">
-              <input
-                type="date"
-                value={customStart}
-                onChange={(e) => onCustomStartChange(e.target.value)}
-                className="rounded-md border border-border bg-surface px-2.5 py-1 text-caption font-numeric text-text-primary focus:border-primary focus:outline-none"
+              <DatePicker
+                size="sm"
+                date={customStart || undefined}
+                onDateChange={(_d, plainDate) =>
+                  onCustomStartChange(plainDate ? plainDate.toString() : '')
+                }
+                placeholder="Start date"
+                formatStyle="short"
                 aria-label="Start date"
+                className="w-36"
               />
               <span className="text-caption text-text-muted">to</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => onCustomEndChange(e.target.value)}
-                className="rounded-md border border-border bg-surface px-2.5 py-1 text-caption font-numeric text-text-primary focus:border-primary focus:outline-none"
+              <DatePicker
+                size="sm"
+                date={customEnd || undefined}
+                onDateChange={(_d, plainDate) =>
+                  onCustomEndChange(plainDate ? plainDate.toString() : '')
+                }
+                placeholder="End date"
+                formatStyle="short"
                 aria-label="End date"
+                className="w-36"
               />
             </div>
           )}

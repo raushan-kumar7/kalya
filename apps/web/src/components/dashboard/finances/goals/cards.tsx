@@ -28,10 +28,10 @@ import { Card } from '@/components/ui/data-display/card';
 import { Badge } from '@/components/ui/data-display/badge';
 import { Progress } from '@/components/ui/feedback/progress';
 import { Button } from '@/components/ui/forms/button';
-import { Skeleton } from '@/components/ui/states/skeleton';
-import { KpiCard } from '@/components/shared';
+import { KpiCard, KpiGrid } from '@/components/shared';
 import { DeadlineCountdownBadge, GoalStatusBadge, OnTrackIndicator } from './status';
 import type { GoalRow, GoalTotals } from './types';
+import { Skeleton } from '@/components/ui';
 
 /* ------------------------------------------------------------------ */
 /* 1. Summary Strip (KPI cards)                                       */
@@ -45,13 +45,14 @@ export function GoalsSummaryStrip({
   isLoading?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <KpiGrid cols={6}>
       <KpiCard
         title="Total Saved"
         value={formatInr(totals.totalSaved)}
         hint={`${Math.round(totals.overallProgressPct)}% of total target`}
         icon={PiggyBank}
         tone="positive"
+        size="sm"
         isLoading={isLoading}
       />
       <KpiCard
@@ -59,6 +60,7 @@ export function GoalsSummaryStrip({
         value={formatInr(totals.totalTarget)}
         hint="Across all savings goals"
         icon={Target}
+        size="sm"
         isLoading={isLoading}
       />
       <KpiCard
@@ -67,6 +69,13 @@ export function GoalsSummaryStrip({
         hint={`${formatInr(Math.max(0, totals.totalTarget - totals.totalSaved))} remaining`}
         icon={TrendingUp}
         tone={totals.overallProgressPct >= 70 ? 'positive' : 'default'}
+        footer={
+          <Progress
+            value={Math.min(100, totals.overallProgressPct)}
+            className="h-1.5 bg-surface-raised"
+          />
+        }
+        size="sm"
         isLoading={isLoading}
       />
       <KpiCard
@@ -74,6 +83,7 @@ export function GoalsSummaryStrip({
         value={String(totals.activeGoalsCount)}
         hint={`${totals.completedCount} completed • ${totals.pausedCount} paused`}
         icon={Wallet}
+        size="sm"
         isLoading={isLoading}
       />
       <KpiCard
@@ -86,6 +96,7 @@ export function GoalsSummaryStrip({
         }
         icon={CheckCircle2}
         tone={totals.behindCount > 0 ? 'warning' : 'positive'}
+        size="sm"
         isLoading={isLoading}
       />
       <KpiCard
@@ -93,9 +104,10 @@ export function GoalsSummaryStrip({
         value={formatInr(totals.totalMonthlyPlanNeeded)}
         hint={`Planned: ${formatInr(totals.totalMonthlyPlanConfigured)}/mo`}
         icon={Coins}
+        size="sm"
         isLoading={isLoading}
       />
-    </div>
+    </KpiGrid>
   );
 }
 

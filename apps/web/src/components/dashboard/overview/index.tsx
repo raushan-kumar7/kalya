@@ -14,9 +14,8 @@ import {
 import { formatInr, formatPercent } from '@kalya/utils';
 import { useOverview } from '@/hooks/finances';
 import { Button } from '@/components/ui';
-import { MonthSwitcher } from '@/components/shared';
+import { MonthSwitcher, KpiCard, KpiGrid } from '@/components/shared';
 import { cn } from '@/libs/utils';
-import { KpiCard } from './card';
 import { RecentTransactions } from './recents';
 import {
   BucketDonut,
@@ -147,7 +146,7 @@ export function DashboardOverview() {
       )}
 
       {/* Top KPI Cards Row */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <KpiGrid cols={4}>
         <KpiCard
           title="Income"
           value={`+${formatInr(kpi.totalIncome)}`}
@@ -181,7 +180,7 @@ export function DashboardOverview() {
           tone="default"
           isLoading={o.isPortfolioLoading}
         />
-      </div>
+      </KpiGrid>
 
       {/* Primary Analytics: Trend + Buckets */}
       <div className="grid gap-5 lg:grid-cols-3">

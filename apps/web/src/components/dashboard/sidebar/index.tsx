@@ -58,6 +58,8 @@ export interface SidebarProps {
   onSignOut?: () => void;
   /** Custom navigation taxonomy if overriding defaults */
   sections?: NavSection[];
+  /** Whether to render floating mobile toggle button (default: false, as Top hosts it) */
+  showMobileTrigger?: boolean;
   /** Optional custom CSS class */
   className?: string;
 }
@@ -74,6 +76,7 @@ export function Sidebar({
   onNavigate,
   onSignOut,
   sections = SIDEBAR_NAVS_ITEMS,
+  showMobileTrigger = false,
   className,
 }: SidebarProps) {
   const router = useRouter();
@@ -210,22 +213,24 @@ export function Sidebar({
   return (
     <>
       {/* ------------------------------------------------------------------ */}
-      {/* 1. MOBILE TRIGGER BUTTON (Visible on < md screens)                 */}
+      {/* 1. MOBILE TRIGGER BUTTON (Visible on < md screens when standalone)  */}
       {/* ------------------------------------------------------------------ */}
-      <button
-        ref={mobileTriggerRef}
-        type="button"
-        onClick={() => setIsMobileOpen(true)}
-        aria-label="Open navigation sidebar"
-        className={cn(
-          'bg-surface-raised border-border fixed top-4 left-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border shadow-md md:hidden',
-          'transition-all duration-150 hover:shadow-lg active:scale-90',
-          FOCUS_RING,
-          'focus-visible:ring-offset-bg'
-        )}
-      >
-        <Menu size={18} className="text-text-secondary" />
-      </button>
+      {showMobileTrigger && (
+        <button
+          ref={mobileTriggerRef}
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          aria-label="Open navigation sidebar"
+          className={cn(
+            'bg-surface-raised border-border fixed top-4 left-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border shadow-md md:hidden',
+            'transition-all duration-150 hover:shadow-lg active:scale-90',
+            FOCUS_RING,
+            'focus-visible:ring-offset-bg'
+          )}
+        >
+          <Menu size={18} className="text-text-secondary" />
+        </button>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* 2. MOBILE BACKDROP                                                */}

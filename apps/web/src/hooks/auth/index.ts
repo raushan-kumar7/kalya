@@ -19,6 +19,7 @@ import type {
   CheckAvailabilityDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  Session,
   SessionResponse,
   SignInDto,
   SignUpDto,
@@ -97,60 +98,67 @@ export interface UseUsernameAvailabilityReturn {
   isChecking: boolean;
   isAvailable: boolean;
   message: string | null;
+  /** Immediately triggers availability check without waiting for the debounce timeout (e.g. on input blur) */
+  checkNow: () => void;
 }
 
 /**
  * Real-time username availability check hook with debouncing and client-side pre-validation.
+ * Waits for the user to enter their username and pause typing (or blur) before searching.
  */
-export function useUsernameAvailability(rawUsername: string): UseUsernameAvailabilityReturn {
+export function useUsernameAvailability(
+  rawUsername: string,
+  debounceMs: number = 500
+): UseUsernameAvailabilityReturn {
   const [debouncedUsername, setDebouncedUsername] = React.useState(rawUsername);
 
   React.useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedUsername(rawUsername);
-    }, 350);
+    }, debounceMs);
 
     return () => {
       clearTimeout(handler);
     };
+  }, [rawUsername, debounceMs]);
+
+  const checkNow = React.useCallback(() => {
+    setDebouncedUsername(rawUsername);
   }, [rawUsername]);
 
   const trimmed = (rawUsername ?? '').trim();
-  const debouncedTrimmed = (debouncedUsername ?? '').trim().toLowerCase();
+  const normalizedRaw = trimmed.toLowerCase();
+  const normalizedDebounced = (debouncedUsername ?? '').trim().toLowerCase();
 
   // Local synchronous validation rules matching UsernameSchema (3-30 chars, alphanumeric + underscores)
-  const isTooShort = trimmed.length > 0 && trimmed.length < 3;
+  const isTooShort = trimmed.length < 3;
   const isTooLong = trimmed.length > 30;
   const hasInvalidChars = trimmed.length > 0 && !/^[a-zA-Z0-9_]+$/.test(trimmed);
 
+  // Only query the server when the debounced username matches what the user typed and is valid
+  const isDebouncedMatch = normalizedRaw === normalizedDebounced;
   const shouldQuery =
-    debouncedTrimmed.length >= 3 &&
-    debouncedTrimmed.length <= 30 &&
-    /^[a-zA-Z0-9_]+$/.test(debouncedTrimmed);
+    isDebouncedMatch &&
+    !isTooShort &&
+    !isTooLong &&
+    !hasInvalidChars &&
+    normalizedDebounced.length >= 3 &&
+    normalizedDebounced.length <= 30 &&
+    /^[a-zA-Z0-9_]+$/.test(normalizedDebounced);
 
-  const query = useCheckAvailabilityQuery('username', debouncedTrimmed, {
+  // Unconditional hook execution - enabled handles whether the query actually runs!
+  const query = useCheckAvailabilityQuery('username', normalizedDebounced, {
     enabled: shouldQuery,
   });
 
-  const isDebouncing =
-    trimmed !== debouncedTrimmed && trimmed.length >= 3 && !hasInvalidChars && !isTooLong;
-  const isChecking = isDebouncing || (shouldQuery && query.isLoading);
-
-  if (!trimmed) {
+  // Calculate return state AFTER all hooks have executed
+  if (!trimmed || isTooShort) {
     return {
       status: 'idle',
       isChecking: false,
       isAvailable: false,
       message: null,
-    };
-  }
-
-  if (isTooShort) {
-    return {
-      status: 'invalid',
-      isChecking: false,
-      isAvailable: false,
-      message: 'Username must be at least 3 characters',
+      checkNow,
     };
   }
 
@@ -160,6 +168,7 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
       isChecking: false,
       isAvailable: false,
       message: 'Username cannot exceed 30 characters',
+      checkNow,
     };
   }
 
@@ -169,8 +178,12 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
       isChecking: false,
       isAvailable: false,
       message: 'Only letters, numbers, and underscores allowed',
+      checkNow,
     };
   }
+
+  // Only show checking when a network search is actively in flight
+  const isChecking = shouldQuery && (query.isLoading || query.isFetching);
 
   if (isChecking) {
     return {
@@ -178,6 +191,7 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
       isChecking: true,
       isAvailable: false,
       message: 'Checking availability…',
+      checkNow,
     };
   }
 
@@ -187,10 +201,11 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
       isChecking: false,
       isAvailable: false,
       message: 'Could not check username availability',
+      checkNow,
     };
   }
 
-  if (query.data) {
+  if (shouldQuery && query.data) {
     return {
       status: query.data.available ? 'available' : 'taken',
       isChecking: false,
@@ -198,6 +213,7 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
       message:
         query.data.message ??
         (query.data.available ? 'Username is available' : 'Username is already taken'),
+      checkNow,
     };
   }
 
@@ -206,6 +222,7 @@ export function useUsernameAvailability(rawUsername: string): UseUsernameAvailab
     isChecking: false,
     isAvailable: false,
     message: null,
+    checkNow,
   };
 }
 
@@ -226,8 +243,18 @@ export function useSignInMutation(options?: UseMutationOptions<AuthResponse, Err
     mutationFn: (dto: SignInDto) => AuthService.signIn(dto),
     onSuccess: (...args) => {
       const [data] = args;
-      if (data?.user && data?.session) {
-        setAuth(data.user, data.session);
+      if (data?.user) {
+        const session =
+          data.session ||
+          ({
+            id: data.token || data.user.id,
+            userId: data.user.id,
+            token: data.token || '',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          } as Session);
+        setAuth(data.user, session);
       }
       queryClient.setQueryData(authKeys.session(), data);
       queryClient.invalidateQueries({ queryKey: authKeys.session() });
@@ -248,8 +275,18 @@ export function useSignUpMutation(options?: UseMutationOptions<AuthResponse, Err
     mutationFn: (dto: SignUpDto) => AuthService.signUp(dto),
     onSuccess: (...args) => {
       const [data] = args;
-      if (data?.user && data?.session) {
-        setAuth(data.user, data.session);
+      if (data?.user) {
+        const session =
+          data.session ||
+          ({
+            id: data.token || data.user.id,
+            userId: data.user.id,
+            token: data.token || '',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          } as Session);
+        setAuth(data.user, session);
       }
       queryClient.setQueryData(authKeys.session(), data);
       queryClient.invalidateQueries({ queryKey: authKeys.session() });

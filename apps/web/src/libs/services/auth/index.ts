@@ -8,6 +8,7 @@ import type {
   CheckAvailabilityDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  Session,
   SessionResponse,
   SignInDto,
   SignUpDto,
@@ -40,7 +41,42 @@ export class AuthService {
           rememberMe: dto.rememberMe ?? false,
         };
 
-    return http.post<AuthResponse>(endpoint, payload);
+    const res = await http.post<AuthResponse & { token?: string }>(endpoint, payload);
+
+    let session = res.session;
+    let user = res.user;
+
+    // Better-Auth sign-in returns { user, token } without a nested session object.
+    // Fetch active session or synthesize one using the returned token.
+    if (!session && user) {
+      try {
+        const sessionRes = await AuthService.getSession();
+        if (sessionRes?.session) {
+          session = sessionRes.session;
+          user = sessionRes.user || user;
+        }
+      } catch {
+        // Fallback: synthesize valid session metadata
+      }
+
+      if (!session) {
+        session = {
+          id: res.token || user.id,
+          userId: user.id,
+          token: res.token || '',
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as Session;
+      }
+    }
+
+    return {
+      ...res,
+      user,
+      session,
+      token: res.token || session?.token,
+    };
   }
 
   /**
@@ -135,7 +171,43 @@ export class AuthService {
       callbackURL: '/dashboard',
     };
 
-    return http.post<AuthResponse>(ENDPOINTS.AUTH.SIGN_UP_EMAIL, payload);
+    const res = await http.post<AuthResponse & { token?: string }>(
+      ENDPOINTS.AUTH.SIGN_UP_EMAIL,
+      payload
+    );
+
+    let session = res.session;
+    let user = res.user;
+
+    if (!session && user) {
+      try {
+        const sessionRes = await AuthService.getSession();
+        if (sessionRes?.session) {
+          session = sessionRes.session;
+          user = sessionRes.user || user;
+        }
+      } catch {
+        // Fallback
+      }
+
+      if (!session) {
+        session = {
+          id: res.token || user.id,
+          userId: user.id,
+          token: res.token || '',
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as Session;
+      }
+    }
+
+    return {
+      ...res,
+      user,
+      session,
+      token: res.token || session?.token,
+    };
   }
 
   /**

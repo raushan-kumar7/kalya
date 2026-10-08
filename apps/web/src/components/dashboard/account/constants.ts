@@ -1,4 +1,5 @@
 import { Bell, LucideIcon, ShieldCheck, SlidersHorizontal, User as UserIcon } from 'lucide-react';
+import type { Gender } from '@kalya/types';
 
 export interface UserSettingsTab {
   key: 'profile' | 'account-security' | 'notification' | 'preferences';
@@ -45,11 +46,17 @@ export const CURRENCIES = [
   { code: 'AED', symbol: 'AED', label: 'AED (د.إ) — UAE Dirham' },
 ] as const;
 
-export const GENDERS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other / Non-binary' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+export interface GenderOption {
+  value: Gender;
+  label: string;
+}
+
+export const GENDERS: readonly GenderOption[] = [
+  { value: 'MALE', label: 'Male' },
+  { value: 'FEMALE', label: 'Female' },
+  { value: 'NON_BINARY', label: 'Non-binary' },
+  { value: 'OTHER', label: 'Other' },
+  { value: 'PREFER_NOT_TO_SAY', label: 'Prefer not to say' },
 ] as const;
 
 export const TIMEZONES = [

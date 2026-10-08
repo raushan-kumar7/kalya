@@ -21,7 +21,7 @@ import {
   VenetianMask,
   XCircle,
 } from 'lucide-react';
-import type { User } from '@kalya/types';
+import type { Gender, User } from '@kalya/types';
 import {
   formatCalendarDateOrDash,
   formatDateTime,
@@ -36,9 +36,15 @@ import {
   AvatarImage,
   Button,
   Card,
+  DatePicker,
   Field,
   Input,
   ReadOnlyField,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui';
 import { GENDERS } from './constants';
 
@@ -54,6 +60,14 @@ export function ProfileTab({ user }: ProfileTabProps) {
   const [isDeletingAvatar, setIsDeletingAvatar] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
 
+  // Normalize user gender to valid uppercase enum value matching GENDERS
+  const normalizeGender = React.useCallback((g?: string | null): Gender => {
+    if (!g) return 'PREFER_NOT_TO_SAY';
+    const upper = g.toUpperCase();
+    const match = GENDERS.find((opt) => opt.value === upper);
+    return match ? match.value : 'PREFER_NOT_TO_SAY';
+  }, []);
+
   // Form state
   const initialData = React.useMemo(
     () => ({
@@ -62,10 +76,10 @@ export function ProfileTab({ user }: ProfileTabProps) {
       last_name: user?.last_name ?? '',
       displayUsername: user?.displayUsername ?? user?.username ?? '',
       phone: user?.phone ?? '',
-      gender: user?.gender ?? 'prefer_not_to_say',
+      gender: normalizeGender(user?.gender),
       dateOfBirth: user?.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '',
     }),
-    [user]
+    [user, normalizeGender]
   );
 
   const [formData, setFormData] = React.useState(initialData);
@@ -138,7 +152,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
         last_name: formData.last_name.trim(),
         displayUsername: formData.displayUsername.trim() || undefined,
         phone: formData.phone.trim() || undefined,
-        gender: formData.gender as any,
+        gender: formData.gender,
         dateOfBirth: formData.dateOfBirth || undefined,
       });
     } finally {
@@ -315,24 +329,38 @@ export function ProfileTab({ user }: ProfileTabProps) {
 
             <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
               <Field label="Gender">
-                <select
+                <Select
                   value={formData.gender}
-                  onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
-                  className="flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-body-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-colors"
+                  onValueChange={(val) => setFormData((s) => ({ ...s, gender: val as Gender }))}
                 >
-                  {GENDERS.map((g) => (
-                    <option key={g.value} value={g.value}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full text-body-sm">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDERS.map((g) => (
+                      <SelectItem key={g.value} value={g.value}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
 
               <Field label="Date of Birth" description={birthDateDescription}>
-                <Input
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => setFormData((s) => ({ ...s, dateOfBirth: e.target.value }))}
+                <DatePicker
+                  date={formData.dateOfBirth || undefined}
+                  onDateChange={(_date, plainDate) =>
+                    setFormData((s) => ({
+                      ...s,
+                      dateOfBirth: plainDate ? plainDate.toString() : '',
+                    }))
+                  }
+                  placeholder="Select birth date"
+                  maxDate={Temporal.Now.plainDateISO()}
+                  fromYear={1900}
+                  toYear={Temporal.Now.plainDateISO().year}
+                  clearable
+                  className="w-full"
                 />
               </Field>
             </div>

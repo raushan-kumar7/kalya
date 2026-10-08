@@ -153,8 +153,7 @@ export const SignIn = ({
 
       if (result.success && result.data) {
         onSuccess?.(result.data);
-        router.push(destination);
-        router.refresh();
+        router.replace(destination);
       } else if (result.errorMessage) {
         setServerError(result.errorMessage);
       }
@@ -386,12 +385,6 @@ export const SignIn = ({
             {isSubmitting || isSigningIn ? 'Authenticating…' : 'Sign in to Kalya'}
           </Button>
         </form>
-
-        {/* Security Trust Signal */}
-        {/* <div className="mt-5 flex items-center justify-center gap-1.5 text-center font-body text-caption text-text-muted select-none">
-          <ShieldCheck className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-          <span>Bank-grade 256-bit encryption · SOC2 Type II compliant</span>
-        </div> */}
       </div>
 
       {/* Switch to Sign Up Action */}

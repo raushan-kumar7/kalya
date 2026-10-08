@@ -212,7 +212,7 @@ export const VerificationSchema: z.ZodType<Verification> = z.object({
  */
 export const AuthResponseSchema: z.ZodType<AuthResponse> = z.object({
   user: UserSchema,
-  session: SessionSchema,
+  session: SessionSchema.optional(),
   token: z.string().optional(),
   message: z.string().optional(),
 });

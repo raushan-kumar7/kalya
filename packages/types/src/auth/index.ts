@@ -253,7 +253,7 @@ export interface AvailabilityResponse {
  */
 export interface AuthResponse {
   user: User;
-  session: Session;
+  session?: Session;
   /** Bearer access token (for mobile clients) */
   token?: string;
   message?: string;
