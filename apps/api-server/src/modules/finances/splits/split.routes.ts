@@ -2,6 +2,8 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { SplitController } from './split.controller';
 import {
   CreateSplitContactMemberSchema,
+  LinkSplitContactSchema,
+  RespondSplitInvitationSchema,
   SettleSplitExpenseSchema,
   UpdateSplitContactMemberSchema,
   z,
@@ -35,6 +37,33 @@ export const createSplitRoutes = (controller: SplitController): FastifyPluginAsy
       handler: controller.updateContact,
     });
 
+    fastify.post('/contacts/:id/link', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'Link unlinked contact to a Kalya user',
+        params: z.object({ id: z.string().min(1) }),
+        body: LinkSplitContactSchema,
+      },
+      handler: controller.linkContact,
+    });
+
+    fastify.post('/contacts/:id/unlink', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'Unlink contact from Kalya user',
+        params: z.object({ id: z.string().min(1) }),
+      },
+      handler: controller.unlinkContact,
+    });
+
+    fastify.get('/contacts/suggestions', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'Get suggestions for unlinked contacts matching Kalya users',
+      },
+      handler: controller.getSuggestions,
+    });
+
     fastify.delete('/contacts/:id', {
       schema: {
         tags: ['Finances - Splits'],
@@ -42,6 +71,24 @@ export const createSplitRoutes = (controller: SplitController): FastifyPluginAsy
         params: z.object({ id: z.string().min(1) }),
       },
       handler: controller.deleteContact,
+    });
+
+    fastify.get('/invitations', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'List incoming pending split invitations',
+      },
+      handler: controller.listInvitations,
+    });
+
+    fastify.post('/invitations/:id/respond', {
+      schema: {
+        tags: ['Finances - Splits'],
+        summary: 'Accept or decline split invitation',
+        params: z.object({ id: z.string().min(1) }),
+        body: RespondSplitInvitationSchema,
+      },
+      handler: controller.respondInvitation,
     });
 
     fastify.get('/pending', {

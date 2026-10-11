@@ -184,8 +184,10 @@ export function ExcelColumnFilter({
   }, [items]);
 
   // Payment method multi-select helper
-  const selectedMethods =
-    filters.paymentMethods ?? (filters.paymentMethod !== 'all' ? [filters.paymentMethod] : []);
+  const selectedMethods = (filters.paymentMethods ??
+    (filters.paymentMethod && filters.paymentMethod !== 'all'
+      ? [filters.paymentMethod]
+      : [])) as PaymentMethod[];
   const handleToggleMethod = (methodId: PaymentMethod) => {
     let next: PaymentMethod[];
     if (selectedMethods.includes(methodId)) {

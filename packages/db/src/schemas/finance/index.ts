@@ -7,4 +7,5 @@ export * from './goal';
 export * from './income';
 export * from './notification';
 export * from './split-contact';
+export * from './split-invitation';
 export * from './summary';

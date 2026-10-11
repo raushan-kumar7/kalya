@@ -98,6 +98,8 @@ export const financeKeys = {
     all: splits.all,
     contacts: (): QueryKey => key(...splits.all(), 'contacts'),
     pending: (): QueryKey => key(...splits.all(), 'pending'),
+    suggestions: (): QueryKey => key(...splits.all(), 'suggestions'),
+    invitations: (): QueryKey => key(...splits.all(), 'invitations'),
   },
 
   assets: {

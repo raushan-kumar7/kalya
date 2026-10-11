@@ -103,10 +103,10 @@ export interface TransactionFilterState {
   /** 'YYYY-MM-DD', used when dateRange is 'custom'. */
   customStartDate?: string;
   customEndDate?: string;
-  categoryId?: string;
+  categoryId?: string | null;
   categoryIds?: string[];
-  bucketId?: string;
-  paymentMethod?: PaymentMethodFilter;
+  bucketId?: string | null;
+  paymentMethod?: PaymentMethodFilter | null;
   paymentMethods?: PaymentMethodFilter[];
   kinds?: TransactionKind[];
   minAmount?: number;

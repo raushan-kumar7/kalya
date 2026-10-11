@@ -14,6 +14,7 @@ import {
   notificationPreference,
   splitContactMember,
   splitExpense,
+  splitInvitation,
 } from './finance';
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -28,6 +29,8 @@ export const userRelations = relations(user, ({ many }) => ({
   expenses: many(expense),
   splitExpenses: many(splitExpense),
   splitContactMembers: many(splitContactMember),
+  sentSplitInvitations: many(splitInvitation, { relationName: 'sentInvitations' }),
+  receivedSplitInvitations: many(splitInvitation, { relationName: 'receivedInvitations' }),
   digitalAssets: many(digitalAsset),
   equityAssets: many(equityAsset),
   monthlySummaries: many(monthlySummary),
@@ -101,6 +104,12 @@ export const splitContactMemberRelations = relations(splitContactMember, ({ one,
   owner: one(user, {
     fields: [splitContactMember.userId],
     references: [user.id],
+    relationName: 'contactOwner',
+  }),
+  linkedUser: one(user, {
+    fields: [splitContactMember.linkedUserId],
+    references: [user.id],
+    relationName: 'linkedUserProfile',
   }),
   expensesPaid: many(expense),
   splitLines: many(splitExpense),
@@ -115,6 +124,36 @@ export const splitExpenseRelations = relations(splitExpense, ({ one }) => ({
   member: one(splitContactMember, {
     fields: [splitExpense.splitMemberId],
     references: [splitContactMember.id],
+  }),
+  creator: one(user, {
+    fields: [splitExpense.creatorUserId],
+    references: [user.id],
+    relationName: 'expenseCreator',
+  }),
+  invitation: one(splitInvitation, {
+    fields: [splitExpense.invitationId],
+    references: [splitInvitation.id],
+  }),
+}));
+
+export const splitInvitationRelations = relations(splitInvitation, ({ one }) => ({
+  sender: one(user, {
+    fields: [splitInvitation.senderUserId],
+    references: [user.id],
+    relationName: 'sentInvitations',
+  }),
+  receiver: one(user, {
+    fields: [splitInvitation.receiverUserId],
+    references: [user.id],
+    relationName: 'receivedInvitations',
+  }),
+  expense: one(expense, {
+    fields: [splitInvitation.expenseId],
+    references: [expense.id],
+  }),
+  splitExpense: one(splitExpense, {
+    fields: [splitInvitation.splitExpenseId],
+    references: [splitExpense.id],
   }),
 }));
 

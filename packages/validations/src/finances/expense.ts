@@ -5,7 +5,9 @@ import {
   CreateSplitExpenseDto,
   ExpenseFilterQueryDto,
   FINANCE_LIMITS,
+  LinkSplitContactDto,
   PAYMENT_METHOD_OPTIONS,
+  RespondSplitInvitationDto,
   SETTLEMENT_METHOD_OPTIONS,
   SettleSplitExpenseDto,
   SPLIT_TYPE_OPTIONS,
@@ -152,6 +154,28 @@ export type ExpenseInput = z.infer<typeof ExpenseSchema>;
 // ============================================================================
 
 /**
+ * Permissive avatar image validator accepting full URLs, relative paths, or null/empty strings.
+ */
+export const AvatarImageSchema = z
+  .string()
+  .trim()
+  .refine(
+    (val) => {
+      if (!val) return true;
+      return (
+        val.startsWith('/') ||
+        val.startsWith('http://') ||
+        val.startsWith('https://') ||
+        val.startsWith('data:image/') ||
+        /^[a-zA-Z0-9_\-./]+$/.test(val)
+      );
+    },
+    { message: 'Invalid image path or URL' }
+  )
+  .nullable()
+  .optional();
+
+/**
  * Schema for creating a new split contact member.
  */
 export const CreateSplitContactMemberSchema: z.ZodType<CreateSplitContactMemberDto> = z.object({
@@ -162,8 +186,10 @@ export const CreateSplitContactMemberSchema: z.ZodType<CreateSplitContactMemberD
     .max(FINANCE_LIMITS.MAX_NAME_LENGTH, 'Name is too long'),
   phone: z.string().trim().max(20).nullable().optional(),
   email: z.string().email('Invalid email address').trim().toLowerCase().nullable().optional(),
-  image: z.string().url('Invalid image URL').nullable().optional(),
+  image: AvatarImageSchema,
   is_linked: z.boolean().optional().default(false),
+  linked_user_id: UUIDSchema.nullable().optional(),
+  auto_sync_profile: z.boolean().optional().default(true),
 });
 export type CreateSplitContactMemberInput = z.infer<typeof CreateSplitContactMemberSchema>;
 
@@ -174,13 +200,33 @@ export const UpdateSplitContactMemberSchema: z.ZodType<UpdateSplitContactMemberD
   name: z.string().trim().min(1).max(FINANCE_LIMITS.MAX_NAME_LENGTH).optional(),
   phone: z.string().trim().max(20).nullable().optional(),
   email: z.string().email('Invalid email address').trim().toLowerCase().nullable().optional(),
-  image: z.string().url('Invalid image URL').nullable().optional(),
+  image: AvatarImageSchema,
   is_linked: z.boolean().optional(),
+  linked_user_id: UUIDSchema.nullable().optional(),
+  auto_sync_profile: z.boolean().optional(),
 });
 export type UpdateSplitContactMemberInput = z.infer<typeof UpdateSplitContactMemberSchema>;
 
 /** Backwards-compatible alias */
 export const SplitContactMemberUpdateSchema = UpdateSplitContactMemberSchema;
+
+/**
+ * Schema for linking an unlinked contact to a registered Kalya user.
+ */
+export const LinkSplitContactSchema: z.ZodType<LinkSplitContactDto> = z.object({
+  linked_user_id: UUIDSchema,
+  auto_sync_profile: z.boolean().optional().default(true),
+});
+export type LinkSplitContactInput = z.infer<typeof LinkSplitContactSchema>;
+
+/**
+ * Schema for responding to a split invitation.
+ */
+export const RespondSplitInvitationSchema: z.ZodType<RespondSplitInvitationDto> = z.object({
+  action: z.enum(['accept', 'decline']),
+  note: z.string().max(300).trim().optional(),
+});
+export type RespondSplitInvitationInput = z.infer<typeof RespondSplitInvitationSchema>;
 
 /**
  * Full Split Contact Member entity schema.

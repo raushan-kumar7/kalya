@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useFinanceModal, useSplitContactActions, useSplitContactsQuery } from '@/hooks/finances';
+import {
+  useFinanceModal,
+  useSplitContactActions,
+  useSplitContactsQuery,
+  useSplitContactSuggestionsQuery,
+} from '@/hooks/finances';
 import { SplitContactCard, CreateSplitContactCard, SplitContactCardSkeleton } from './card';
 import { SplitContactForm } from '@/components/forms/finances';
 import {
@@ -15,7 +20,7 @@ import {
   ModalDescription,
   ModalFooter,
 } from '@/components/ui';
-import { AlertTriangle, Search, UserPlus, Users, X } from 'lucide-react';
+import { AlertTriangle, Search, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import type {
   SplitContactMember,
@@ -33,9 +38,19 @@ type FilterTab = 'all' | 'linked' | 'external';
 export function SplitContacts() {
   // Queries
   const { data: contacts = [], isLoading, error, refetch } = useSplitContactsQuery();
+  const { data: suggestions = [] } = useSplitContactSuggestionsQuery();
+
   // Actions
-  const { createContact, updateContact, deleteContact, isCreating, isUpdating, isDeleting } =
-    useSplitContactActions();
+  const {
+    createContact,
+    updateContact,
+    linkContact,
+    deleteContact,
+    isCreating,
+    isUpdating,
+    isLinking,
+    isDeleting,
+  } = useSplitContactActions();
   // Modal
   const { activeModal, openModal, closeModal, activeContactId, setActiveContactId } =
     useFinanceModal();
@@ -43,6 +58,11 @@ export function SplitContacts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [pendingDelete, setPendingDelete] = useState<SplitContactMember | null>(null);
+
+  // Map suggestions by contact_id
+  const suggestionsByContactId = useMemo(() => {
+    return new Map(suggestions.map((s) => [s.contact_id, s]));
+  }, [suggestions]);
 
   // Active contact selected for edit mode
   const editingContact = useMemo(() => {
@@ -96,6 +116,19 @@ export function SplitContacts() {
       if (!res.success) {
         throw new Error(res.error?.message || 'Failed to create contact');
       }
+    }
+  };
+
+  const handleLinkContact = async (member: SplitContactMember) => {
+    const match = suggestionsByContactId.get(member.id);
+    if (match) {
+      await linkContact(member.id, {
+        linked_user_id: match.matched_user.id,
+        auto_sync_profile: true,
+      });
+    } else {
+      setActiveContactId(member.id);
+      openModal('edit-split-contact', member.id);
     }
   };
 
@@ -251,6 +284,47 @@ export function SplitContacts() {
           />
         )}
 
+        {/* Kalya User Matches / Link Suggestions Banner */}
+        {!isLoading && suggestions.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-subtle/25 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/20 text-accent">
+                <Sparkles size={18} className="animate-pulse" />
+              </div>
+              <div>
+                <p className="text-body-sm font-medium text-text-primary">
+                  {suggestions.length} {suggestions.length === 1 ? 'contact' : 'contacts'} found on
+                  Kalya!
+                </p>
+                <p className="text-caption text-text-secondary">
+                  Match found via email or phone. Link them to sync avatars, profiles, and two-way
+                  split requests.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  for (const s of suggestions) {
+                    await linkContact(s.contact_id, {
+                      linked_user_id: s.matched_user.id,
+                      auto_sync_profile: true,
+                    });
+                  }
+                }}
+                disabled={isLinking}
+                isLoading={isLinking}
+                className="text-caption bg-surface border-accent/40 text-accent hover:border-accent"
+              >
+                <Sparkles size={14} className="mr-1.5" />
+                Link all ({suggestions.length})
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Contacts Grid */}
         {!isLoading && filteredContacts.length > 0 && (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
@@ -259,11 +333,13 @@ export function SplitContacts() {
               <SplitContactCard
                 key={member.id}
                 member={member}
+                suggestedMatch={suggestionsByContactId.get(member.id)}
                 onEdit={() => {
                   setActiveContactId(member.id);
                   openModal('edit-split-contact', member.id);
                 }}
                 onDelete={() => setPendingDelete(member)}
+                onLink={handleLinkContact}
               />
             ))}
           </div>

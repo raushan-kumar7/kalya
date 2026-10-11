@@ -19,6 +19,10 @@ export type PersonGroup = {
   owed: number;
   settled: number;
   remaining: number;
+  theyOweYou: number;
+  youOweThem: number;
+  netBalance: number;
+  direction: 'they_owe_you' | 'you_owe_them' | 'settled';
   progressPct: number;
   unpaidCount: number;
   partialCount: number;
@@ -30,6 +34,8 @@ export type SplitsStats = {
   totalObligation: number;
   totalSettled: number;
   totalOutstanding: number;
+  totalYouAreOwed: number;
+  totalYouOwe: number;
   peopleCount: number;
   shareCount: number;
   partialCount: number;
@@ -98,6 +104,18 @@ export const getRemaining = (item: UnsettledSplitItem): number => {
   return Math.max(0, roundMoney(getOwed(item) - getSettled(item)));
 };
 
+/**
+ * Returns true if the logged-in user paid upfront for the parent expense.
+ * In Kalya's schema, expense.paid_by (or paidBy) is null when the owning user paid.
+ * When a peer paid, paid_by contains the peer contact ID.
+ */
+export const isUserPaidItem = (item: UnsettledSplitItem): boolean => {
+  const exp = item.expense;
+  if (!exp) return true;
+  const paidBy = exp.paid_by ?? (exp as any).paidBy;
+  return !paidBy;
+};
+
 export const isLinkedMember = (member?: SplitContactMember | null): boolean => {
   return Boolean(member?.is_linked ?? (member as any)?.isLinked);
 };
@@ -131,6 +149,7 @@ export function getGroupKey(item: UnsettledSplitItem): string {
 /**
  * Aggregates a flat list of unsettled split items into person-centric groups.
  * Items inside each group are sorted chronologically (oldest -> newest) for FIFO settlement.
+ * Computes bidirectional netting between sender and receiver.
  */
 export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
   const map = new Map<
@@ -141,7 +160,8 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
       items: UnsettledSplitItem[];
       owed: number;
       settled: number;
-      remaining: number;
+      theyOweYou: number;
+      youOweThem: number;
       unpaidCount: number;
       partialCount: number;
       latestTime: number;
@@ -159,7 +179,8 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
         items: [],
         owed: 0,
         settled: 0,
-        remaining: 0,
+        theyOweYou: 0,
+        youOweThem: 0,
         unpaidCount: 0,
         partialCount: 0,
         latestTime: 0,
@@ -172,11 +193,17 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
     const settled = getSettled(item);
     const remaining = getRemaining(item);
     const timestamp = getItemDateTimestamp(item);
+    const isUserPayer = isUserPaidItem(item);
 
     g.items.push(item);
     g.owed += owed;
     g.settled += settled;
-    g.remaining += remaining;
+
+    if (isUserPayer) {
+      g.theyOweYou += remaining;
+    } else {
+      g.youOweThem += remaining;
+    }
 
     if (settled === 0) {
       g.unpaidCount += 1;
@@ -193,7 +220,18 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
   return Array.from(map.values()).map((g) => {
     const owed = roundMoney(g.owed);
     const settled = roundMoney(g.settled);
-    const remaining = roundMoney(g.remaining);
+    const theyOweYou = roundMoney(g.theyOweYou);
+    const youOweThem = roundMoney(g.youOweThem);
+    const netBalance = roundMoney(theyOweYou - youOweThem);
+
+    let direction: 'they_owe_you' | 'you_owe_them' | 'settled' = 'settled';
+    if (netBalance > 0.001) {
+      direction = 'they_owe_you';
+    } else if (netBalance < -0.001) {
+      direction = 'you_owe_them';
+    }
+
+    const remaining = roundMoney(Math.abs(netBalance));
     const progressPct =
       owed > 0 ? Math.min(100, Math.max(0, Math.round((settled / owed) * 100))) : 0;
 
@@ -203,6 +241,10 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
       owed,
       settled,
       remaining,
+      theyOweYou,
+      youOweThem,
+      netBalance,
+      direction,
       progressPct,
       unpaidCount: g.unpaidCount,
       partialCount: g.partialCount,
@@ -214,7 +256,7 @@ export function buildPersonGroups(items: UnsettledSplitItem[]): PersonGroup[] {
 }
 
 /**
- * Computes top-level KPI metrics across all person groups.
+ * Computes top-level KPI metrics across all person groups with bidirectional netting.
  */
 export function computeSplitsStats(
   allGroups: PersonGroup[],
@@ -222,7 +264,8 @@ export function computeSplitsStats(
 ): SplitsStats {
   let totalObligation = 0;
   let totalSettled = 0;
-  let totalOutstanding = 0;
+  let totalYouAreOwed = 0;
+  let totalYouOwe = 0;
   let partialCount = 0;
   let unpaidCount = 0;
   let linkedPeople = 0;
@@ -230,7 +273,11 @@ export function computeSplitsStats(
   for (const g of allGroups) {
     totalObligation += g.owed;
     totalSettled += g.settled;
-    totalOutstanding += g.remaining;
+    if (g.direction === 'they_owe_you') {
+      totalYouAreOwed += g.remaining;
+    } else if (g.direction === 'you_owe_them') {
+      totalYouOwe += g.remaining;
+    }
     partialCount += g.partialCount;
     unpaidCount += g.unpaidCount;
     if (isLinkedMember(g.member)) linkedPeople += 1;
@@ -238,12 +285,16 @@ export function computeSplitsStats(
 
   const roundedObligation = roundMoney(totalObligation);
   const roundedSettled = roundMoney(totalSettled);
-  const roundedOutstanding = roundMoney(totalOutstanding);
+  const roundedYouAreOwed = roundMoney(totalYouAreOwed);
+  const roundedYouOwe = roundMoney(totalYouOwe);
+  const roundedOutstanding = roundMoney(roundedYouAreOwed - roundedYouOwe);
 
   return {
     totalObligation: roundedObligation,
     totalSettled: roundedSettled,
     totalOutstanding: roundedOutstanding,
+    totalYouAreOwed: roundedYouAreOwed,
+    totalYouOwe: roundedYouOwe,
     peopleCount: allGroups.length,
     shareCount: totalSharesCount,
     partialCount,
@@ -329,7 +380,9 @@ export function computeSettleTarget(
 
   if (items.length === 0) return null;
 
-  const remaining = roundMoney(items.reduce((sum, i) => sum + getRemaining(i), 0));
+  const remaining = settleState.itemId
+    ? roundMoney(items.reduce((sum, i) => sum + getRemaining(i), 0))
+    : group.remaining;
   return {
     group,
     items,
@@ -372,17 +425,32 @@ export function validateSettlementAmount(
 
 /**
  * Distributes an incoming payment amount across items in FIFO order (oldest first).
+ * Prioritizes shares matching the group's net direction.
  * Returns individual payment allocations for each item.
  */
 export function planFifoSettlement(
   items: UnsettledSplitItem[],
-  amountToPay: number
+  amountToPay: number,
+  targetDirection?: 'they_owe_you' | 'you_owe_them' | 'settled'
 ): SettlementAllocation[] {
   let left = roundMoney(amountToPay);
   if (left <= 0 || items.length === 0) return [];
 
+  // Filter items matching the target direction if specified
+  let eligibleItems = items;
+  if (targetDirection === 'they_owe_you') {
+    eligibleItems = items.filter((i) => isUserPaidItem(i));
+  } else if (targetDirection === 'you_owe_them') {
+    eligibleItems = items.filter((i) => !isUserPaidItem(i));
+  }
+  if (eligibleItems.length === 0) {
+    eligibleItems = items;
+  }
+
   // Guarantee oldest to newest sorting
-  const sortedItems = [...items].sort((a, b) => getItemDateTimestamp(a) - getItemDateTimestamp(b));
+  const sortedItems = [...eligibleItems].sort(
+    (a, b) => getItemDateTimestamp(a) - getItemDateTimestamp(b)
+  );
 
   const allocations: SettlementAllocation[] = [];
 

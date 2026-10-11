@@ -202,6 +202,14 @@ export class UserService {
       );
     }
 
+    // Automatically synchronize updated profile across any split contacts where this user is linked
+    await this.syncSplitMemberProfiles(userId, {
+      name: compositeFullName,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      image: updatedUser.image,
+    });
+
     return this.formatUser(updatedUser);
   }
 
@@ -311,6 +319,11 @@ export class UserService {
       }
     }
 
+    // Automatically synchronize updated avatar across any split contacts where this user is linked
+    await this.syncSplitMemberProfiles(userId, {
+      image: result.url,
+    });
+
     return this.formatUser(updatedUser);
   }
 
@@ -338,6 +351,11 @@ export class UserService {
       .set({ image: null })
       .where(eq(schema.user.id, userId))
       .returning();
+
+    // Automatically synchronize removed avatar across any split contacts where this user is linked
+    await this.syncSplitMemberProfiles(userId, {
+      image: null,
+    });
 
     return this.formatUser(updatedUser);
   }
@@ -598,5 +616,78 @@ export class UserService {
     }
 
     return { totalSent: activeUsers.length };
+  }
+
+  /**
+   * Synchronizes updated profile fields to all split contact member records across the platform
+   * where this user is linked with autoSyncProfile enabled.
+   * Also retroactively auto-links any unlinked contacts matching the user's email or phone.
+   */
+  private async syncSplitMemberProfiles(
+    userId: string,
+    updates: {
+      name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      image?: string | null;
+    }
+  ): Promise<void> {
+    try {
+      const patch: Record<string, any> = {};
+      if (updates.name !== undefined) patch.name = updates.name;
+      if (updates.email !== undefined) patch.email = updates.email;
+      if (updates.phone !== undefined) patch.phone = updates.phone;
+      if (updates.image !== undefined) patch.image = updates.image;
+
+      if (Object.keys(patch).length > 0) {
+        patch.updatedAt = new Date();
+
+        // 1. Update all existing linked contacts where autoSyncProfile is true
+        await this.db
+          .update(schema.splitContactMember)
+          .set(patch)
+          .where(
+            and(
+              eq(schema.splitContactMember.linkedUserId, userId),
+              eq(schema.splitContactMember.autoSyncProfile, true)
+            )
+          );
+      }
+
+      // 2. Retroactively link any unlinked contacts matching user's email or phone
+      const conditions = [];
+      if (updates.email && updates.email.trim()) {
+        conditions.push(eq(schema.splitContactMember.email, updates.email.trim().toLowerCase()));
+      }
+      if (updates.phone && updates.phone.trim()) {
+        conditions.push(eq(schema.splitContactMember.phone, updates.phone.trim()));
+      }
+
+      if (conditions.length > 0) {
+        await this.db
+          .update(schema.splitContactMember)
+          .set({
+            linkedUserId: userId,
+            isLinked: true,
+            autoSyncProfile: true,
+            ...(updates.image !== undefined ? { image: updates.image } : {}),
+            ...(updates.name ? { name: updates.name } : {}),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              ne(schema.splitContactMember.userId, userId),
+              eq(schema.splitContactMember.isLinked, false),
+              or(...conditions)
+            )
+          );
+      }
+    } catch (err) {
+      log.warn('Failed to synchronize split member profiles', {
+        action: 'SYNC_SPLIT_MEMBER_PROFILES_FAILED',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 }

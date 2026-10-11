@@ -16,6 +16,7 @@ import {
   Timestamps,
   UUID,
 } from '../core';
+import type { User } from '../auth';
 
 // ============================================================================
 // Core Finance Entities
@@ -131,12 +132,18 @@ export interface Expense extends Identifiable, Timestamps {
   split_type: SplitType;
 }
 
+export type SplitSyncStatus =
+  'unlinked' | 'pending_acceptance' | 'synced' | 'declined' | 'disputed';
+export type SplitInvitationStatus = 'pending' | 'accepted' | 'declined' | 'cancelled' | 'expired';
+
 /**
  * Peer contact participant in split expenses.
  */
 export interface SplitContactMember extends Identifiable, Timestamps {
   /** User who added this contact */
   user_id: UUID;
+  /** Optional foreign key to linked registered platform user */
+  linked_user_id?: UUID | null;
   /** Contact full display name */
   name?: string | null;
   /** Contact phone number */
@@ -147,6 +154,10 @@ export interface SplitContactMember extends Identifiable, Timestamps {
   image?: string | null;
   /** Whether linked to an active Kalya registered user account */
   is_linked: boolean;
+  /** Whether to automatically sync profile updates from the linked user */
+  auto_sync_profile?: boolean;
+  /** Populated linked user profile entity */
+  linked_user?: User | null;
 }
 
 /**
@@ -169,6 +180,20 @@ export interface SplitExpense extends Identifiable {
   settled_via?: SettlementMethod | null;
   /** Timestamp when final settlement was completed */
   settled_at?: ISOTimestamp | null;
+  /** Link to mirror record in the peer participant's ledger */
+  peer_split_expense_id?: UUID | null;
+  /** Two-way ledger synchronization state */
+  sync_status?: SplitSyncStatus;
+  /** Reference to the invitation record if participant was invited */
+  invitation_id?: UUID | null;
+  /** Original creator user ID of the expense */
+  creator_user_id?: UUID | null;
+  /** Populated creator entity */
+  creator?: User | null;
+  /** Populated member entity */
+  member?: SplitContactMember | null;
+  /** Populated expense entity */
+  expense?: Expense | null;
 }
 
 /**
@@ -432,6 +457,8 @@ export interface CreateSplitContactMemberDto {
   email?: string | null;
   image?: string | null;
   is_linked?: boolean;
+  linked_user_id?: string | null;
+  auto_sync_profile?: boolean;
 }
 
 /** Input DTO for updating a Split Contact Member */
@@ -441,6 +468,52 @@ export interface UpdateSplitContactMemberDto {
   email?: string | null;
   image?: string | null;
   is_linked?: boolean;
+  linked_user_id?: string | null;
+  auto_sync_profile?: boolean;
+}
+
+/** Input DTO for linking an unlinked contact to a Kalya user */
+export interface LinkSplitContactDto {
+  linked_user_id: string;
+  auto_sync_profile?: boolean;
+}
+
+/** Suggestion item for unlinked contacts matching platform users */
+export interface SplitContactSuggestion {
+  contact_id: string;
+  contact_name: string;
+  matched_user: {
+    id: string;
+    name: string;
+    username: string;
+    email: string;
+    phone?: string | null;
+    image?: string | null;
+  };
+  match_reason: 'email' | 'phone';
+}
+
+/** Split Invitation entity */
+export interface SplitInvitation extends Identifiable, Timestamps {
+  sender_user_id: UUID;
+  receiver_user_id?: UUID | null;
+  invitee_email?: string | null;
+  invitee_phone?: string | null;
+  expense_id: UUID;
+  split_expense_id: UUID;
+  share_amount: Decimal;
+  status: SplitInvitationStatus;
+  response_note?: string | null;
+  responded_at?: ISOTimestamp | null;
+  expires_at?: ISOTimestamp | null;
+  sender?: User;
+  expense?: Expense;
+}
+
+/** Input DTO for accepting or declining an invitation */
+export interface RespondSplitInvitationDto {
+  action: 'accept' | 'decline';
+  note?: string;
 }
 
 /** Input DTO for creating a Split Expense share */

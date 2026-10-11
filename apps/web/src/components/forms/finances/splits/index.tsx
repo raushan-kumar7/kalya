@@ -47,6 +47,7 @@ const emptyValues: CreateSplitContactMemberInput = {
   phone: '',
   image: '',
   is_linked: false,
+  linked_user_id: null,
 };
 
 const SplitContactFormValidationSchema = z.object({
@@ -66,6 +67,7 @@ const SplitContactFormValidationSchema = z.object({
   phone: z.string().trim().max(20, 'Phone number is too long').optional().nullable(),
   image: z.string().optional().nullable(),
   is_linked: z.boolean().default(false),
+  linked_user_id: z.string().optional().nullable(),
 });
 
 export function SplitContactForm({
@@ -85,6 +87,7 @@ export function SplitContactForm({
       email: splitContact?.email ?? '',
       image: splitContact?.image ?? '',
       is_linked: splitContact?.is_linked ?? (splitContact as any)?.isLinked ?? false,
+      linked_user_id: splitContact?.linked_user_id ?? (splitContact as any)?.linkedUserId ?? null,
     },
   });
 
@@ -127,6 +130,7 @@ export function SplitContactForm({
       email: splitContact?.email ?? '',
       image: splitContact?.image ?? '',
       is_linked: splitContact?.is_linked ?? (splitContact as any)?.isLinked ?? false,
+      linked_user_id: splitContact?.linked_user_id ?? (splitContact as any)?.linkedUserId ?? null,
     });
   }, [open, splitContact, form]);
 
@@ -139,10 +143,13 @@ export function SplitContactForm({
     form.setValue('phone', user.phone ?? '', opts);
     form.setValue('image', user.image ?? '', opts);
     form.setValue('is_linked', true, opts);
+    form.setValue('linked_user_id', user.id, opts);
   };
 
   const unlink = () => {
-    form.reset(emptyValues);
+    const opts = { shouldValidate: true, shouldDirty: true } as const;
+    form.setValue('is_linked', false, opts);
+    form.setValue('linked_user_id', null, opts);
     setQuery('');
   };
 
@@ -155,6 +162,7 @@ export function SplitContactForm({
       phone: payload.phone?.trim() ? payload.phone.trim() : null,
       image: payload.image?.trim() ? payload.image.trim() : null,
       is_linked: Boolean(payload.is_linked),
+      linked_user_id: payload.linked_user_id ?? null,
     };
     await onSave(cleanPayload);
     onOpenChange(false);
@@ -176,8 +184,8 @@ export function SplitContactForm({
       size="md"
     >
       <div className="space-y-5">
-        {/* Registered-user lookup (shown only when creating or when not yet linked) */}
-        {!isEdit && !isLinked && (
+        {/* Registered-user lookup (shown when not yet linked, in both Add and Edit modes) */}
+        {!isLinked && (
           <div className="rounded-xl border border-dashed border-border/80 bg-surface-raised/30 p-3.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-caption font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
@@ -242,9 +250,11 @@ export function SplitContactForm({
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar
                   size="md"
-                  className="h-10 w-10 shrink-0 border border-success/40 ring-2 ring-success/20"
+                  className="h-10 w-10 shrink-0 border border-success/40 ring-2 ring-success/20 overflow-hidden"
                 >
-                  {watchedImage && <AvatarImage src={watchedImage} alt={watchedName || 'User'} />}
+                  {watchedImage ? (
+                    <AvatarImage src={watchedImage} alt={watchedName || 'User'} />
+                  ) : null}
                   <AvatarFallback className="bg-success-subtle text-success font-semibold text-caption">
                     {initials}
                   </AvatarFallback>
@@ -270,18 +280,16 @@ export function SplitContactForm({
                 </div>
               </div>
 
-              {!isEdit && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={unlink}
-                  className="text-text-muted hover:text-danger hover:bg-danger-subtle/30 shrink-0 text-caption gap-1 px-2.5 h-7 transition-colors"
-                >
-                  <Unlink className="h-3.5 w-3.5" />
-                  <span>Unlink</span>
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={unlink}
+                className="text-text-muted hover:text-danger hover:bg-danger-subtle/30 shrink-0 text-caption gap-1 px-2.5 h-7 transition-colors"
+              >
+                <Unlink className="h-3.5 w-3.5" />
+                <span>Unlink</span>
+              </Button>
             </div>
 
             <div className="mt-2.5 flex items-center gap-1.5 border-t border-success/20 pt-2 text-[11px] text-text-muted">

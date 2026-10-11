@@ -396,7 +396,7 @@ import {
   type TransactionKind,
   type TransactionTab,
   type UnifiedTransactionItem,
-} from '@/hooks/finances/transactions/types';
+} from './types';
 import { TransactionsHeader } from './header';
 import { SummaryStrip } from './summary-strip';
 import { FilterBar } from './filter-bar';

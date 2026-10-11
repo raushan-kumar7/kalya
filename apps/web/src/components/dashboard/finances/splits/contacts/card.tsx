@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import type { SplitContactMember } from '@kalya/types';
+import type { SplitContactMember, SplitContactSuggestion } from '@kalya/types';
 import type { UpdateSplitContactMemberInput } from '@kalya/validations';
 import { CreateEntityCard, EntityCard, FooterRow } from '@/components/shared';
 import { formatCardDate } from '@kalya/utils';
+import { cn } from '@/libs/utils';
 import {
   Banknote,
   Clock3,
@@ -12,6 +13,7 @@ import {
   Mail,
   Phone,
   Receipt,
+  Sparkles,
   User,
   UserCheck,
   UserPlus,
@@ -88,6 +90,10 @@ export interface SplitContactCardProps {
     | ((payload: UpdateSplitContactMemberInput) => void | Promise<void>);
   /** Callback fired when user clicks Delete in the action menu */
   onDelete?: ((member: SplitContactMember) => void | Promise<void>) | (() => void | Promise<void>);
+  /** Callback fired when user clicks Link to Kalya */
+  onLink?: (member: SplitContactMember) => void | Promise<void>;
+  /** Optional matched suggestion from Kalya user directory */
+  suggestedMatch?: SplitContactSuggestion | null;
   /** Optional click callback for the whole card */
   onClick?: (member: SplitContactMember) => void;
   /** Custom wrapper CSS class */
@@ -98,6 +104,8 @@ export function SplitContactCard({
   member,
   onEdit,
   onDelete,
+  onLink,
+  suggestedMatch,
   onClick,
   className,
 }: SplitContactCardProps) {
@@ -163,10 +171,34 @@ export function SplitContactCard({
               Linked Account
             </span>
           ) : (
-            <span className="text-caption bg-surface-raised text-text-muted border border-border/50 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium">
-              <User size={12} />
-              External
-            </span>
+            <>
+              <span className="text-caption bg-surface-raised text-text-muted border border-border/50 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium">
+                <User size={12} />
+                External
+              </span>
+
+              {onLink && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLink(member);
+                  }}
+                  className={cn(
+                    'text-caption inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-colors cursor-pointer',
+                    suggestedMatch
+                      ? 'bg-accent-subtle/50 hover:bg-accent-subtle text-accent border border-accent/40 shadow-xs'
+                      : 'bg-surface-raised hover:bg-primary-subtle hover:text-primary text-text-secondary border border-border/60'
+                  )}
+                >
+                  <Sparkles
+                    size={12}
+                    className={suggestedMatch ? 'text-accent animate-pulse' : 'text-text-muted'}
+                  />
+                  <span>{suggestedMatch ? 'Account Found — Link' : 'Link to Kalya'}</span>
+                </button>
+              )}
+            </>
           )}
 
           {member.phone && member.email && (

@@ -133,10 +133,27 @@
 //   }
 // }
 
-import { and, desc, eq, expense, splitExpense, category, gte, lte } from '@kalya/db';
+import {
+  alert,
+  and,
+  category,
+  desc,
+  eq,
+  expense,
+  gte,
+  lte,
+  schema,
+  splitContactMember,
+  splitExpense,
+  splitInvitation,
+} from '@kalya/db';
 import { CreateExpenseDto, ExpenseFilterQueryDto, UpdateExpenseDto } from '@kalya/types';
 import { BaseFinanceService } from '../common';
 import { calculateSplitShares, roundMoney } from '@kalya/utils';
+import { env } from '@kalya/env';
+import { log } from '@/logger';
+import { getMailer } from '@/libs/mail';
+import { SplitExpenseRequest } from '@kalya/email';
 
 export class ExpenseService extends BaseFinanceService {
   async listExpenses(userId: string, query: ExpenseFilterQueryDto) {
@@ -188,8 +205,20 @@ export class ExpenseService extends BaseFinanceService {
     const splitType = dto.split_type ?? 'equal';
     const yourShare = roundMoney(dto.your_share ?? (isSplit ? 0 : totalAmount));
 
+    const emailJobs: {
+      to: string;
+      recipientName: string;
+      payerName: string;
+      expenseDescription: string;
+      totalBillAmount: string;
+      recipientShareAmount: string;
+      expenseDate: string;
+      splitMethod: string;
+      paymentMethod: string;
+    }[] = [];
+
     // better-sqlite3 transactions are SYNCHRONOUS: no async/await inside the callback.
-    return this.db.transaction((tx) => {
+    const createdExpense = this.db.transaction((tx) => {
       const newExpense = tx
         .insert(expense)
         .values({
@@ -220,7 +249,34 @@ export class ExpenseService extends BaseFinanceService {
             );
 
         for (const share of splitShares) {
-          tx.insert(splitExpense)
+          const [contactMember] = tx
+            .select()
+            .from(splitContactMember)
+            .where(eq(splitContactMember.id, share.memberId))
+            .all();
+
+          // Resolve linked user profile or check matched registered user
+          let targetUser = null;
+          if (contactMember?.linkedUserId) {
+            [targetUser] = tx
+              .select()
+              .from(schema.user)
+              .where(eq(schema.user.id, contactMember.linkedUserId))
+              .all();
+          } else if (contactMember?.email) {
+            [targetUser] = tx
+              .select()
+              .from(schema.user)
+              .where(eq(schema.user.email, contactMember.email.toLowerCase()))
+              .all();
+          }
+
+          const isMemberLinked = Boolean(targetUser);
+          const inviteeEmail = contactMember?.email || targetUser?.email || null;
+          const inviteePhone = contactMember?.phone || targetUser?.phone || null;
+
+          const [newSplitShare] = tx
+            .insert(splitExpense)
             .values({
               userId,
               expenseId: newExpense.id,
@@ -228,13 +284,112 @@ export class ExpenseService extends BaseFinanceService {
               amount: share.amount,
               settledAmount: 0,
               settled: false,
+              syncStatus: isMemberLinked ? 'pending_acceptance' : 'unlinked',
+              creatorUserId: userId,
             })
-            .run();
+            .returning()
+            .all();
+
+          if (targetUser || inviteeEmail || inviteePhone) {
+            const [invitation] = tx
+              .insert(splitInvitation)
+              .values({
+                senderUserId: userId,
+                receiverUserId: targetUser?.id || null,
+                inviteeEmail: inviteeEmail ? inviteeEmail.toLowerCase() : null,
+                inviteePhone: inviteePhone || null,
+                expenseId: newExpense.id,
+                splitExpenseId: newSplitShare.id,
+                shareAmount: share.amount,
+                status: 'pending',
+              })
+              .returning()
+              .all();
+
+            tx.update(splitExpense)
+              .set({ invitationId: invitation.id })
+              .where(eq(splitExpense.id, newSplitShare.id))
+              .run();
+
+            const [senderUser] = tx
+              .select()
+              .from(schema.user)
+              .where(eq(schema.user.id, userId))
+              .all();
+
+            // Create in-app alert for registered users
+            if (targetUser) {
+              tx.insert(alert)
+                .values({
+                  userId: targetUser.id,
+                  type: 'split_update',
+                  title: `Split Request: ${senderUser?.name || 'Someone'}`,
+                  message: `${senderUser?.name || 'A contact'} split "${newExpense.description}" with you. Your share is ₹${share.amount}.`,
+                  isRead: false,
+                  referenceType: 'split_invitation',
+                  referenceId: invitation.id,
+                  metadata: {
+                    expenseId: newExpense.id,
+                    invitationId: invitation.id,
+                    amount: share.amount,
+                  },
+                })
+                .run();
+            }
+
+            // Queue background email dispatch if recipient email is available
+            if (inviteeEmail) {
+              emailJobs.push({
+                to: inviteeEmail,
+                recipientName: contactMember?.name || targetUser?.name || 'Friend',
+                payerName: senderUser?.name || 'Someone',
+                expenseDescription: newExpense.description,
+                totalBillAmount: `₹${newExpense.amount}`,
+                recipientShareAmount: `₹${share.amount}`,
+                expenseDate: newExpense.date,
+                splitMethod: `Split (${splitType})`,
+                paymentMethod: newExpense.paymentMethod || 'UPI',
+              });
+            }
+          }
         }
       }
 
       return newExpense;
     });
+
+    // Background async email dispatch (non-blocking, outside of DB transaction)
+    if (emailJobs.length > 0) {
+      (async () => {
+        try {
+          const mailer = getMailer();
+          for (const job of emailJobs) {
+            await mailer.sendTemplate({
+              to: job.to,
+              subject: `${job.payerName} split a bill with you on Kalya (${job.recipientShareAmount})`,
+              template: SplitExpenseRequest,
+              props: {
+                payerName: job.payerName,
+                recipientName: job.recipientName,
+                expenseDescription: job.expenseDescription,
+                totalBillAmount: job.totalBillAmount,
+                recipientShareAmount: job.recipientShareAmount,
+                expenseDate: job.expenseDate,
+                splitMethod: job.splitMethod,
+                paymentMethod: job.paymentMethod,
+                settleUrl: `${env.app.clientUrl}/dashboard/splits`,
+              },
+            });
+          }
+        } catch (mailError) {
+          log.warn('Split expense email dispatch skipped', {
+            error: mailError instanceof Error ? mailError.message : String(mailError),
+          });
+        }
+      })().catch(() => {});
+    }
+
+    return createdExpense;
   }
 
   async updateExpense(userId: string, id: string, dto: UpdateExpenseDto) {

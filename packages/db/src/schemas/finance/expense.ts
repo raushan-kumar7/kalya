@@ -3,6 +3,7 @@ import { boolCol, idCol, isoDate, money, timestamps, uuidCol } from '../_columns
 import { userIdCol } from './_user-ref';
 import { category } from './category';
 import { splitContactMember } from './split-contact';
+import { user } from '../auth';
 
 export const expense = sqliteTable(
   'expense',
@@ -48,14 +49,26 @@ export const splitExpense = sqliteTable(
       .notNull()
       .references(() => splitContactMember.id, { onDelete: 'cascade' }),
     amount: money('amount'),
-    settledAmount: money('settled_amount'),
+    settledAmount: money('settled_amount').default(0),
     settled: boolCol('settled', false),
     settledVia: text('settled_via'),
     settledAt: isoDate('settled_at'),
+    peerSplitExpenseId: uuidCol('peer_split_expense_id'),
+    syncStatus: text('sync_status', {
+      enum: ['unlinked', 'pending_acceptance', 'synced', 'declined', 'disputed'],
+    })
+      .notNull()
+      .default('unlinked'),
+    invitationId: uuidCol('invitation_id'),
+    creatorUserId: uuidCol('creator_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
   },
   (t) => [
     index('split_expense_expense_member_idx').on(t.expenseId, t.splitMemberId),
     index('split_expense_member_idx').on(t.splitMemberId), // "what do I owe overall"
+    index('split_expense_peer_idx').on(t.peerSplitExpenseId),
+    index('split_expense_sync_status_idx').on(t.userId, t.syncStatus),
   ]
 );
 

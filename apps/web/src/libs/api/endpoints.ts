@@ -189,6 +189,11 @@ export const ENDPOINTS = {
     SPLITS: {
       CONTACTS: `${FINANCES}/splits/contacts`,
       CONTACT_DETAIL: (id: string) => `${FINANCES}/splits/contacts/${id}`,
+      CONTACT_LINK: (id: string) => `${FINANCES}/splits/contacts/${id}/link`,
+      CONTACT_UNLINK: (id: string) => `${FINANCES}/splits/contacts/${id}/unlink`,
+      CONTACT_SUGGESTIONS: `${FINANCES}/splits/contacts/suggestions`,
+      INVITATIONS: `${FINANCES}/splits/invitations`,
+      INVITATION_RESPOND: (id: string) => `${FINANCES}/splits/invitations/${id}/respond`,
       SHARES_PENDING: `${FINANCES}/splits/pending`, // FIXED: was /splits/shares/pending
       SETTLE_SHARE: (id: string) => `${FINANCES}/splits/shares/${id}/settle`,
     },

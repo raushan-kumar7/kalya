@@ -6,6 +6,10 @@ import {
   UpdateSplitContactMemberDto,
   SplitExpense,
   SettleSplitExpenseDto,
+  LinkSplitContactDto,
+  RespondSplitInvitationDto,
+  SplitContactSuggestion,
+  SplitInvitation,
 } from '@kalya/types';
 import { queryOptions, useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
@@ -33,6 +37,18 @@ export const splitQueries = {
       queryFn: () => SplitService.listPending(),
       staleTime: STALE.short,
     }),
+  suggestions: () =>
+    queryOptions({
+      queryKey: financeKeys.splits.suggestions(),
+      queryFn: () => SplitService.getSuggestions(),
+      staleTime: STALE.medium,
+    }),
+  invitations: () =>
+    queryOptions({
+      queryKey: financeKeys.splits.invitations(),
+      queryFn: () => SplitService.listInvitations(),
+      staleTime: STALE.short,
+    }),
 };
 
 export function useSplitContactsQuery(options?: QueryOverrides<SplitContactMember[]>) {
@@ -43,13 +59,26 @@ export function usePendingSplitSharesQuery(options?: QueryOverrides<PendingSplit
   return useQuery({ ...splitQueries.pending(), ...options });
 }
 
+export function useSplitContactSuggestionsQuery(
+  options?: QueryOverrides<SplitContactSuggestion[]>
+) {
+  return useQuery({ ...splitQueries.suggestions(), ...options });
+}
+
+export function useSplitInvitationsQuery(options?: QueryOverrides<SplitInvitation[]>) {
+  return useQuery({ ...splitQueries.invitations(), ...options });
+}
+
 /* ── Mutations ───────────────────────────────────────────── */
 
 export function useCreateSplitContactMutation() {
   const qc = useQueryClient();
   return useMutation<SplitContactMember, Error, CreateSplitContactMemberDto>({
     mutationFn: (dto) => SplitService.createContact(dto),
-    onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.splits.contacts() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: financeKeys.splits.contacts() });
+      qc.invalidateQueries({ queryKey: financeKeys.splits.suggestions() });
+    },
   });
 }
 
@@ -59,6 +88,42 @@ export function useUpdateSplitContactMutation() {
     mutationFn: ({ id, dto }) => SplitService.updateContact(id, dto),
     // Pending shares embed the member, so a rename must refresh them too.
     onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.splits.all() }),
+  });
+}
+
+export function useLinkSplitContactMutation() {
+  const qc = useQueryClient();
+  return useMutation<SplitContactMember, Error, { id: string; dto: LinkSplitContactDto }>({
+    mutationFn: ({ id, dto }) => SplitService.linkContact(id, dto),
+    onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.splits.all() }),
+  });
+}
+
+export function useUnlinkSplitContactMutation() {
+  const qc = useQueryClient();
+  return useMutation<SplitContactMember, Error, string>({
+    mutationFn: (id) => SplitService.unlinkContact(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.splits.all() }),
+  });
+}
+
+export function useRespondSplitInvitationMutation() {
+  const qc = useQueryClient();
+  return useMutation<SplitInvitation, Error, { id: string; dto: RespondSplitInvitationDto }>({
+    mutationFn: ({ id, dto }) => SplitService.respondInvitation(id, dto),
+    onSuccess: (_data, variables) => {
+      // Optimistically remove the responded invitation from cache immediately
+      qc.setQueriesData<SplitInvitation[]>(
+        { queryKey: financeKeys.splits.invitations() },
+        (old) => {
+          if (!old) return [];
+          return old.filter((inv) => inv.id !== variables.id);
+        }
+      );
+      qc.invalidateQueries({ queryKey: financeKeys.splits.invitations() });
+      qc.invalidateQueries({ queryKey: financeKeys.splits.all() });
+      qc.invalidateQueries({ queryKey: financeKeys.expenses.all() });
+    },
   });
 }
 
@@ -84,6 +149,8 @@ export function useSplitContactActions() {
   const { mutateAsync: createAsync, isPending: isCreating } = useCreateSplitContactMutation();
   const { mutateAsync: updateAsync, isPending: isUpdating } = useUpdateSplitContactMutation();
   const { mutateAsync: deleteAsync, isPending: isDeleting } = useDeleteSplitContactMutation();
+  const { mutateAsync: linkAsync, isPending: isLinking } = useLinkSplitContactMutation();
+  const { mutateAsync: unlinkAsync, isPending: isUnlinking } = useUnlinkSplitContactMutation();
 
   const createContact = useCallback(
     (dto: CreateSplitContactMemberDto, options?: RunActionOptions<SplitContactMember>) =>
@@ -109,6 +176,26 @@ export function useSplitContactActions() {
     [updateAsync]
   );
 
+  const linkContact = useCallback(
+    (id: string, dto: LinkSplitContactDto, options?: RunActionOptions<SplitContactMember>) =>
+      runAction(() => linkAsync({ id, dto }), {
+        loading: 'Linking to Kalya account…',
+        success: 'Contact linked successfully!',
+        ...options,
+      }),
+    [linkAsync]
+  );
+
+  const unlinkContact = useCallback(
+    (id: string, options?: RunActionOptions<SplitContactMember>) =>
+      runAction(() => unlinkAsync(id), {
+        loading: 'Unlinking contact…',
+        success: 'Contact unlinked successfully',
+        ...options,
+      }),
+    [unlinkAsync]
+  );
+
   const deleteContact = useCallback(
     (id: string, options?: RunActionOptions<SuccessResponse>) =>
       runAction(() => deleteAsync(id), {
@@ -122,16 +209,22 @@ export function useSplitContactActions() {
   return {
     createContact,
     updateContact,
+    linkContact,
+    unlinkContact,
     deleteContact,
     isCreating,
     isUpdating,
+    isLinking,
+    isUnlinking,
     isDeleting,
-    isSubmitting: isCreating || isUpdating || isDeleting,
+    isSubmitting: isCreating || isUpdating || isLinking || isUnlinking || isDeleting,
   };
 }
 
 export function useSplitShareActions() {
   const { mutateAsync: settleAsync, isPending: isSettling } = useSettleSplitExpenseMutation();
+  const { mutateAsync: respondAsync, isPending: isResponding } =
+    useRespondSplitInvitationMutation();
 
   const settleShare = useCallback(
     (id: string, dto: SettleSplitExpenseDto, options?: RunActionOptions<SplitExpense>) =>
@@ -143,5 +236,21 @@ export function useSplitShareActions() {
     [settleAsync]
   );
 
-  return { settleShare, isSettling, isSubmitting: isSettling };
+  const respondInvitation = useCallback(
+    (id: string, dto: RespondSplitInvitationDto, options?: RunActionOptions<SplitInvitation>) =>
+      runAction(() => respondAsync({ id, dto }), {
+        loading: dto.action === 'accept' ? 'Accepting split bill…' : 'Declining split…',
+        success: dto.action === 'accept' ? 'Split bill accepted and synced!' : 'Split declined',
+        ...options,
+      }),
+    [respondAsync]
+  );
+
+  return {
+    settleShare,
+    respondInvitation,
+    isSettling,
+    isResponding,
+    isSubmitting: isSettling || isResponding,
+  };
 }

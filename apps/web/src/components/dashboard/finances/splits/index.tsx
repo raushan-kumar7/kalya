@@ -40,6 +40,7 @@ import type { SettlementMethod, SplitContactMember } from '@kalya/types';
 import {
   usePendingSplitSharesQuery,
   useSplitContactsQuery,
+  useSplitInvitationsQuery,
   useSplitShareActions,
 } from '@/hooks/finances';
 import {
@@ -59,6 +60,7 @@ import {
   computeSettleTarget,
   validateSettlementAmount,
   planFifoSettlement,
+  isUserPaidItem,
   inr,
   fmtDate,
 } from './helper';
@@ -83,14 +85,40 @@ export function BalancesAndSettlements() {
   } = usePendingSplitSharesQuery();
 
   const { data: contacts = [] } = useSplitContactsQuery();
+  const {
+    data: invitations = [],
+    isLoading: invitationsLoading,
+    refetch: refetchInvitations,
+  } = useSplitInvitationsQuery();
 
   // Actions
-  const { settleShare, isSettling: isSettlingSplit } = useSplitShareActions();
+  const {
+    settleShare,
+    respondInvitation,
+    isSettling: isSettlingSplit,
+    isResponding: isRespondingInvitation,
+  } = useSplitShareActions();
+
+  // Pending split invitations sent to this user
+  const pendingInvitations = useMemo(
+    () => (invitations ?? []).filter((inv) => inv.status === 'pending'),
+    [invitations]
+  );
 
   // Toolbar
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<SortOption>('highest');
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+
+  const handleRespondInvitation = async (id: string, action: 'accept' | 'decline') => {
+    setRespondingId(id);
+    try {
+      await respondInvitation(id, { action });
+    } finally {
+      setRespondingId(null);
+    }
+  };
 
   // Dialogs
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
@@ -157,7 +185,11 @@ export function BalancesAndSettlements() {
     }
     setSettleError(null);
 
-    const allocations = planFifoSettlement(settleTarget.items, validation.amount);
+    const allocations = planFifoSettlement(
+      settleTarget.items,
+      validation.amount,
+      settleTarget.group.direction
+    );
     if (allocations.length === 0) return;
 
     const settledAt = Temporal.Now.instant().toString();
@@ -232,13 +264,19 @@ export function BalancesAndSettlements() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => refetchUnsettledSplits()}
+              onClick={() => {
+                refetchUnsettledSplits();
+                refetchInvitations();
+              }}
               disabled={unsettledLoading}
               className="gap-1.5"
             >
               <RotateCw
                 size={15}
-                className={cn('shrink-0', isPendingSplitsRefetching && 'animate-spin')}
+                className={cn(
+                  'shrink-0',
+                  (isPendingSplitsRefetching || invitationsLoading) && 'animate-spin'
+                )}
               />
               <span className="hidden sm:inline">Refresh</span>
             </Button>
@@ -251,36 +289,150 @@ export function BalancesAndSettlements() {
           </div>
         </div>
 
+        {/* Incoming Split Bill Invitations from Peers */}
+        {pendingInvitations.length > 0 && (
+          <div className="rounded-xl border border-primary/30 bg-primary-subtle/20 p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary shadow-sm">
+                  <Receipt size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display text-body-md font-semibold text-text-primary flex items-center gap-2">
+                    Split Bill Invitations
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-on-primary">
+                      {pendingInvitations.length} new
+                    </span>
+                  </h3>
+                  <p className="text-caption text-text-secondary mt-0.5">
+                    Your peers added you to shared expenses. Review and accept to sync them directly
+                    into your ledger.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+              {pendingInvitations.map((inv) => {
+                const inviterName = inv.sender?.name || 'A Kalya peer';
+                const inviterInitials = getContactInitials(inviterName);
+                const inviterColor = resolveContactColor(inv.sender?.id || inviterName);
+                const expenseDesc = inv.expense?.description || 'Shared expense';
+                const dateStr = fmtDate(inv.expense?.date);
+                const shareAmount = inv.share_amount;
+
+                return (
+                  <div
+                    key={inv.id}
+                    className="flex flex-col justify-between rounded-xl border border-border/80 bg-surface p-4 shadow-xs hover:border-primary/40 transition-colors"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-on-primary overflow-hidden"
+                            style={{ backgroundColor: inviterColor }}
+                          >
+                            {inv.sender?.image ? (
+                              <img
+                                src={inv.sender.image}
+                                alt={inviterName}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              inviterInitials || <User size={12} />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-caption font-medium text-text-primary block truncate">
+                              {inviterName}
+                            </span>
+                            <span className="text-[10px] text-text-muted block truncate">
+                              Logged bill
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="font-display text-body-md font-bold text-primary">
+                          {inr(shareAmount)}
+                        </span>
+                      </div>
+
+                      <div className="rounded-lg bg-surface-raised/50 p-2.5 space-y-1 text-caption">
+                        <p className="font-medium text-text-primary truncate">{expenseDesc}</p>
+                        <p className="text-[11px] text-text-muted flex items-center gap-1.5">
+                          <Calendar size={11} />
+                          {dateStr}
+                          {inv.expense?.split_type && (
+                            <span className="capitalize">· {inv.expense.split_type} split</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-4 pt-2 border-t border-border/40">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRespondInvitation(inv.id, 'decline')}
+                        disabled={Boolean(respondingId)}
+                        className="flex-1 text-caption text-text-muted hover:text-danger"
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleRespondInvitation(inv.id, 'accept')}
+                        disabled={Boolean(respondingId)}
+                        isLoading={respondingId === inv.id}
+                        className="flex-1 text-caption gap-1"
+                      >
+                        <Check size={14} />
+                        Accept
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* KPI cards */}
         <KpiGrid cols={4}>
           <KpiCard
-            title="Total Outstanding"
-            value={inr(stats.totalOutstanding)}
-            hint={`Owed by ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`}
+            title="Net Outstanding"
+            value={inr(Math.abs(stats.totalOutstanding))}
+            hint={
+              stats.totalOutstanding > 0
+                ? `You are owed net across ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`
+                : stats.totalOutstanding < 0
+                  ? `You owe net across ${stats.peopleCount} ${stats.peopleCount === 1 ? 'person' : 'people'}`
+                  : 'All accounts balanced · ₹0 net'
+            }
             icon={Wallet}
-            tone="warning"
+            tone={stats.totalOutstanding >= 0 ? 'positive' : 'warning'}
           />
           <KpiCard
-            title="Unsettled Shares"
-            value={String(stats.shareCount)}
-            hint={`${stats.unpaidCount} unpaid · ${stats.partialCount} partial`}
+            title="You Are Owed"
+            value={inr(stats.totalYouAreOwed)}
+            hint="Receivables from peers"
             icon={Receipt}
-            tone="default"
+            tone="positive"
+          />
+          <KpiCard
+            title="You Owe"
+            value={inr(stats.totalYouOwe)}
+            hint="Payables to peers"
+            icon={Banknote}
+            tone={stats.totalYouOwe > 0 ? 'warning' : 'default'}
           />
           <KpiCard
             title="Collected So Far"
             value={inr(stats.totalSettled)}
             hint={`From ${inr(stats.totalObligation)} total obligation`}
             icon={CheckCircle2}
-            tone="positive"
-          />
-          <KpiCard
-            title="Recovery Rate"
-            value={`${stats.recoveryRate}%`}
-            badge="Settled"
-            icon={Sparkles}
             tone="accent"
-            footer={<Progress value={stats.recoveryRate} className="h-1.5 bg-surface-raised" />}
           />
         </KpiGrid>
 
@@ -500,24 +652,48 @@ export function BalancesAndSettlements() {
                     <div className="my-5 rounded-lg border border-border/50 bg-surface-raised/40 px-4 py-4">
                       <div className="flex flex-col items-center text-center">
                         <div className="flex items-center gap-2">
-                          <span className="text-caption text-text-muted">Total remaining</span>
+                          <span className="text-caption text-text-muted">
+                            {g.direction === 'they_owe_you'
+                              ? 'Owes you'
+                              : g.direction === 'you_owe_them'
+                                ? 'You owe'
+                                : 'Net balance'}
+                          </span>
                           <span
                             className={cn(
                               'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                              isPartial
-                                ? 'bg-primary-subtle text-primary'
-                                : 'bg-warning-subtle text-warning'
+                              g.direction === 'settled'
+                                ? 'bg-success-subtle text-success'
+                                : g.direction === 'they_owe_you'
+                                  ? 'bg-primary-subtle text-primary'
+                                  : 'bg-warning-subtle text-warning'
                             )}
                           >
-                            {isPartial ? 'Partial' : 'Unpaid'}
+                            {g.direction === 'settled'
+                              ? 'All Square'
+                              : g.direction === 'they_owe_you'
+                                ? 'Receivable'
+                                : 'Payable'}
                           </span>
                         </div>
-                        <span className="mt-1 font-display text-display-md font-bold text-text-primary leading-tight">
+                        <span
+                          className={cn(
+                            'mt-1 font-display text-display-md font-bold leading-tight',
+                            g.direction === 'settled'
+                              ? 'text-success'
+                              : g.direction === 'they_owe_you'
+                                ? 'text-primary'
+                                : 'text-warning'
+                          )}
+                        >
                           {inr(g.remaining)}
                         </span>
                         <span className="mt-1 text-caption text-text-secondary">
-                          across {count} {count === 1 ? 'expense' : 'expenses'}
-                          {isPartial && ` · ${inr(g.settled)} paid`}
+                          {g.direction === 'settled'
+                            ? `Mutual splits cancel out across ${count} ${count === 1 ? 'bill' : 'bills'}`
+                            : `across ${count} ${count === 1 ? 'expense' : 'expenses'}${
+                                isPartial ? ` · ${inr(g.settled)} paid` : ''
+                              }`}
                         </span>
                       </div>
                     </div>
@@ -552,10 +728,15 @@ export function BalancesAndSettlements() {
                       size="sm"
                       className="gap-1.5"
                       onClick={() => openSettle(g.key)}
+                      disabled={g.direction === 'settled' || g.remaining === 0}
                       aria-label={`Settle ${inr(g.remaining)} with ${name}`}
                     >
                       <CheckCircle2 size={15} />
-                      {count === 1 ? 'Settle' : 'Settle all'}
+                      {g.direction === 'settled'
+                        ? 'Settled'
+                        : count === 1
+                          ? 'Settle'
+                          : 'Settle all'}
                     </Button>
                   </div>
                 </div>
@@ -571,10 +752,25 @@ export function BalancesAndSettlements() {
           <ModalHeader icon={<Receipt className="h-5 w-5" />}>
             <ModalTitle>{detailsGroup?.member?.name || 'Contact'}</ModalTitle>
             <ModalDescription>
-              {detailsGroup &&
-                `${inr(detailsGroup.remaining)} remaining across ${detailsGroup.items.length} ${
-                  detailsGroup.items.length === 1 ? 'expense' : 'expenses'
-                }`}
+              {detailsGroup && (
+                <span className="flex flex-col gap-1 mt-1 text-caption text-text-secondary">
+                  <span>
+                    {detailsGroup.direction === 'settled'
+                      ? 'Mutual expenses are completely balanced (Net ₹0).'
+                      : detailsGroup.direction === 'they_owe_you'
+                        ? `They owe you net ${inr(detailsGroup.remaining)} across ${detailsGroup.items.length} ${
+                            detailsGroup.items.length === 1 ? 'expense' : 'expenses'
+                          }.`
+                        : `You owe them net ${inr(detailsGroup.remaining)} across ${detailsGroup.items.length} ${
+                            detailsGroup.items.length === 1 ? 'expense' : 'expenses'
+                          }.`}
+                  </span>
+                  <span className="text-[11px] text-text-muted">
+                    Total lent by you: {inr(detailsGroup.theyOweYou)} · Total borrowed by you:{' '}
+                    {inr(detailsGroup.youOweThem)}
+                  </span>
+                </span>
+              )}
             </ModalDescription>
           </ModalHeader>
 
@@ -584,21 +780,57 @@ export function BalancesAndSettlements() {
                 {[...detailsGroup.items].reverse().map((item) => {
                   const remaining = getRemaining(item);
                   const settled = getSettled(item);
+                  const isPayer = isUserPaidItem(item);
                   return (
                     <div
                       key={item.id}
                       className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-surface-raised/40 p-3"
                     >
                       <div className="min-w-0">
-                        <p className="text-body-sm font-medium text-text-primary truncate">
-                          {item.expense?.description || 'Shared Expense'}
-                        </p>
-                        <p className="mt-0.5 flex items-center gap-1.5 text-caption text-text-muted">
+                        <div className="flex items-center gap-2">
+                          <p className="text-body-sm font-medium text-text-primary truncate">
+                            {item.expense?.description || 'Shared Expense'}
+                          </p>
+                          <span
+                            className={cn(
+                              'rounded px-1.5 py-0.2 text-[10px] font-semibold tracking-wide border shrink-0',
+                              isPayer
+                                ? 'bg-primary-subtle text-primary border-primary/30'
+                                : 'bg-warning-subtle text-warning border-warning/30'
+                            )}
+                          >
+                            {isPayer ? 'You paid' : 'Peer paid'}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
                           <Calendar size={12} className="shrink-0" />
                           {fmtDate(item.expense?.date)}
                           {item.expense?.split_type && (
                             <span className="rounded border border-border/40 bg-surface px-1.5 text-[11px] capitalize">
                               {item.expense.split_type}
+                            </span>
+                          )}
+                          {item.sync_status && (
+                            <span
+                              className={cn(
+                                'rounded px-1.5 text-[10px] font-medium tracking-wide border',
+                                item.sync_status === 'synced'
+                                  ? 'bg-success-subtle text-success border-success/30'
+                                  : item.sync_status === 'pending_acceptance'
+                                    ? 'bg-warning-subtle text-warning border-warning/30'
+                                    : 'bg-surface-raised text-text-muted border-border/50'
+                              )}
+                            >
+                              {item.sync_status === 'synced'
+                                ? 'Synced'
+                                : item.sync_status === 'pending_acceptance'
+                                  ? 'Pending peer'
+                                  : 'Local'}
+                            </span>
+                          )}
+                          {item.creator && (
+                            <span className="text-[11px] text-text-secondary">
+                              · Logged by {item.creator.name || item.creator.username}
                             </span>
                           )}
                         </p>
@@ -629,9 +861,15 @@ export function BalancesAndSettlements() {
                 <Button variant="ghost" onClick={() => setDetailsKey(null)}>
                   Close
                 </Button>
-                <Button className="gap-1.5" onClick={() => openSettle(detailsGroup.key)}>
+                <Button
+                  className="gap-1.5"
+                  onClick={() => openSettle(detailsGroup.key)}
+                  disabled={detailsGroup.direction === 'settled' || detailsGroup.remaining === 0}
+                >
                   <CheckCircle2 size={15} />
-                  Settle all ({inr(detailsGroup.remaining)})
+                  {detailsGroup.direction === 'settled'
+                    ? 'All settled (₹0)'
+                    : `Settle all (${inr(detailsGroup.remaining)})`}
                 </Button>
               </ModalFooter>
             </>
