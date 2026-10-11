@@ -14,11 +14,11 @@ const buildAPICSP = (isLocal: boolean) => ({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:'],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'validator.swagger.io', 'https://res.cloudinary.com'],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", 'data:'],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],
       formAction: ["'self'"],

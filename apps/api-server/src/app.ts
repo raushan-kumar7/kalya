@@ -14,6 +14,7 @@ import {
   requestLoggerPlugin,
   securityPlugin,
   staticFilesPlugin,
+  swaggerPlugin,
 } from '@/plugins';
 import { modulesPlugin } from '@/modules';
 
@@ -77,7 +78,10 @@ export const buildApp = (): FastifyInstance => {
   app.register(multipartPlugin);
   app.register(staticFilesPlugin);
 
-  // 5. Application Modules (Auth, Health, and domain features)
+  // 5. API Documentation & OpenAPI Specification (Registered before route modules)
+  app.register(swaggerPlugin);
+
+  // 6. Application Modules (Auth, Health, and domain features)
   app.register(modulesPlugin);
 
   // 6. Observability & Logging

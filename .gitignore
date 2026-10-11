@@ -57,3 +57,12 @@ ui.txt
 commit_message.txt
 server.txt
 client.txt
+
+# AI Agents & Assistant Workspace Configuration
+.agents/
+.claude/
+.gemini/
+skills/
+**/skills/
+*AGENTS.md
+*CLAUDE.md
