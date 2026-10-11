@@ -5,6 +5,9 @@ import {
   CreateEquityAssetSchema,
   DigitalAssetFilterQuerySchema,
   EquityAssetFilterQuerySchema,
+  UpdateDigitalAssetSchema,
+  UpdateEquityAssetSchema,
+  z,
 } from '@kalya/validations';
 
 export const createAssetRoutes = (controller: AssetController): FastifyPluginAsyncZod => {
@@ -29,6 +32,25 @@ export const createAssetRoutes = (controller: AssetController): FastifyPluginAsy
       handler: controller.createDigital,
     });
 
+    fastify.patch('/digital/:id', {
+      schema: {
+        tags: ['Finances - Assets'],
+        summary: 'Update digital asset purchase',
+        params: z.object({ id: z.string().min(1) }),
+        body: UpdateDigitalAssetSchema,
+      },
+      handler: controller.updateDigital,
+    });
+
+    fastify.delete('/digital/:id', {
+      schema: {
+        tags: ['Finances - Assets'],
+        summary: 'Delete digital asset purchase',
+        params: z.object({ id: z.string().min(1) }),
+      },
+      handler: controller.deleteDigital,
+    });
+
     fastify.get('/equities', {
       schema: {
         tags: ['Finances - Assets'],
@@ -45,6 +67,25 @@ export const createAssetRoutes = (controller: AssetController): FastifyPluginAsy
         body: CreateEquityAssetSchema,
       },
       handler: controller.createEquity,
+    });
+
+    fastify.patch('/equities/:id', {
+      schema: {
+        tags: ['Finances - Assets'],
+        summary: 'Update equity shares purchase',
+        params: z.object({ id: z.string().min(1) }),
+        body: UpdateEquityAssetSchema,
+      },
+      handler: controller.updateEquity,
+    });
+
+    fastify.delete('/equities/:id', {
+      schema: {
+        tags: ['Finances - Assets'],
+        summary: 'Delete equity shares purchase',
+        params: z.object({ id: z.string().min(1) }),
+      },
+      handler: controller.deleteEquity,
     });
 
     fastify.get('/portfolio-summary', {

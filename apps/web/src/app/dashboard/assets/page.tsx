@@ -17,10 +17,7 @@ import {
 } from 'lucide-react';
 import { formatCompactInr, formatInr } from '@kalya/utils';
 import { Button } from '@/components/ui/forms/button';
-import {
-  MarketPriceBadge,
-  WealthNetWorthCard,
-} from '@/components/dashboard/finances/assets/shared';
+import { WealthNetWorthCard } from '@/components/dashboard/finances/assets/shared';
 import { useGoldSilverData } from '@/hooks/finances/use-gold-silver';
 import { useEquitiesData } from '@/hooks/finances/use-equities';
 
@@ -28,7 +25,7 @@ export default function AssetsPage() {
   const goldSilver = useGoldSilverData();
   const equities = useEquitiesData();
 
-  const totalCommodities = goldSilver.totals.totalCurrentValue;
+  const totalCommodities = goldSilver.totals.totalInvested;
   const totalEquities = equities.totals.stocksCurrentValue;
   const totalMutualFunds = equities.totals.mfsCurrentValue;
   const totalInvested = goldSilver.totals.totalInvested + equities.totals.totalInvested;
@@ -49,16 +46,6 @@ export default function AssetsPage() {
           <p className="mt-1 text-body-sm text-text-secondary">
             Unified view of your bullion commodities, listed equities, and mutual fund investments.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <MarketPriceBadge
-            goldRate={goldSilver.marketRates.gold}
-            silverRate={goldSilver.marketRates.silver}
-            lastRefreshedAt={goldSilver.lastRefreshedAt}
-            isRefreshing={goldSilver.isRefreshingRates}
-            onRefresh={goldSilver.refreshMarketRates}
-          />
         </div>
       </header>
 
@@ -99,7 +86,7 @@ export default function AssetsPage() {
                 </div>
               </div>
               <div>
-                <span className="text-caption text-text-muted">Current Value</span>
+                <span className="text-caption text-text-muted">Total Invested</span>
                 <div className="font-numeric text-body-md font-bold text-amber-500">
                   {formatInr(totalCommodities)}
                 </div>

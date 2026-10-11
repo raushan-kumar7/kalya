@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type {
@@ -11,30 +11,20 @@ import type {
 } from '@kalya/types';
 import { CreateEquityAssetInput, CreateEquityAssetSchema } from '@kalya/validations';
 import { formatInr, roundMoney } from '@kalya/utils';
-import {
-  Building2,
-  Calendar,
-  CheckCircle2,
-  Hash,
-  IndianRupee,
-  Layers,
-  Sparkles,
-  TrendingUp,
-} from 'lucide-react';
-import {
-  Button,
-  Field,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui';
+import { Building2, Hash, IndianRupee, TrendingUp } from 'lucide-react';
+import { Card, Field, Input, RadioCard, RadioGroup } from '@/components/ui';
 import { DatePicker } from '@/components/ui/forms/date-picker';
 import { FinanceFormModal } from './modal';
-import { cn } from '@/libs/utils';
 import { STOCK_MARKET_DATA } from '@/hooks/finances/use-equities';
+import { ComputedValue } from '@/components/shared';
+
+const NUMBER_INPUT_CLASS =
+  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+
+const toInputText = (value: number | string | null | undefined) => {
+  const n = Number(value) || 0;
+  return n > 0 ? String(n) : '';
+};
 
 export interface EquityFormProps {
   open: boolean;
@@ -44,17 +34,6 @@ export interface EquityFormProps {
   defaultExchange?: ExchangeType;
   defaultCompany?: string;
 }
-
-const POPULAR_STOCKS = [
-  { name: 'Reliance Industries', symbol: 'RELIANCE', price: 1285.5 },
-  { name: 'Tata Consultancy Services', symbol: 'TCS', price: 4210.0 },
-  { name: 'HDFC Bank', symbol: 'HDFCBANK', price: 1675.25 },
-  { name: 'Infosys', symbol: 'INFY', price: 1890.75 },
-  { name: 'Tata Motors', symbol: 'TATAMOTORS', price: 945.0 },
-  { name: 'Larsen & Toubro', symbol: 'LT', price: 3580.0 },
-  { name: 'ITC', symbol: 'ITC', price: 512.4 },
-  { name: 'ICICI Bank', symbol: 'ICICIBANK', price: 1240.0 },
-];
 
 export function EquityForm({
   open,
@@ -80,13 +59,21 @@ export function EquityForm({
     },
   });
 
-  const watchCompany = useWatch({ control: form.control, name: 'company' });
-  const watchPrice = useWatch({ control: form.control, name: 'price_per_share' });
-  const watchShares = useWatch({ control: form.control, name: 'total_shared' });
-  const watchExchange = useWatch({ control: form.control, name: 'exchange_type' });
+  const [watchCompany, watchPrice, watchShares, watchExchange] = useWatch({
+    control: form.control,
+    name: ['company', 'price_per_share', 'total_shared', 'exchange_type'],
+  });
 
-  // Sync form defaults when asset or defaultCompany changes
+  // Text shown in the number inputs. The form itself only ever stores numbers.
+  const [inputText, setInputText] = useState({
+    price: toInputText(asset?.price_per_share || 1285.5),
+    shares: toInputText(asset?.total_shared || 10),
+  });
+
+  // Sync form values when the modal opens or when asset / defaults change
   useEffect(() => {
+    if (!open) return;
+
     if (asset) {
       form.reset({
         exchange_type: asset.exchange_type as ExchangeType,
@@ -95,6 +82,10 @@ export function EquityForm({
         price_per_share: Number(asset.price_per_share),
         total_shared: Number(asset.total_shared),
         total_amount: Number(asset.total_amount),
+      });
+      setInputText({
+        price: toInputText(asset.price_per_share),
+        shares: toInputText(asset.total_shared),
       });
     } else {
       const company = defaultCompany || 'Reliance Industries';
@@ -109,15 +100,34 @@ export function EquityForm({
         total_shared: shares,
         total_amount: roundMoney(price * shares),
       });
+      setInputText({ price: toInputText(price), shares: toInputText(shares) });
     }
-  }, [asset, defaultExchange, defaultCompany, defaultDate, form]);
+  }, [open, asset, defaultExchange, defaultCompany, defaultDate, form]);
 
-  // Quick chip click: selects company & autofills benchmark price
-  const handleSelectQuickStock = (stock: (typeof POPULAR_STOCKS)[0]) => {
-    form.setValue('company', stock.name, { shouldValidate: true });
-    form.setValue('price_per_share', stock.price, { shouldValidate: true });
-    const shares = Number(form.getValues('total_shared')) || 10;
-    form.setValue('total_amount', roundMoney(stock.price * shares));
+  // Price changes: keep shares, recalculate total
+  const handlePriceChange = (newPriceStr: string) => {
+    const parsed = parseFloat(newPriceStr);
+    const price = Number.isFinite(parsed) ? parsed : 0;
+    const shares = Number(form.getValues('total_shared')) || 0;
+
+    form.setValue('price_per_share', price, { shouldValidate: true });
+    form.setValue('total_amount', roundMoney(price * shares));
+    setInputText((prev) => ({ ...prev, price: newPriceStr }));
+  };
+
+  // Shares change: keep price, recalculate total
+  const handleSharesChange = (newSharesStr: string) => {
+    const parsed = parseInt(newSharesStr, 10);
+    const shares = Number.isFinite(parsed) ? parsed : 0;
+    const price = Number(form.getValues('price_per_share')) || 0;
+
+    form.setValue('total_shared', shares, { shouldValidate: true });
+    form.setValue('total_amount', roundMoney(price * shares));
+    setInputText((prev) => ({ ...prev, shares: newSharesStr }));
+  };
+
+  const handleExchangeChange = (value: string) => {
+    form.setValue('exchange_type', value as ExchangeType, { shouldValidate: true });
   };
 
   const computedTotal = roundMoney((Number(watchPrice) || 0) * (Number(watchShares) || 0));
@@ -142,103 +152,39 @@ export function EquityForm({
       onOpenChange={onOpenChange}
       form={form}
       onSubmit={onSubmit}
-      title={isEdit ? 'Edit Stock Lot' : 'Add Stock Holding / Lot'}
+      title={isEdit ? 'Edit Equity Asset' : 'Add Equity Asset'}
       description="Record listed public equities on NSE or BSE with automated purchase lot tracking."
       icon={TrendingUp}
       tone="accent"
-      submitLabel={isEdit ? 'Save Lot' : 'Add Stock Lot'}
+      submitLabel={isEdit ? 'Save Changes' : 'Add Equity Asset'}
       size="xl"
     >
       <div className="space-y-4 text-text-primary">
         {/* Exchange Selector */}
         <div className="space-y-1.5">
-          <label className="text-caption font-medium text-text-secondary">Stock Exchange</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => form.setValue('exchange_type', 'NSE')}
-              className={cn(
-                'group flex items-center justify-between rounded-xl border p-3 text-left transition-all cursor-pointer',
-                watchExchange === 'NSE'
-                  ? 'border-primary bg-primary-subtle shadow-xs ring-1 ring-primary/30'
-                  : 'border-border bg-surface hover:bg-surface-raised'
-              )}
-            >
-              <div>
-                <div className="font-display text-body-sm font-semibold text-text-primary">
-                  NSE (National)
-                </div>
-                <div className="text-caption text-text-muted">NIFTY 50 Benchmark</div>
-              </div>
-              <span
-                className={cn(
-                  'h-2.5 w-2.5 rounded-full',
-                  watchExchange === 'NSE' ? 'bg-primary' : 'bg-border'
-                )}
-              />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => form.setValue('exchange_type', 'BSE')}
-              className={cn(
-                'group flex items-center justify-between rounded-xl border p-3 text-left transition-all cursor-pointer',
-                watchExchange === 'BSE'
-                  ? 'border-primary bg-primary-subtle shadow-xs ring-1 ring-primary/30'
-                  : 'border-border bg-surface hover:bg-surface-raised'
-              )}
-            >
-              <div>
-                <div className="font-display text-body-sm font-semibold text-text-primary">
-                  BSE (Bombay)
-                </div>
-                <div className="text-caption text-text-muted">SENSEX Benchmark</div>
-              </div>
-              <span
-                className={cn(
-                  'h-2.5 w-2.5 rounded-full',
-                  watchExchange === 'BSE' ? 'bg-primary' : 'bg-border'
-                )}
-              />
-            </button>
-          </div>
+          <span id="exchange-label" className="text-sm font-medium text-text-secondary">
+            Exchange
+          </span>
+          <RadioGroup
+            aria-labelledby="exchange-label"
+            value={watchExchange}
+            onValueChange={handleExchangeChange}
+            className="mt-3 grid-cols-2 gap-3"
+          >
+            <RadioCard
+              value="NSE"
+              label="NSE"
+              description="National Stock Exchange"
+              wrapperClassName="p-3"
+            />
+            <RadioCard
+              value="BSE"
+              label="BSE"
+              description="Bombay Stock Exchange"
+              wrapperClassName="p-3"
+            />
+          </RadioGroup>
         </div>
-
-        {/* Company Name / Ticker */}
-        <Field
-          label="Company Name or Symbol"
-          required
-          error={form.formState.errors.company?.message}
-          description="E.g., Reliance Industries, TCS, HDFC Bank"
-        >
-          <Input placeholder="Search or enter company name" {...form.register('company')} />
-        </Field>
-
-        {/* Quick Suggestion Chips */}
-        {!isEdit && (
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">
-              Popular Stocks
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {POPULAR_STOCKS.slice(0, 6).map((stock) => (
-                <button
-                  key={stock.symbol}
-                  type="button"
-                  onClick={() => handleSelectQuickStock(stock)}
-                  className={cn(
-                    'rounded-lg border px-2.5 py-1 text-caption font-medium transition-colors cursor-pointer',
-                    watchCompany === stock.name
-                      ? 'border-primary bg-primary text-text-inverse font-semibold'
-                      : 'border-border bg-surface-raised hover:bg-surface text-text-secondary hover:text-text-primary'
-                  )}
-                >
-                  {stock.symbol}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Purchase Date */}
         <Field label="Purchase Date" required error={form.formState.errors.date?.message}>
@@ -253,84 +199,64 @@ export function EquityForm({
           />
         </Field>
 
+        {/* Company Name / Ticker */}
+        <Input
+          label="Company Name"
+          placeholder="e.g., Reliance Industries"
+          leadingIcon={<Building2 size={16} />}
+          required
+          autoComplete="off"
+          value={watchCompany ?? ''}
+          onChange={(e) => form.setValue('company', e.target.value, { shouldValidate: true })}
+          errorMessage={form.formState.errors.company?.message}
+        />
+
         {/* Price Per Share and Number of Shares */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field
+          <Input
             label="Buy Price per Share (₹)"
             required
-            error={form.formState.errors.price_per_share?.message}
-          >
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">
-                ₹
-              </span>
-              <Input
-                type="number"
-                step="any"
-                className="pl-7 font-numeric"
-                placeholder="0.00"
-                {...form.register('price_per_share', {
-                  valueAsNumber: true,
-                  onChange: (e) => {
-                    const p = parseFloat(e.target.value);
-                    const s = Number(form.getValues('total_shared')) || 0;
-                    if (p > 0 && s > 0) {
-                      form.setValue('total_amount', roundMoney(p * s));
-                    }
-                  },
-                })}
-              />
-            </div>
-          </Field>
+            leadingIcon={<IndianRupee size={16} />}
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min={0}
+            className={`${NUMBER_INPUT_CLASS} font-numeric`}
+            placeholder="0.00"
+            value={inputText.price}
+            onChange={(e) => handlePriceChange(e.target.value)}
+            errorMessage={form.formState.errors.price_per_share?.message}
+          />
 
-          <Field
+          <Input
             label="Number of Shares"
             required
-            error={form.formState.errors.total_shared?.message}
-          >
-            <div className="relative">
-              <Input
-                type="number"
-                step="1"
-                min="1"
-                className="font-numeric pr-12"
-                placeholder="1"
-                {...form.register('total_shared', {
-                  valueAsNumber: true,
-                  onChange: (e) => {
-                    const s = parseInt(e.target.value, 10);
-                    const p = Number(form.getValues('price_per_share')) || 0;
-                    if (s > 0 && p > 0) {
-                      form.setValue('total_amount', roundMoney(p * s));
-                    }
-                  },
-                })}
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-caption font-medium text-text-muted">
-                qty
-              </span>
-            </div>
-          </Field>
+            leadingIcon={<Hash size={16} />}
+            type="number"
+            inputMode="numeric"
+            step={1}
+            min={0}
+            className={`${NUMBER_INPUT_CLASS} font-numeric`}
+            placeholder="1"
+            value={inputText.shares}
+            onChange={(e) => handleSharesChange(e.target.value)}
+            errorMessage={form.formState.errors.total_shared?.message}
+          />
         </div>
 
         {/* Auto Calculated Total Amount Summary */}
-        <div className="rounded-xl border border-border/80 bg-surface-raised/40 p-3">
-          <div className="flex items-center justify-between text-body-xs text-text-secondary">
-            <span>Holding Summary</span>
-            <span className="font-numeric">
-              {Number(watchShares) || 0} shares @ ₹{Number(watchPrice) || 0}
-            </span>
-          </div>
-
-          <div className="my-2 border-t border-border/60" />
-
-          <div className="flex items-center justify-between text-body-sm font-semibold">
-            <span className="text-text-primary">Total Investment Value</span>
-            <span className="font-numeric text-primary text-body-md">
-              ₹{formatInr(computedTotal)}
-            </span>
-          </div>
-        </div>
+        <Card variant="outlined" className="space-y-2 p-3">
+          <p className="text-caption font-medium text-text-secondary">Investment Summary</p>
+          <ComputedValue
+            label={`${Number(watchShares) || 0} shares @ ${formatInr(Number(watchPrice) || 0)}`}
+            value={formatInr(computedTotal)}
+          />
+          <ComputedValue
+            tone="primary"
+            label="Total Investment Value"
+            value={formatInr(computedTotal)}
+          />
+        </Card>
       </div>
     </FinanceFormModal>
   );

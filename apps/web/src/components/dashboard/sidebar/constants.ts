@@ -162,7 +162,7 @@ export const SIDEBAR_NAVS_ITEMS: NavSection[] = [
             description: 'Physical & digital bullion holdings with live rates.',
           },
           {
-            label: 'Equities & MFs',
+            label: 'Equities',
             href: '/dashboard/assets/equity',
             icon: TrendingUp,
             description: 'Shares, SIPs, and mutual fund portfolio.',

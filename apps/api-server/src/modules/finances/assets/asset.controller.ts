@@ -6,6 +6,8 @@ import {
   CreateEquityAssetDto,
   DigitalAssetFilterQueryDto,
   EquityAssetFilterQueryDto,
+  UpdateDigitalAssetDto,
+  UpdateEquityAssetDto,
 } from '@kalya/types';
 
 export class AssetController {
@@ -29,6 +31,28 @@ export class AssetController {
     return ApiResponse.created(reply, created, 'Digital asset purchase logged');
   };
 
+  updateDigital = async (
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdateDigitalAssetDto }>,
+    reply: FastifyReply
+  ) => {
+    const userId = request.user!.id;
+    const updated = await this.assetService.updateDigitalAsset(
+      userId,
+      request.params.id,
+      request.body
+    );
+    return ApiResponse.ok(reply, updated, 'Digital asset purchase updated');
+  };
+
+  deleteDigital = async (
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) => {
+    const userId = request.user!.id;
+    const result = await this.assetService.deleteDigitalAsset(userId, request.params.id);
+    return ApiResponse.ok(reply, result, 'Digital asset purchase deleted');
+  };
+
   listEquities = async (
     request: FastifyRequest<{ Querystring: EquityAssetFilterQueryDto }>,
     reply: FastifyReply
@@ -45,6 +69,28 @@ export class AssetController {
     const userId = request.user!.id;
     const created = await this.assetService.createEquityAsset(userId, request.body);
     return ApiResponse.created(reply, created, 'Equity stock purchase recorded');
+  };
+
+  updateEquity = async (
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdateEquityAssetDto }>,
+    reply: FastifyReply
+  ) => {
+    const userId = request.user!.id;
+    const updated = await this.assetService.updateEquityAsset(
+      userId,
+      request.params.id,
+      request.body
+    );
+    return ApiResponse.ok(reply, updated, 'Equity stock purchase updated');
+  };
+
+  deleteEquity = async (
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) => {
+    const userId = request.user!.id;
+    const result = await this.assetService.deleteEquityAsset(userId, request.params.id);
+    return ApiResponse.ok(reply, result, 'Equity stock purchase deleted');
   };
 
   getPortfolioSummary = async (request: FastifyRequest, reply: FastifyReply) => {

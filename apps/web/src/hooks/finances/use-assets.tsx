@@ -5,6 +5,8 @@ import {
   DigitalAssetFilterQueryDto,
   EquityAsset,
   EquityAssetFilterQueryDto,
+  UpdateDigitalAssetDto,
+  UpdateEquityAssetDto,
 } from '@kalya/types';
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { financeKeys, QueryOverrides, STALE } from './shared';
@@ -67,10 +69,42 @@ export function useCreateDigitalAssetMutation() {
   });
 }
 
+export function useUpdateDigitalAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<DigitalAsset, Error, { id: string; dto: UpdateDigitalAssetDto }>({
+    mutationFn: ({ id, dto }) => AssetService.updateDigital(id, dto),
+    onSuccess: () => invalidateAssets(qc),
+  });
+}
+
+export function useDeleteDigitalAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<{ success: boolean; id?: string }, Error, string>({
+    mutationFn: (id) => AssetService.deleteDigital(id),
+    onSuccess: () => invalidateAssets(qc),
+  });
+}
+
 export function useCreateEquityAssetMutation() {
   const qc = useQueryClient();
   return useMutation<EquityAsset, Error, CreateEquityAssetDto>({
     mutationFn: (dto) => AssetService.createEquity(dto),
+    onSuccess: () => invalidateAssets(qc),
+  });
+}
+
+export function useUpdateEquityAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<EquityAsset, Error, { id: string; dto: UpdateEquityAssetDto }>({
+    mutationFn: ({ id, dto }) => AssetService.updateEquity(id, dto),
+    onSuccess: () => invalidateAssets(qc),
+  });
+}
+
+export function useDeleteEquityAssetMutation() {
+  const qc = useQueryClient();
+  return useMutation<{ success: boolean; id?: string }, Error, string>({
+    mutationFn: (id) => AssetService.deleteEquity(id),
     onSuccess: () => invalidateAssets(qc),
   });
 }
@@ -80,8 +114,16 @@ export function useCreateEquityAssetMutation() {
 export function useAssetActions() {
   const { mutateAsync: createDigitalAsync, isPending: isCreatingDigital } =
     useCreateDigitalAssetMutation();
+  const { mutateAsync: updateDigitalAsync, isPending: isUpdatingDigital } =
+    useUpdateDigitalAssetMutation();
+  const { mutateAsync: deleteDigitalAsync, isPending: isDeletingDigital } =
+    useDeleteDigitalAssetMutation();
   const { mutateAsync: createEquityAsync, isPending: isCreatingEquity } =
     useCreateEquityAssetMutation();
+  const { mutateAsync: updateEquityAsync, isPending: isUpdatingEquity } =
+    useUpdateEquityAssetMutation();
+  const { mutateAsync: deleteEquityAsync, isPending: isDeletingEquity } =
+    useDeleteEquityAssetMutation();
 
   const createDigitalAsset = useCallback(
     (dto: CreateDigitalAssetDto, options?: RunActionOptions<DigitalAsset>) =>
@@ -91,6 +133,26 @@ export function useAssetActions() {
         ...options,
       }),
     [createDigitalAsync]
+  );
+
+  const updateDigitalAsset = useCallback(
+    (id: string, dto: UpdateDigitalAssetDto, options?: RunActionOptions<DigitalAsset>) =>
+      runAction(() => updateDigitalAsync({ id, dto }), {
+        loading: 'Updating digital asset…',
+        success: 'Digital asset updated!',
+        ...options,
+      }),
+    [updateDigitalAsync]
+  );
+
+  const deleteDigitalAsset = useCallback(
+    (id: string, options?: RunActionOptions<{ success: boolean; id?: string }>) =>
+      runAction(() => deleteDigitalAsync(id), {
+        loading: 'Deleting digital asset…',
+        success: 'Digital asset deleted!',
+        ...options,
+      }),
+    [deleteDigitalAsync]
   );
 
   const createEquityAsset = useCallback(
@@ -103,11 +165,45 @@ export function useAssetActions() {
     [createEquityAsync]
   );
 
+  const updateEquityAsset = useCallback(
+    (id: string, dto: UpdateEquityAssetDto, options?: RunActionOptions<EquityAsset>) =>
+      runAction(() => updateEquityAsync({ id, dto }), {
+        loading: 'Updating equity asset…',
+        success: 'Equity asset updated!',
+        ...options,
+      }),
+    [updateEquityAsync]
+  );
+
+  const deleteEquityAsset = useCallback(
+    (id: string, options?: RunActionOptions<{ success: boolean; id?: string }>) =>
+      runAction(() => deleteEquityAsync(id), {
+        loading: 'Deleting equity asset…',
+        success: 'Equity asset deleted!',
+        ...options,
+      }),
+    [deleteEquityAsync]
+  );
+
   return {
     createDigitalAsset,
+    updateDigitalAsset,
+    deleteDigitalAsset,
     createEquityAsset,
+    updateEquityAsset,
+    deleteEquityAsset,
     isCreatingDigital,
+    isUpdatingDigital,
+    isDeletingDigital,
     isCreatingEquity,
-    isSubmitting: isCreatingDigital || isCreatingEquity,
+    isUpdatingEquity,
+    isDeletingEquity,
+    isSubmitting:
+      isCreatingDigital ||
+      isUpdatingDigital ||
+      isDeletingDigital ||
+      isCreatingEquity ||
+      isUpdatingEquity ||
+      isDeletingEquity,
   };
 }

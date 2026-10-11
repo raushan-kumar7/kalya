@@ -1,253 +1,123 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  BarChart3,
-  Coins,
-  CreditCard,
-  LineChart as LineChartIcon,
-  PieChart,
-  TrendingUp,
-} from 'lucide-react';
+import React, { useMemo } from 'react';
 import { formatCompactInr, formatInr } from '@kalya/utils';
 import { CartesianChart, ChartCard, DonutChart } from '@/components/ui/charts';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs';
+import type { DigitalAssetItem } from '@/hooks/finances/use-gold-silver';
 
 export interface GoldSilverChartsProps {
-  timeline: Array<{
-    date: string;
-    label: string;
-    invested: number;
-    currentValue: number;
-    gainLoss: number;
-  }>;
-  allocation: Array<{
-    name: string;
-    value: number;
-    weight: number;
-    unit: string;
-    color: string;
-  }>;
-  purchasesByMonth: Array<{
-    month: string;
-    goldAmount: number;
-    silverAmount: number;
-    total: number;
-  }>;
-  rateComparison: Array<{
-    name: string;
-    buyRate: number;
-    marketRate: number;
-    platform: string;
-    diffPct: number;
-  }>;
-  byPlatform: Array<{
-    name: string;
-    value: number;
-  }>;
+  purchases: DigitalAssetItem[];
   isLoading?: boolean;
 }
 
-export function GoldSilverCharts({
-  timeline,
-  allocation,
-  purchasesByMonth,
-  rateComparison,
-  byPlatform,
-  isLoading,
-}: GoldSilverChartsProps) {
-  const [activeTab, setActiveTab] = useState<
-    'timeline' | 'allocation' | 'monthly' | 'rates' | 'platform'
-  >('timeline');
+interface TimelinePoint {
+  date: string;
+  purchased: number;
+  cumulative: number;
+}
 
-  const hasData = timeline.length > 0;
+export function GoldSilverCharts({ purchases, isLoading = false }: GoldSilverChartsProps) {
+  // 1. Metal Allocation (Gold vs Silver Donut chart data)
+  const { allocationData, totalInvested } = useMemo(() => {
+    let goldTotal = 0;
+    let silverTotal = 0;
+
+    for (const p of purchases) {
+      const amount = Number(p.amount_paid) || 0;
+      if (p.type === 'gold') {
+        goldTotal += amount;
+      } else {
+        silverTotal += amount;
+      }
+    }
+
+    const data = [
+      { name: 'Gold 24K', value: goldTotal, color: '#f59e0b' },
+      { name: 'Silver 999', value: silverTotal, color: '#94a3b8' },
+    ].filter((d) => d.value > 0);
+
+    return { allocationData: data, totalInvested: goldTotal + silverTotal };
+  }, [purchases]);
+
+  // 2. Cumulative Capital Deployed Timeline (Area chart data)
+  const timelineData = useMemo<TimelinePoint[]>(() => {
+    if (purchases.length === 0) return [];
+
+    const dateMap = new Map<string, number>();
+    const sorted = [...purchases].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    for (const p of sorted) {
+      const d = p.date.slice(0, 10);
+      dateMap.set(d, (dateMap.get(d) || 0) + Number(p.amount_paid));
+    }
+
+    let runningTotal = 0;
+    return Array.from(dateMap.entries()).map(([rawDate, amount]) => {
+      runningTotal += amount;
+      return {
+        date: new Date(rawDate).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+        }),
+        purchased: amount,
+        cumulative: runningTotal,
+      };
+    });
+  }, [purchases]);
+
+  const hasData = purchases.length > 0;
 
   return (
-    <section className="space-y-4">
-      {/* Chart Navigation Tabs */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="font-display text-body-md font-semibold text-text-primary">
-          Bullion Portfolio Analytics
-        </h3>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Metal Allocation */}
+      <ChartCard
+        title="Bullion Allocation"
+        description="Capital deployed across Gold and Silver"
+        info="Shows allocation of total bullion purchase amounts between 24K Gold and 999 Silver."
+        isLoading={isLoading}
+        isEmpty={!hasData}
+        emptyMessage="Log your first bullion purchase to see metal allocation."
+        height={240}
+      >
+        <DonutChart
+          data={allocationData}
+          height={230}
+          centerLabel="Invested"
+          centerValue={formatCompactInr(totalInvested)}
+          valueFormatter={formatInr}
+          legendPosition="right"
+        />
+      </ChartCard>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList variant="pill">
-            <TabsTrigger value="timeline" icon={<LineChartIcon className="h-3.5 w-3.5" />}>
-              Growth
-            </TabsTrigger>
-            <TabsTrigger value="allocation" icon={<PieChart className="h-3.5 w-3.5" />}>
-              Gold vs Silver
-            </TabsTrigger>
-            <TabsTrigger value="monthly" icon={<BarChart3 className="h-3.5 w-3.5" />}>
-              Monthly Inflow
-            </TabsTrigger>
-            <TabsTrigger value="rates" icon={<TrendingUp className="h-3.5 w-3.5" />}>
-              Buy vs Live Rate
-            </TabsTrigger>
-            <TabsTrigger value="platform" icon={<CreditCard className="h-3.5 w-3.5" />}>
-              Vaults
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* Main Charts View */}
-      {activeTab === 'timeline' && (
-        <ChartCard
-          title="Invested vs Market Value Growth"
-          description="Track capital deployed into precious metals versus current market valuation."
-          info="Shows cumulative amount spent (including GST) plotted against current valuation at benchmark market rates."
-          isLoading={isLoading}
-          isEmpty={!hasData}
-          height={260}
-        >
-          <CartesianChart
-            data={timeline}
-            xKey="label"
-            height={260}
-            series={[
-              {
-                key: 'invested',
-                label: 'Invested (₹)',
-                color: 'var(--chart-3)',
-                type: 'line',
-              },
-              {
-                key: 'currentValue',
-                label: 'Market Valuation (₹)',
-                color: '#f59e0b',
-                type: 'area',
-              },
-            ]}
-          />
-        </ChartCard>
-      )}
-
-      {activeTab === 'allocation' && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="Gold vs Silver Allocation"
-            description="Valuation share between 24K Gold and 999 Fine Silver."
-            info="Computed from current market rates of ₹7,650/g (Gold) and ₹94.5/g (Silver)."
-            isLoading={isLoading}
-            isEmpty={allocation.length === 0}
-            height={240}
-          >
-            <DonutChart
-              data={allocation}
-              height={220}
-              centerLabel="Total Metals"
-              centerValue={formatCompactInr(allocation.reduce((a, b) => a + b.value, 0))}
-              legendPosition="right"
-            />
-          </ChartCard>
-
-          <ChartCard
-            title="Vault & Platform Breakdown"
-            description="Holdings distribution across digital gold providers and jewellers."
-            info="Shows where your precious metals are safely vaulted or held."
-            isLoading={isLoading}
-            isEmpty={byPlatform.length === 0}
-            height={240}
-          >
-            <DonutChart
-              data={byPlatform}
-              height={220}
-              centerLabel="By Vault"
-              legendPosition="right"
-            />
-          </ChartCard>
-        </div>
-      )}
-
-      {activeTab === 'monthly' && (
-        <ChartCard
-          title="Monthly Bullion Purchases"
-          description="Consistency of precious metals accumulation over time."
-          info="Tracks your rupee-cost-averaging discipline across months."
-          isLoading={isLoading}
-          isEmpty={purchasesByMonth.length === 0}
-          height={260}
-        >
-          <CartesianChart
-            data={purchasesByMonth}
-            xKey="month"
-            height={260}
-            series={[
-              {
-                key: 'goldAmount',
-                label: 'Gold (₹)',
-                color: '#f59e0b',
-                type: 'bar',
-                stackId: 'metals',
-              },
-              {
-                key: 'silverAmount',
-                label: 'Silver (₹)',
-                color: '#94a3b8',
-                type: 'bar',
-                stackId: 'metals',
-              },
-            ]}
-          />
-        </ChartCard>
-      )}
-
-      {activeTab === 'rates' && (
-        <ChartCard
-          title="Average Buy Rate vs Today's Live Rate"
-          description="Compare the price you paid per gram with today's prevailing bullion rates."
-          info="Buy rates below today's rate indicate profitable purchases (bought low)."
-          isLoading={isLoading}
-          isEmpty={rateComparison.length === 0}
-          height={260}
-        >
-          <CartesianChart
-            data={rateComparison}
-            xKey="name"
-            height={260}
-            series={[
-              {
-                key: 'buyRate',
-                label: 'Purchase Rate (₹/g)',
-                color: 'var(--chart-4)',
-                type: 'bar',
-              },
-              {
-                key: 'marketRate',
-                label: 'Live Market Rate (₹/g)',
-                color: '#f59e0b',
-                type: 'line',
-              },
-            ]}
-          />
-        </ChartCard>
-      )}
-
-      {activeTab === 'platform' && (
-        <ChartCard
-          title="Capital Allocation by Platform"
-          description="Total capital deployed across each vault and provider."
-          info="Total invested amount grouped by provider (Jar, MMTC-PAMP, Augmont, etc.)."
-          isLoading={isLoading}
-          isEmpty={byPlatform.length === 0}
-          height={260}
-        >
-          <CartesianChart
-            data={byPlatform}
-            xKey="name"
-            height={260}
-            series={[
-              {
-                key: 'value',
-                label: 'Capital Held (₹)',
-                color: 'var(--chart-2)',
-                type: 'bar',
-              },
-            ]}
-          />
-        </ChartCard>
-      )}
-    </section>
+      {/* Capital Deployed Progression */}
+      <ChartCard
+        title="Capital Deployed Timeline"
+        description="Cumulative bullion investment progression"
+        info="Chronological progression of cumulative capital invested in precious metals."
+        isLoading={isLoading}
+        isEmpty={!hasData}
+        emptyMessage="Log your first bullion purchase to view investment progression."
+        height={240}
+      >
+        <CartesianChart
+          data={timelineData}
+          xKey="date"
+          series={[
+            {
+              key: 'cumulative',
+              label: 'Total Invested',
+              type: 'area',
+              color: '#f59e0b',
+            },
+          ]}
+          height={230}
+          showLegend={false}
+          valueFormatter={formatInr}
+          axisFormatter={formatCompactInr}
+        />
+      </ChartCard>
+    </div>
   );
 }

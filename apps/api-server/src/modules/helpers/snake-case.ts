@@ -1,6 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
-const toSnakeKey = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+const toSnakeKey = (key: string) => {
+  if (key === 'gst3Percent') return 'gst_3_percent';
+  return key.replace(/([a-z])([0-9])/g, '$1_$2').replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+};
 
 /** Deeply converts object keys from camelCase to snake_case (idempotent for snake_case keys). */
 export const toSnake = (value: any): any => {

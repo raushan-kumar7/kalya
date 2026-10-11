@@ -1,50 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Coins, Plus, TrendingUp } from 'lucide-react';
+import { Coins, PiggyBank, Plus, Receipt, Sparkles } from 'lucide-react';
+import { formatInr } from '@kalya/utils';
+import type { CreateDigitalAssetDto, UpdateDigitalAssetDto } from '@kalya/types';
 import { Button } from '@/components/ui/forms/button';
+import { KpiCard, KpiGrid } from '@/components/shared';
 import { GoldSilverForm } from '@/components/forms/finances/gold-silver';
 import { DigitalAssetItem, useGoldSilverData } from '@/hooks/finances/use-gold-silver';
-import { GoldSilverSummary } from './summary';
 import { GoldSilverCharts } from './charts';
-import { GoldSilverTable } from './table';
-import { GoldSilverDetailsSheet } from './details-sheet';
-import { DeleteConfirmDialog, MarketPriceBadge, SellDialog, WealthEmptyState } from '../shared';
-import type { CreateDigitalAssetDto, UpdateDigitalAssetDto } from '@kalya/types';
+import { GoldSilverTable } from './gold-silver-table';
+import { DeleteConfirmDialog, WealthEmptyState } from '../shared';
 
 export function GoldSilver() {
   const {
     purchases,
-    filteredPurchases,
     totals,
-    filters,
-    setFilters,
-    updateFilters,
-    platforms,
-    chartData,
-    selectedPurchase,
-    selectedPurchaseId,
-    setSelectedPurchaseId,
-    marketRates,
-    lastRefreshedAt,
-    isRefreshingRates,
-    refreshMarketRates,
     handleAddPurchase,
     handleEditPurchase,
     handleDeletePurchase,
     isLoading,
   } = useGoldSilverData();
 
-  // Dialog states
+  // Dialog & selection states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [purchaseToEdit, setPurchaseToEdit] = useState<DigitalAssetItem | null>(null);
-  const [purchaseToSell, setPurchaseToSell] = useState<DigitalAssetItem | null>(null);
   const [purchaseToDelete, setPurchaseToDelete] = useState<DigitalAssetItem | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [activeDetailsPurchase, setActiveDetailsPurchase] = useState<DigitalAssetItem | null>(null);
 
-  // Handlers
-  const handleOpenAddModal = (template?: any) => {
+  const handleOpenAddModal = () => {
     setPurchaseToEdit(null);
     setIsAddModalOpen(true);
   };
@@ -54,43 +37,13 @@ export function GoldSilver() {
     setIsAddModalOpen(true);
   };
 
-  const handleOpenSellModal = (item: DigitalAssetItem) => {
-    setPurchaseToSell(item);
-  };
-
-  const handleOpenDeleteModal = (item: DigitalAssetItem) => {
-    setPurchaseToDelete(item);
-  };
-
-  const handleOpenDetails = (item: DigitalAssetItem) => {
-    setActiveDetailsPurchase(item);
-    setIsDetailsOpen(true);
-  };
-
   const handleSavePurchase = async (payload: CreateDigitalAssetDto | UpdateDigitalAssetDto) => {
     if (purchaseToEdit) {
-      handleEditPurchase(purchaseToEdit.id, payload as UpdateDigitalAssetDto);
+      await handleEditPurchase(purchaseToEdit.id, payload as UpdateDigitalAssetDto);
       setPurchaseToEdit(null);
     } else {
       await handleAddPurchase(payload as CreateDigitalAssetDto);
     }
-  };
-
-  const handleConfirmSell = (soldUnits: number, exitPrice: number) => {
-    if (!purchaseToSell) return;
-    const remainingWeight = Math.max(0, Number(purchaseToSell.weight_in_gram) - soldUnits);
-    if (remainingWeight === 0) {
-      handleDeletePurchase(purchaseToSell.id);
-    } else {
-      const remainingAmount =
-        Number(purchaseToSell.amount_paid) *
-        (remainingWeight / Number(purchaseToSell.weight_in_gram));
-      handleEditPurchase(purchaseToSell.id, {
-        weight_in_gram: remainingWeight,
-        amount_paid: remainingAmount,
-      });
-    }
-    setPurchaseToSell(null);
   };
 
   const hasPurchases = purchases.length > 0;
@@ -98,7 +51,7 @@ export function GoldSilver() {
   return (
     <section className="flex h-full min-h-0 flex-col gap-6 pb-12">
       {/* Page Header */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-5">
+      <header className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500 shadow-inner">
@@ -109,115 +62,99 @@ export function GoldSilver() {
             </h1>
           </div>
           <p className="mt-1 text-body-sm text-text-secondary">
-            Manage physical and digital precious metal holdings with real-time valuation, tax
-            invoices, and returns.
+            Your 24K gold and 999 fine silver vaulted assets and capital deployed in them.
           </p>
         </div>
 
-        {/* Action Controls & Market Badge */}
-        <div className="flex flex-wrap items-center gap-3">
-          <MarketPriceBadge
-            goldRate={marketRates.gold}
-            silverRate={marketRates.silver}
-            lastRefreshedAt={lastRefreshedAt}
-            isRefreshing={isRefreshingRates}
-            onRefresh={refreshMarketRates}
-          />
-
-          <Button onClick={() => handleOpenAddModal()} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Purchase
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => handleOpenAddModal()} className="gap-1.5">
+          <Sparkles size={16} />
+          Add Purchase
+        </Button>
       </header>
 
-      {/* Summary KPI Strip */}
-      <GoldSilverSummary totals={totals} isLoading={isLoading} />
-
-      {/* Analytics Charts */}
-      {hasPurchases && (
-        <GoldSilverCharts
-          timeline={chartData.timeline}
-          allocation={chartData.allocation}
-          purchasesByMonth={chartData.purchasesByMonth}
-          rateComparison={chartData.rateComparison}
-          byPlatform={chartData.byPlatform}
+      {/* Reduced KPI Grid */}
+      <KpiGrid cols={4}>
+        <KpiCard
+          title="Total Invested"
+          value={formatInr(totals.totalInvested)}
+          hint={`${totals.totalWeight.toFixed(2)}g total weight`}
+          icon={PiggyBank}
+          tone="default"
+          info="Total capital deployed across all bullion purchases including 3% GST."
+          size="sm"
           isLoading={isLoading}
         />
-      )}
+        <KpiCard
+          title="Gold Holdings"
+          value={`${totals.goldWeight.toFixed(2)} g`}
+          hint={formatInr(totals.goldInvested)}
+          icon={Coins}
+          tone="default"
+          info="Total weight of 24K 99.9% pure gold bullion held."
+          size="sm"
+          isLoading={isLoading}
+        />
+        <KpiCard
+          title="Silver Holdings"
+          value={`${totals.silverWeight.toFixed(2)} g`}
+          hint={formatInr(totals.silverInvested)}
+          icon={Sparkles}
+          tone="default"
+          info="Total weight of 999 fine silver bullion held."
+          size="sm"
+          isLoading={isLoading}
+        />
+        <KpiCard
+          title="Purchases"
+          value={String(totals.purchaseCount)}
+          hint="Buy invoices logged"
+          icon={Receipt}
+          tone="default"
+          info="Total number of individual bullion transactions recorded."
+          size="sm"
+          isLoading={isLoading}
+        />
+      </KpiGrid>
 
-      {/* Main Holdings Table or Empty State */}
-      {hasPurchases ? (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-body-md font-semibold text-text-primary">
-              Precious Metals Purchase Ledger
-            </h3>
-            <span className="text-caption text-text-muted">
-              {filteredPurchases.length} transaction{filteredPurchases.length === 1 ? '' : 's'}
-            </span>
-          </div>
+      {/* Analytics Charts */}
+      {hasPurchases && <GoldSilverCharts purchases={purchases} isLoading={isLoading} />}
 
-          <GoldSilverTable
-            purchases={filteredPurchases}
-            filters={filters}
-            onFilterChange={updateFilters}
-            platforms={platforms}
-            onSelectPurchase={handleOpenDetails}
-            onEditPurchase={handleOpenEditModal}
-            onSellPurchase={handleOpenSellModal}
-            onDeletePurchase={handleOpenDeleteModal}
-            onAddNew={() => handleOpenAddModal()}
-          />
-        </section>
+      {/* Bullion Purchase Table */}
+      {hasPurchases || isLoading ? (
+        <GoldSilverTable
+          purchases={purchases}
+          isLoading={isLoading}
+          onEdit={handleOpenEditModal}
+          onDelete={setPurchaseToDelete}
+        />
       ) : (
         <WealthEmptyState
           type="gold-silver"
           onAction={() => handleOpenAddModal()}
-          onSelectTemplate={(tpl) => handleOpenAddModal(tpl)}
+          onSelectTemplate={() => handleOpenAddModal()}
         />
       )}
 
       {/* Purchase Modal Form */}
       <GoldSilverForm
         open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
+        onOpenChange={(open) => {
+          setIsAddModalOpen(open);
+          if (!open) {
+            setPurchaseToEdit(null);
+          }
+        }}
         asset={purchaseToEdit}
         onSave={handleSavePurchase}
       />
 
-      {/* Slide-over Details Sheet */}
-      <GoldSilverDetailsSheet
-        purchase={activeDetailsPurchase}
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        onEdit={handleOpenEditModal}
-        onSell={handleOpenSellModal}
-        onDelete={handleOpenDeleteModal}
-      />
-
-      {/* Simulated Sell Modal */}
-      {purchaseToSell && (
-        <SellDialog
-          open={Boolean(purchaseToSell)}
-          onOpenChange={(open) => !open && setPurchaseToSell(null)}
-          title={`Sell ${purchaseToSell.type === 'gold' ? 'Gold 24K' : 'Silver 999'}`}
-          itemDescription={`Purchased on ${purchaseToSell.date} via ${purchaseToSell.platform} at ₹${purchaseToSell.rate_per_gram}/g.`}
-          maxUnits={Number(purchaseToSell.weight_in_gram)}
-          unitLabel="grams"
-          buyRate={Number(purchaseToSell.rate_per_gram)}
-          defaultMarketRate={purchaseToSell.current_rate_per_gram}
-          onConfirmSell={handleConfirmSell}
-        />
-      )}
-
-      {/* Delete Confirmation Modal */}
+      {/* Delete Purchase Confirmation Modal */}
       {purchaseToDelete && (
         <DeleteConfirmDialog
           open={Boolean(purchaseToDelete)}
           onOpenChange={(open) => !open && setPurchaseToDelete(null)}
           title="Delete Bullion Purchase"
-          description={`Are you sure you want to delete ${purchaseToDelete.weight_in_gram}g of ${purchaseToDelete.type} purchased via ${purchaseToDelete.platform}?`}
+          description={`Are you sure you want to remove this ${purchaseToDelete.weight_in_gram}g ${purchaseToDelete.type} purchase from ${purchaseToDelete.platform}?`}
           onConfirm={() => handleDeletePurchase(purchaseToDelete.id)}
         />
       )}

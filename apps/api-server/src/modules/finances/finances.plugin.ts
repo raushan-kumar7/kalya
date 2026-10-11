@@ -187,15 +187,16 @@ export const financesPlugin: FastifyPluginAsync = fp(
       await scope.register(createGoalRoutes(new GoalController(new GoalService(db))), {
         prefix: `${basePrefix}/goals`,
       });
+
+      // 7. Assets
+      await scope.register(createAssetRoutes(new AssetController(new AssetService(db))), {
+        prefix: `${basePrefix}/assets`,
+      });
     });
 
     // Remaining modules unchanged (move into the scope above if their client code also expects snake_case)
     await fastify.register(createBudgetRoutes(new BudgetController(new BudgetService(db))), {
       prefix: `${basePrefix}/budgets`,
-    });
-
-    await fastify.register(createAssetRoutes(new AssetController(new AssetService(db))), {
-      prefix: `${basePrefix}/assets`,
     });
 
     await fastify.register(createSummaryRoutes(new SummaryController(new SummaryService(db))), {
