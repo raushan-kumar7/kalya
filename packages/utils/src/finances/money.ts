@@ -12,11 +12,22 @@ const inr = new Intl.NumberFormat('en-IN', {
   currency: 'INR',
   maximumFractionDigits: 0,
 });
+const inrPrecise = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const compact = new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
 
 /** 12345 -> "₹12,345" */
 export function formatInr(n: number): string {
   return inr.format(Number.isFinite(n) ? n : 0);
+}
+
+/** 12345.5 -> "₹12,345.50" (formal statements, invoices, detailed ledgers) */
+export function formatInrPrecise(n: number): string {
+  return inrPrecise.format(Number.isFinite(n) ? n : 0);
 }
 
 /** 125000 -> "₹1.3L" (axis ticks, tight spaces) */

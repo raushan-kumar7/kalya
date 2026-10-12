@@ -6,7 +6,24 @@ export class PushService {
    * Fetch the server's VAPID public key for Web Push registration.
    */
   static async getVapidKey(): Promise<{ publicKey: string }> {
-    return http.get<{ publicKey: string }>(ENDPOINTS.NOTIFICATIONS.PUSH.VAPID_KEY);
+    try {
+      const res = await http.get<Record<string, unknown>>(ENDPOINTS.NOTIFICATIONS.PUSH.VAPID_KEY);
+      const rawKey =
+        (res?.publicKey as string) ||
+        (res?.public_key as string) ||
+        ((res?.data as Record<string, unknown>)?.publicKey as string) ||
+        ((res?.data as Record<string, unknown>)?.public_key as string) ||
+        '';
+
+      if (rawKey) {
+        return { publicKey: rawKey };
+      }
+    } catch {
+      // Fallback to static public key if network or server issue occurs
+    }
+
+    const envFallback = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+    return { publicKey: envFallback };
   }
 
   /**

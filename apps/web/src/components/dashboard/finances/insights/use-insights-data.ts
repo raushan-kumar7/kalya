@@ -168,34 +168,63 @@ export function useInsightsData() {
     return { currentItems: current, previousItems: previous };
   }, [items, currentPeriod.months, prevMonths]);
 
-  // Compute Sparklines by sub-slices (by month)
+  // Compute Sparklines by sub-slices (by month or weekly periods for single month)
   const sparklines = useMemo(() => {
     const months = currentPeriod.months;
     const incPoints: number[] = [];
     const expPoints: number[] = [];
     const netPoints: number[] = [];
 
-    for (const m of months) {
-      let mInc = 0;
-      let mExp = 0;
-      for (const item of currentItems) {
-        if (item.date && item.date.startsWith(m)) {
-          if (item.kind === 'income') {
-            mInc += item.totalIncome;
-          } else {
-            mExp += spentAmount(item);
+    if (months.length === 1) {
+      // Single month: break down by 4 weekly periods for a beautiful timeline curve
+      const m = months[0];
+      const weekRanges = [
+        { start: `${m}-01`, end: `${m}-07` },
+        { start: `${m}-08`, end: `${m}-14` },
+        { start: `${m}-15`, end: `${m}-21` },
+        { start: `${m}-22`, end: `${m}-31` },
+      ];
+
+      for (const w of weekRanges) {
+        let wInc = 0;
+        let wExp = 0;
+        for (const item of currentItems) {
+          if (item.date && item.date >= w.start && item.date <= w.end) {
+            if (item.kind === 'income') {
+              wInc += item.totalIncome;
+            } else {
+              wExp += spentAmount(item);
+            }
           }
         }
+        incPoints.push(roundMoney(wInc));
+        expPoints.push(roundMoney(wExp));
+        netPoints.push(roundMoney(wInc - wExp));
       }
-      incPoints.push(roundMoney(mInc));
-      expPoints.push(roundMoney(mExp));
-      netPoints.push(roundMoney(mInc - mExp));
+    } else {
+      // Multi-month: calculate by month
+      for (const m of months) {
+        let mInc = 0;
+        let mExp = 0;
+        for (const item of currentItems) {
+          if (item.date && item.date.startsWith(m)) {
+            if (item.kind === 'income') {
+              mInc += item.totalIncome;
+            } else {
+              mExp += spentAmount(item);
+            }
+          }
+        }
+        incPoints.push(roundMoney(mInc));
+        expPoints.push(roundMoney(mExp));
+        netPoints.push(roundMoney(mInc - mExp));
+      }
     }
 
     return {
-      income: incPoints.length > 0 ? incPoints : [0],
-      spent: expPoints.length > 0 ? expPoints : [0],
-      netSavings: netPoints.length > 0 ? netPoints : [0],
+      income: incPoints,
+      spent: expPoints,
+      netSavings: netPoints,
     };
   }, [currentPeriod.months, currentItems]);
 

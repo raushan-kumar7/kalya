@@ -35,6 +35,7 @@ import {
   IncomeTableView,
 } from './tables';
 import { GenerateStatementModal, ViewStatementModal } from './statement-modal';
+import { StatementViewerModal } from '../statement';
 import { downloadCsv, triggerPrintReport } from './export-utils';
 import { useInsightsData } from './use-insights-data';
 import type {
@@ -345,19 +346,19 @@ function FinancialInsightsContent() {
         </div>
       </div>
 
-      {/* Generate Statement Modal (with DatePicker) */}
-      <GenerateStatementModal
+      {/* Comprehensive Statement Viewer & Generator Modal */}
+      <StatementViewerModal
         open={isGenerateModalOpen}
         onOpenChange={setIsGenerateModalOpen}
-        defaultMonth={currentPeriod.months[0]}
-        isGenerating={isGenerating}
-        onConfirmGenerate={async (targetMonth) => {
-          await generateSummary({
-            month: targetMonth,
-            period_start: `${targetMonth}-01`,
-            period_end: `${targetMonth}-31`,
-          });
-        }}
+        initialPreset={
+          preset === 'last_month'
+            ? 'last_month'
+            : preset === 'last_3_months'
+              ? 'last_3_months'
+              : preset === 'custom'
+                ? 'custom'
+                : 'this_month'
+        }
       />
 
       {/* View Statement Modal */}

@@ -84,7 +84,12 @@ export function useWebPush() {
       await navigator.serviceWorker.ready;
 
       // 3. Retrieve VAPID Public Key from server
-      const { publicKey } = await PushService.getVapidKey();
+      const vapidRes = await PushService.getVapidKey();
+      const publicKey =
+        vapidRes?.publicKey ||
+        (vapidRes as any)?.public_key ||
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
       if (!publicKey) {
         throw new Error('Push service VAPID public key not available from server');
       }

@@ -429,6 +429,7 @@ import type {
   UpdateIncomeInput,
 } from '@kalya/validations';
 import { toast } from '@/components/ui/feedback';
+import { StatementViewerModal } from '../statement';
 
 export function Transactions() {
   const router = useRouter();
@@ -438,6 +439,7 @@ export function Transactions() {
   // Modal dialog states
   const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
   const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false);
+  const [isStatementOpen, setIsStatementOpen] = useState(false);
   const [expenseFormMode, setExpenseFormMode] = useState<ExpenseFormMode>('personal');
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<Income | null>(null);
@@ -660,6 +662,7 @@ export function Transactions() {
         items={paginatedPageItems}
         totalRecordsCount={allCount}
         filteredRecordsCount={filteredCount}
+        onOpenStatement={() => setIsStatementOpen(true)}
       />
 
       {/* 4. Main Content Area (Unified Table) */}
@@ -754,6 +757,9 @@ export function Transactions() {
         income={selectedIncome!}
         onSave={handleSaveIncome}
       />
+
+      {/* 7. Statement Viewer & Generator Modal */}
+      <StatementViewerModal open={isStatementOpen} onOpenChange={setIsStatementOpen} />
     </section>
   );
 }

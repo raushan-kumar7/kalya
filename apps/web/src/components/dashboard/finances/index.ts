@@ -4,3 +4,4 @@ export * from './budgets';
 export * from './goals';
 export * from './insights';
 export * from './alerts';
+export * from './statement';

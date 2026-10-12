@@ -3,7 +3,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/forms/input';
 import { Button } from '@/components/ui/forms/button';
-import { Download, RotateCcw, Search, X } from 'lucide-react';
+import { Download, FileText, RotateCcw, Search, X } from 'lucide-react';
 import type { Category } from '@kalya/types';
 import type { TransactionFilterState, TransactionTab, UnifiedTransactionItem } from './types';
 import { ColumnVisibilityMenu, type ColumnVisibilityState } from './table/column-visibility-menu';
@@ -31,6 +31,7 @@ export interface FilterBarProps {
   items: UnifiedTransactionItem[];
   totalRecordsCount: number;
   filteredRecordsCount: number;
+  onOpenStatement?: () => void;
 }
 
 export function FilterBar({
@@ -48,6 +49,7 @@ export function FilterBar({
   items,
   totalRecordsCount,
   filteredRecordsCount,
+  onOpenStatement,
 }: FilterBarProps) {
   const tabs: { id: TransactionTab; label: string; count: number }[] = [
     { id: 'all', label: 'All', count: tabCounts.all },
@@ -136,6 +138,20 @@ export function FilterBar({
               className="bg-surface h-9"
             />
           </div>
+
+          {/* Statement Button */}
+          {onOpenStatement && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenStatement}
+              className="h-9 gap-1.5 text-caption bg-surface cursor-pointer shadow-xs shrink-0 border-primary/30 text-primary hover:bg-primary-subtle"
+              title="View and generate financial statement (PDF & Excel)"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Statement</span>
+            </Button>
+          )}
 
           {/* Export CSV */}
           <Button

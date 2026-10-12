@@ -4,11 +4,16 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   transpilePackages: ['@kalya/types', '@kalya/utils', '@kalya/validations'],
+  serverExternalPackages: ['@react-pdf/renderer'],
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
       },
     ],
   },
