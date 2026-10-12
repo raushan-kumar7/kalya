@@ -209,19 +209,22 @@ export const ALERT_REFERENCE_TYPE_OPTIONS = [
 ] as const;
 
 /**
- * Notification preference preference categories.
+ * Notification preference categories.
  */
 export const NOTIFICATION_CATEGORY_OPTIONS = [
   'statement',
   'budget_alerts',
+  'large_transactions',
   'split_reminders',
+  'smart_insights',
   'marketing',
+  'system',
 ] as const;
 
 /**
  * Communication delivery channels.
  */
-export const NOTIFICATION_CHANNEL_OPTIONS = ['email', 'push'] as const;
+export const NOTIFICATION_CHANNEL_OPTIONS = ['email', 'push', 'in_app'] as const;
 
 /**
  * Frequency cadence for notification digests and alerts.
@@ -232,6 +235,42 @@ export const NOTIFICATION_FREQUENCY_OPTIONS = [
   'weekly',
   'monthly',
   'custom',
+  'off',
+] as const;
+
+/**
+ * Supported push notification device platforms.
+ */
+export const PUSH_PLATFORM_OPTIONS = ['web', 'ios', 'android'] as const;
+
+/**
+ * Supported background job queues.
+ */
+export const JOB_QUEUE_OPTIONS = ['email', 'notification', 'scheduled', 'system'] as const;
+
+/**
+ * Supported background job execution statuses.
+ */
+export const JOB_STATUS_OPTIONS = [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
+
+/**
+ * Supported background job task types.
+ */
+export const JOB_TYPE_OPTIONS = [
+  'SEND_EMAIL',
+  'DISPATCH_PUSH',
+  'SYNC_IN_APP_ALERT',
+  'EVALUATE_BUDGET_THRESHOLDS',
+  'DISPATCH_SPLIT_REMINDERS',
+  'GENERATE_WEEKLY_DIGEST',
+  'COMPILE_MONTHLY_STATEMENT',
+  'CLEANUP_STALE_TOKENS',
 ] as const;
 
 /**

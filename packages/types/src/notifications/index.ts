@@ -187,3 +187,5 @@ export interface NotificationPreferenceListResponse {
   /** List of configured preferences */
   items: NotificationPreference[];
 }
+
+export * from './push';

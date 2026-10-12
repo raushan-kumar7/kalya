@@ -101,6 +101,13 @@ function createConfig(): AppConfig {
         folder: rawEnv['KALYA_STORAGE.CLOUDINARY_FOLDER'],
       },
     },
+
+    push: {
+      vapidPublicKey: rawEnv['KALYA_PUSH.VAPID_PUBLIC_KEY'],
+      vapidPrivateKey: rawEnv['KALYA_PUSH.VAPID_PRIVATE_KEY'],
+      vapidSubject: rawEnv['KALYA_PUSH.VAPID_SUBJECT'],
+      expoAccessToken: rawEnv['KALYA_PUSH.EXPO_ACCESS_TOKEN'],
+    },
   };
 
   return Object.freeze(config);

@@ -12,6 +12,7 @@ import {
   income,
   monthlySummary,
   notificationPreference,
+  pushSubscription,
   splitContactMember,
   splitExpense,
   splitInvitation,
@@ -38,6 +39,7 @@ export const userRelations = relations(user, ({ many }) => ({
   monthlySummaries: many(monthlySummary),
   alerts: many(alert),
   notificationPreferences: many(notificationPreference),
+  pushSubscriptions: many(pushSubscription),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -185,6 +187,13 @@ export const alertRelations = relations(alert, ({ one }) => ({
 export const notificationPreferenceRelations = relations(notificationPreference, ({ one }) => ({
   owner: one(user, {
     fields: [notificationPreference.userId],
+    references: [user.id],
+  }),
+}));
+
+export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) => ({
+  owner: one(user, {
+    fields: [pushSubscription.userId],
     references: [user.id],
   }),
 }));

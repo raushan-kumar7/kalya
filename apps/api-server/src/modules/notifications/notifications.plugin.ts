@@ -10,6 +10,10 @@ import { PreferenceService } from './preferences/preference.service';
 import { PreferenceController } from './preferences/preference.controller';
 import { createPreferenceRoutes } from './preferences/preference.routes';
 
+import { PushService } from './push/push.service';
+import { PushController } from './push/push.controller';
+import { createPushRoutes } from './push/push.routes';
+
 import { AlertDispatcherService } from './alert-dispatcher.service';
 
 declare module 'fastify' {
@@ -23,16 +27,23 @@ export const notificationsPlugin: FastifyPluginAsync = fp(
     const db = fastify.db;
     const basePrefix = `/api/${env.app.apiVersion}/notifications`;
 
-    // 1. Decorate Fastify with cross-domain Alert Dispatcher
-    const alertDispatcher = new AlertDispatcherService(db);
+    // 1. Push Notifications Service & Routes
+    const pushService = fastify.pushService || new PushService(db);
+    const pushController = new PushController(pushService);
+    await fastify.register(createPushRoutes(pushController), {
+      prefix: `${basePrefix}/push`,
+    });
+
+    // 2. Decorate Fastify with cross-domain Alert Dispatcher
+    const alertDispatcher = new AlertDispatcherService(db, fastify.jobQueue);
     fastify.decorate('alertDispatcher', alertDispatcher);
 
-    // 2. In-App Alerts Routes
+    // 3. In-App Alerts Routes
     const alertService = new AlertService(db);
     const alertController = new AlertController(alertService);
     await fastify.register(createAlertRoutes(alertController), { prefix: `${basePrefix}/alerts` });
 
-    // 3. User Delivery Preferences Routes
+    // 4. User Delivery Preferences Routes
     const preferenceService = new PreferenceService(db);
     const preferenceController = new PreferenceController(preferenceService);
     await fastify.register(createPreferenceRoutes(preferenceController), {

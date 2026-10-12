@@ -154,8 +154,16 @@ import { env } from '@kalya/env';
 import { log } from '@/logger';
 import { getMailer } from '@/libs/mail';
 import { SplitExpenseRequest } from '@kalya/email';
+import type { JobQueueService } from '../../jobs/job-queue.service';
 
 export class ExpenseService extends BaseFinanceService {
+  constructor(
+    db: any,
+    private readonly jobQueue?: JobQueueService
+  ) {
+    super(db);
+  }
+
   async listExpenses(userId: string, query: ExpenseFilterQueryDto) {
     const conditions = [eq(expense.userId, userId)];
 
@@ -358,16 +366,15 @@ export class ExpenseService extends BaseFinanceService {
       return newExpense;
     });
 
-    // Background async email dispatch (non-blocking, outside of DB transaction)
+    // Background async email dispatch (reliable via persistent jobQueue)
     if (emailJobs.length > 0) {
-      (async () => {
-        try {
-          const mailer = getMailer();
-          for (const job of emailJobs) {
-            await mailer.sendTemplate({
+      if (this.jobQueue) {
+        for (const job of emailJobs) {
+          await this.jobQueue
+            .enqueue('email', 'SEND_EMAIL', {
               to: job.to,
               subject: `${job.payerName} split a bill with you on Kalya (${job.recipientShareAmount})`,
-              template: SplitExpenseRequest,
+              templateName: 'SplitExpenseRequest',
               props: {
                 payerName: job.payerName,
                 recipientName: job.recipientName,
@@ -379,14 +386,38 @@ export class ExpenseService extends BaseFinanceService {
                 paymentMethod: job.paymentMethod,
                 settleUrl: `${env.app.clientUrl}/dashboard/splits`,
               },
+            })
+            .catch(() => {});
+        }
+      } else {
+        (async () => {
+          try {
+            const mailer = getMailer();
+            for (const job of emailJobs) {
+              await mailer.sendTemplate({
+                to: job.to,
+                subject: `${job.payerName} split a bill with you on Kalya (${job.recipientShareAmount})`,
+                template: SplitExpenseRequest,
+                props: {
+                  payerName: job.payerName,
+                  recipientName: job.recipientName,
+                  expenseDescription: job.expenseDescription,
+                  totalBillAmount: job.totalBillAmount,
+                  recipientShareAmount: job.recipientShareAmount,
+                  expenseDate: job.expenseDate,
+                  splitMethod: job.splitMethod,
+                  paymentMethod: job.paymentMethod,
+                  settleUrl: `${env.app.clientUrl}/dashboard/splits`,
+                },
+              });
+            }
+          } catch (mailError) {
+            log.warn('Split expense email dispatch skipped', {
+              error: mailError instanceof Error ? mailError.message : String(mailError),
             });
           }
-        } catch (mailError) {
-          log.warn('Split expense email dispatch skipped', {
-            error: mailError instanceof Error ? mailError.message : String(mailError),
-          });
-        }
-      })().catch(() => {});
+        })().catch(() => {});
+      }
     }
 
     return createdExpense;

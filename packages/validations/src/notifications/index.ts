@@ -246,3 +246,5 @@ export const NotificationPreferenceFilterQuerySchema: z.ZodType<NotificationPref
 export type NotificationPreferenceFilterQueryInput = z.infer<
   typeof NotificationPreferenceFilterQuerySchema
 >;
+
+export * from './push';

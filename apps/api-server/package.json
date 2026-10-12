@@ -38,6 +38,7 @@
     "sharp": "^0.35.4",
     "slugify": "^1.6.9",
     "ua-parser-js": "^2.0.10",
+    "web-push": "^3.6.7",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
@@ -47,6 +48,7 @@
     "@types/geoip-lite": "^1.4.4",
     "@types/node": "^26.6.3",
     "@types/ua-parser-js": "^0.7.39",
+    "@types/web-push": "^3.6.4",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

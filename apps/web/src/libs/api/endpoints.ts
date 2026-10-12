@@ -236,6 +236,15 @@ export const ENDPOINTS = {
       UPSERT: `${NOTIFICATIONS}/preferences`,
       UPDATE: (id: string) => `${NOTIFICATIONS}/preferences/${id}`,
     },
+    PUSH: {
+      VAPID_KEY: `${NOTIFICATIONS}/push/vapid-key`,
+      SUBSCRIBE_WEB: `${NOTIFICATIONS}/push/web/subscribe`,
+      UNSUBSCRIBE_WEB: `${NOTIFICATIONS}/push/web/unsubscribe`,
+      REGISTER_MOBILE: `${NOTIFICATIONS}/push/mobile/register`,
+      DEVICES: `${NOTIFICATIONS}/push/devices`,
+      REVOKE_DEVICE: (id: string) => `${NOTIFICATIONS}/push/devices/${id}`,
+      TEST: `${NOTIFICATIONS}/push/test`,
+    },
   },
 
   // System Health & Monitoring (mounted at server root, not under /api/v1)

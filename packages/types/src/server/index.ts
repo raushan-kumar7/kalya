@@ -151,4 +151,12 @@ export interface AppConfig {
       folder: string;
     };
   };
+
+  /** Push Notification configuration */
+  push: {
+    vapidPublicKey: string;
+    vapidPrivateKey: string;
+    vapidSubject: string;
+    expoAccessToken: string;
+  };
 }

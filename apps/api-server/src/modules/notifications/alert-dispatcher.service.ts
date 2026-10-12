@@ -1,12 +1,27 @@
 import { and, eq, alert, notificationPreference } from '@kalya/db';
 import { CreateAlertDto } from '@kalya/types';
 import type { MailerService } from '@/libs/mail/mailer.service';
+import type { JobQueueService } from '../jobs/job-queue.service';
 
 export class AlertDispatcherService {
   constructor(
     private readonly db: any,
+    private readonly jobQueue?: JobQueueService,
     private readonly mailer?: MailerService
   ) {}
+
+  private resolveDeepLink(referenceType?: string | null): string {
+    switch (referenceType) {
+      case 'budget':
+        return '/dashboard/budgets';
+      case 'split_expense':
+        return '/dashboard/splits';
+      case 'goal':
+        return '/dashboard/goals';
+      default:
+        return '/dashboard';
+    }
+  }
 
   async dispatch(dto: CreateAlertDto & { userId: string }) {
     // 1. Check user notification preferences
@@ -47,9 +62,23 @@ export class AlertDispatcherService {
       })
       .returning();
 
-    // 3. Optional Immediate Email Dispatch if channel is configured
-    if (this.mailer && pref?.channel === 'email' && pref.frequency === 'immediate') {
-      // Background email dispatch hook
+    // 3. Asynchronous Push Notification Dispatch via Job Queue
+    if (this.jobQueue) {
+      const url = this.resolveDeepLink(dto.reference_type);
+      await this.jobQueue
+        .enqueue('notification', 'DISPATCH_PUSH', {
+          userId: dto.userId,
+          title: dto.title,
+          body: dto.message,
+          url,
+          data: {
+            alertId: createdAlert.id,
+            type: dto.type,
+            referenceType: dto.reference_type ?? null,
+            referenceId: dto.reference_id ?? null,
+          },
+        })
+        .catch(() => {});
     }
 
     return createdAlert;

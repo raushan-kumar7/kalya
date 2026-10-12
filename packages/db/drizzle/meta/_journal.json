@@ -15,6 +15,13 @@
       "when": 1791731673633,
       "tag": "0001_moaning_ironclad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791825235175,
+      "tag": "0002_new_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

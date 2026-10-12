@@ -29,17 +29,26 @@ export const notificationPreference = sqliteTable(
     id: idCol(),
     userId: userIdCol(),
     category: text('category', {
-      enum: ['statement', 'budget_alerts', 'split_reminders', 'marketing'],
+      enum: [
+        'statement',
+        'budget_alerts',
+        'large_transactions',
+        'split_reminders',
+        'smart_insights',
+        'marketing',
+        'system',
+      ],
     })
       .notNull()
       .default('statement'),
-    channel: text('channel', { enum: ['email', 'push'] }).notNull(),
+    channel: text('channel', { enum: ['email', 'push', 'in_app'] }).notNull(),
     frequency: text('frequency', {
-      enum: ['immediate', 'daily', 'weekly', 'monthly', 'custom'],
+      enum: ['immediate', 'daily', 'weekly', 'monthly', 'custom', 'off'],
     })
       .notNull()
-      .default('daily'),
+      .default('immediate'),
     customSchedule: text('custom_schedule'),
+    metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
     isEnabled: boolCol('is_enabled', true),
 
     updatedAt: updatedAt(),

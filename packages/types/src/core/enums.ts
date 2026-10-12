@@ -11,6 +11,10 @@ import {
   NOTIFICATION_FREQUENCY_OPTIONS,
   ORIGIN_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
+  PUSH_PLATFORM_OPTIONS,
+  JOB_QUEUE_OPTIONS,
+  JOB_STATUS_OPTIONS,
+  JOB_TYPE_OPTIONS,
   SETTLEMENT_METHOD_OPTIONS,
   SPLIT_TYPE_OPTIONS,
 } from './constants';
@@ -115,3 +119,23 @@ export type NotificationChannel = Extensible<BaseNotificationChannel>;
 export type BaseNotificationFrequency = (typeof NOTIFICATION_FREQUENCY_OPTIONS)[number];
 /** Table: notification_preference | Column: frequency */
 export type NotificationFrequency = Extensible<BaseNotificationFrequency>;
+
+/** Strict literal union for PushPlatform */
+export type BasePushPlatform = (typeof PUSH_PLATFORM_OPTIONS)[number];
+/** Table: push_subscription | Column: platform */
+export type PushPlatform = Extensible<BasePushPlatform>;
+
+/** Strict literal union for JobQueueName */
+export type BaseJobQueueName = (typeof JOB_QUEUE_OPTIONS)[number];
+/** Table: job_queue | Column: queue */
+export type JobQueueName = Extensible<BaseJobQueueName>;
+
+/** Strict literal union for JobStatus */
+export type BaseJobStatus = (typeof JOB_STATUS_OPTIONS)[number];
+/** Table: job_queue | Column: status */
+export type JobStatus = Extensible<BaseJobStatus>;
+
+/** Strict literal union for JobType */
+export type BaseJobType = (typeof JOB_TYPE_OPTIONS)[number];
+/** Table: job_queue | Column: job_type */
+export type JobType = Extensible<BaseJobType>;

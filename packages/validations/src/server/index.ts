@@ -96,6 +96,12 @@ export const envSchema = databaseEnvSchema.extend({
   'KALYA_STORAGE.CLOUDINARY_API_KEY': z.string().optional().default(''),
   'KALYA_STORAGE.CLOUDINARY_API_SECRET': z.string().optional().default(''),
   'KALYA_STORAGE.CLOUDINARY_FOLDER': z.string().optional().default('kalya'),
+
+  // ---- Push Notifications ----
+  'KALYA_PUSH.VAPID_PUBLIC_KEY': z.string().optional().default(''),
+  'KALYA_PUSH.VAPID_PRIVATE_KEY': z.string().optional().default(''),
+  'KALYA_PUSH.VAPID_SUBJECT': z.string().optional().default('mailto:admin@kalya.io'),
+  'KALYA_PUSH.EXPO_ACCESS_TOKEN': z.string().optional().default(''),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;

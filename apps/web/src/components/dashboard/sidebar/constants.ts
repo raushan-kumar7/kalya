@@ -178,18 +178,6 @@ export const SIDEBAR_NAVS_ITEMS: NavSection[] = [
     ],
   },
   {
-    label: 'Activity',
-    items: [
-      {
-        label: 'Alerts & Feed',
-        href: '/dashboard/alerts',
-        icon: Bell,
-        badgeKey: 'alerts',
-        description: 'Budget warnings, bill reminders, and notifications.',
-      },
-    ],
-  },
-  {
     label: 'Configuration',
     items: [
       {

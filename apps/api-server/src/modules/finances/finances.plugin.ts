@@ -174,9 +174,12 @@ export const financesPlugin: FastifyPluginAsync = fp(
       });
 
       // 4. Expenses
-      await scope.register(createExpenseRoutes(new ExpenseController(new ExpenseService(db))), {
-        prefix: `${basePrefix}/expenses`,
-      });
+      await scope.register(
+        createExpenseRoutes(new ExpenseController(new ExpenseService(db, fastify.jobQueue))),
+        {
+          prefix: `${basePrefix}/expenses`,
+        }
+      );
 
       // 5. Splits
       await scope.register(createSplitRoutes(new SplitController(new SplitService(db))), {

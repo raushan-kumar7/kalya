@@ -9,3 +9,5 @@ export * from './notification';
 export * from './split-contact';
 export * from './split-invitation';
 export * from './summary';
+export * from './push-subscription';
+export * from './job-queue';

@@ -8,13 +8,17 @@ import {
   Bell,
   CalendarClock,
   Clock,
+  Laptop,
   Lightbulb,
   Mail,
   RotateCcw,
+  Send,
+  Smartphone,
   Sparkles,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react';
-import type { User } from '@kalya/types';
+import type { User, UpsertNotificationPreferenceDto } from '@kalya/types';
 import {
   formatDateTime,
   formatRelativeTime,
@@ -34,13 +38,18 @@ import {
   toast,
 } from '@/components/ui';
 import { cn } from '@/libs/utils';
+import { useWebPush } from '@/hooks/use-web-push';
+import {
+  useNotificationPreferencesQuery,
+  useUpsertNotificationPreferenceMutation,
+} from '@/hooks/finances';
 
 export interface NotificationsTabProps {
   user: User | null;
 }
 
 type Frequency = 'off' | 'weekly' | 'monthly';
-type Channels = { email: boolean; inApp: boolean };
+type Channels = { email: boolean; push: boolean; inApp: boolean };
 
 interface NotificationSettings {
   expenseReportFrequency: Frequency;
@@ -58,10 +67,10 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   expenseReportFrequency: 'monthly',
   budgetThresholdEnabled: true,
   budgetThresholdPercent: '90',
-  budgetThresholdChannels: { email: true, inApp: true },
+  budgetThresholdChannels: { email: true, push: true, inApp: true },
   largeTransactionEnabled: true,
   largeTransactionAmount: '10000',
-  largeTransactionChannels: { email: true, inApp: true },
+  largeTransactionChannels: { email: true, push: true, inApp: true },
   weeklyDigestEnabled: true,
   smartInsightsEnabled: true,
 };
@@ -100,6 +109,23 @@ function ChannelToggle({
       >
         <Mail className="h-3.5 w-3.5" />
       </button>
+
+      <button
+        type="button"
+        onClick={() => onChange({ ...channels, push: !channels.push })}
+        aria-pressed={channels.push}
+        title="Push notifications (Browser & Mobile)"
+        aria-label="Toggle push notifications"
+        className={cn(
+          'flex h-7 w-7 items-center justify-center rounded-md border transition-colors cursor-pointer',
+          channels.push
+            ? 'border-primary/30 bg-primary-subtle text-primary'
+            : 'border-border text-text-muted hover:text-text-primary hover:bg-surface-raised'
+        )}
+      >
+        <Smartphone className="h-3.5 w-3.5" />
+      </button>
+
       <button
         type="button"
         onClick={() => onChange({ ...channels, inApp: !channels.inApp })}
@@ -151,6 +177,58 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
   const [saved, setSaved] = React.useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = React.useState(false);
 
+  // TanStack Query & Web Push Hooks
+  const { data: serverPrefs } = useNotificationPreferencesQuery();
+  const upsertMutation = useUpsertNotificationPreferenceMutation();
+  const {
+    isSupported,
+    permission,
+    isSubscribed,
+    isLoading: isPushLoading,
+    devices,
+    subscribeToPush,
+    unsubscribeFromPush,
+    revokeDevice,
+    isRevoking,
+    sendTestPush,
+    isSendingTest,
+  } = useWebPush();
+
+  // Populate settings from server preferences when loaded
+  React.useEffect(() => {
+    if (!serverPrefs || serverPrefs.length === 0) return;
+
+    setSettings((prev) => {
+      const next = { ...prev };
+      for (const pref of serverPrefs) {
+        if (pref.category === 'statement') {
+          next.expenseReportFrequency = (pref.frequency as Frequency) || 'monthly';
+        }
+        if (pref.category === 'budget_alerts') {
+          next.budgetThresholdEnabled = pref.is_enabled;
+          if (pref.channel === 'push') next.budgetThresholdChannels.push = pref.is_enabled;
+          if (pref.channel === 'email') next.budgetThresholdChannels.email = pref.is_enabled;
+          if (pref.channel === 'in_app') next.budgetThresholdChannels.inApp = pref.is_enabled;
+        }
+        if (pref.category === 'large_transactions') {
+          next.largeTransactionEnabled = pref.is_enabled;
+          if (pref.channel === 'push') next.largeTransactionChannels.push = pref.is_enabled;
+          if (pref.channel === 'email') next.largeTransactionChannels.email = pref.is_enabled;
+          if (pref.channel === 'in_app') next.largeTransactionChannels.inApp = pref.is_enabled;
+        }
+        if (pref.category === 'marketing') {
+          next.weeklyDigestEnabled = pref.is_enabled;
+        }
+        if (pref.category === 'smart_insights') {
+          next.smartInsightsEnabled = pref.is_enabled;
+        }
+      }
+      return next;
+    });
+
+    setSaved((prev) => ({ ...prev }));
+  }, [serverPrefs]);
+
   const isDirty = JSON.stringify(settings) !== JSON.stringify(saved);
 
   // Next run dates computed via @kalya/utils
@@ -181,7 +259,74 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
     if (amountInvalid) return;
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 450));
+      // Upsert preferences across categories & channels
+      const promises: Promise<any>[] = [];
+
+      // 1. Budget Alerts
+      const budgetChannelConfigs: { channel: 'email' | 'push' | 'in_app'; isEnabled: boolean }[] = [
+        { channel: 'email', isEnabled: settings.budgetThresholdChannels.email },
+        { channel: 'push', isEnabled: settings.budgetThresholdChannels.push },
+        { channel: 'in_app', isEnabled: settings.budgetThresholdChannels.inApp },
+      ];
+      for (const item of budgetChannelConfigs) {
+        promises.push(
+          upsertMutation.mutateAsync({
+            category: 'budget_alerts',
+            channel: item.channel,
+            frequency: 'immediate',
+            is_enabled: settings.budgetThresholdEnabled && item.isEnabled,
+          })
+        );
+      }
+
+      // 2. Large Transactions
+      const largeTxConfigs: { channel: 'email' | 'push' | 'in_app'; isEnabled: boolean }[] = [
+        { channel: 'email', isEnabled: settings.largeTransactionChannels.email },
+        { channel: 'push', isEnabled: settings.largeTransactionChannels.push },
+        { channel: 'in_app', isEnabled: settings.largeTransactionChannels.inApp },
+      ];
+      for (const item of largeTxConfigs) {
+        promises.push(
+          upsertMutation.mutateAsync({
+            category: 'large_transactions',
+            channel: item.channel,
+            frequency: 'immediate',
+            is_enabled: settings.largeTransactionEnabled && item.isEnabled,
+          })
+        );
+      }
+
+      // 3. Statement Frequency
+      promises.push(
+        upsertMutation.mutateAsync({
+          category: 'statement',
+          channel: 'email',
+          frequency:
+            settings.expenseReportFrequency === 'off' ? 'monthly' : settings.expenseReportFrequency,
+          is_enabled: settings.expenseReportFrequency !== 'off',
+        })
+      );
+
+      // 4. Digest & Insights
+      promises.push(
+        upsertMutation.mutateAsync({
+          category: 'marketing',
+          channel: 'push',
+          frequency: 'weekly',
+          is_enabled: settings.weeklyDigestEnabled,
+        })
+      );
+
+      promises.push(
+        upsertMutation.mutateAsync({
+          category: 'smart_insights',
+          channel: 'push',
+          frequency: 'immediate',
+          is_enabled: settings.smartInsightsEnabled,
+        })
+      );
+
+      await Promise.allSettled(promises);
       setSaved(settings);
       toast.success('Notification preferences saved successfully');
     } catch (err: unknown) {
@@ -204,13 +349,132 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
             Notifications & Alerts
           </h2>
           <p className="text-text-secondary text-body-sm">
-            Choose what Kalya tells you about, and how — nothing here is enabled by default that you
-            didn't ask for.
+            Control push notifications, email reports, and alert thresholds across devices.
           </p>
         </div>
 
         <div className="flex flex-col gap-8">
-          {/* ---------- 1. Email Reports ---------- */}
+          {/* ---------- 1. Web Push & Device Management ---------- */}
+          <div className="flex flex-col gap-4">
+            <SectionHeader icon={Smartphone} title="Push Notifications & Connected Devices" />
+
+            <div className="border-border bg-surface-raised/40 rounded-xl border p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3.5">
+                  <RowIcon icon={Smartphone} />
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-text-primary text-body-sm font-medium">
+                        Browser Push Notifications
+                      </span>
+                      {isSubscribed ? (
+                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10.5px] font-semibold px-2 py-0.5 rounded-full">
+                          Active on this browser
+                        </span>
+                      ) : permission === 'denied' ? (
+                        <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[10.5px] font-semibold px-2 py-0.5 rounded-full">
+                          Blocked in browser
+                        </span>
+                      ) : (
+                        <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10.5px] font-semibold px-2 py-0.5 rounded-full">
+                          Not enabled
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-text-secondary text-caption">
+                      Receive immediate budget warnings and split reminders even when Kalya is
+                      closed.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendTestPush()}
+                    isLoading={isSendingTest}
+                    leftIcon={<Send size={13} />}
+                    className="text-xs h-8"
+                  >
+                    Send Test Push
+                  </Button>
+
+                  {isSubscribed ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => unsubscribeFromPush()}
+                      isLoading={isPushLoading}
+                      className="text-xs h-8 text-rose-500 hover:text-rose-600"
+                    >
+                      Disable
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => subscribeToPush()}
+                      isLoading={isPushLoading}
+                      className="text-xs h-8"
+                    >
+                      Enable Browser Push
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Registered Devices List */}
+              {devices.length > 0 && (
+                <div className="border-border/60 mt-4 border-t pt-3">
+                  <span className="text-text-muted text-[11px] font-medium uppercase tracking-wider">
+                    Registered Devices ({devices.length})
+                  </span>
+                  <div className="mt-2 divide-y divide-border/40">
+                    {devices.map((device) => {
+                      const DeviceIcon = device.platform === 'web' ? Laptop : Smartphone;
+                      return (
+                        <div
+                          key={device.id}
+                          className="flex items-center justify-between py-2.5 text-body-sm"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <DeviceIcon className="text-text-muted h-4 w-4" />
+                            <div className="flex flex-col">
+                              <span className="text-text-primary text-xs font-medium">
+                                {device.device_name}
+                              </span>
+                              <span className="text-text-muted text-[10.5px]">
+                                Added {formatTimeAgo(device.created_at)}
+                                {device.last_seen_at &&
+                                  ` • Active ${formatTimeAgo(device.last_seen_at)}`}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => revokeDevice(device.id)}
+                            disabled={isRevoking}
+                            title="Revoke device"
+                            className="text-text-muted hover:text-rose-500 h-7 w-7 p-0"
+                          >
+                            <Trash2 size={13} />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ---------- 2. Email Reports ---------- */}
           <div className="flex flex-col gap-4">
             <SectionHeader icon={Mail} title="Email Reports" />
 
@@ -257,7 +521,7 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
             </div>
           </div>
 
-          {/* ---------- 2. Spending Alerts ---------- */}
+          {/* ---------- 3. Spending Alerts ---------- */}
           <div className="flex flex-col gap-4">
             <SectionHeader icon={AlertTriangle} title="Spending Alerts" />
 
@@ -355,7 +619,7 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
             </div>
           </div>
 
-          {/* ---------- 3. Digest & Insights ---------- */}
+          {/* ---------- 4. Digest & Insights ---------- */}
           <div className="flex flex-col gap-4">
             <SectionHeader icon={Lightbulb} title="Digest & Insights" />
 
@@ -429,7 +693,7 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
           )}
         </div>
 
-        {/* Footer actions — only appear once there is a pending dirty state */}
+        {/* Footer actions — appears when pending dirty state */}
         {isDirty && (
           <div className="border-border flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
             <Button
@@ -459,3 +723,4 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
     </Card>
   );
 }
+export default NotificationsTab;
