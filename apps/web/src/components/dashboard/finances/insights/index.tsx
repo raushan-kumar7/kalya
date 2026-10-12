@@ -39,7 +39,7 @@ import { StatementsList } from './statements-list';
 import { GenerateStatementModal, ViewStatementModal } from './statement-modal';
 import { DrilldownDrawer } from './drilldown-drawer';
 import { ReportsToolbar } from './toolbar';
-import { useReportsData } from './use-reports-data';
+import { useInsightsData } from './use-insights-data';
 import type {
   CategoryBreakdownItem,
   DrilldownTarget,
@@ -49,7 +49,7 @@ import type {
   TopExpenseItem,
 } from './types';
 
-export function ReportsAndAnalytics() {
+export function FinancialInsights() {
   const [activeTab, setActiveTab] = useState<ReportTab>('cashflow');
   const [drilldownTarget, setDrilldownTarget] = useState<DrilldownTarget | null>(null);
   const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
@@ -92,7 +92,7 @@ export function ReportsAndAnalytics() {
     isGenerating,
     isLoading,
     refetch,
-  } = useReportsData();
+  } = useInsightsData();
 
   const visibleInsights = insights.filter((i) => !dismissedInsightIds.includes(i.id));
 
@@ -250,7 +250,7 @@ export function ReportsAndAnalytics() {
       <header className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h1 className="font-display text-title-lg font-bold text-text-primary tracking-tight">
-            Reports & Analytics
+            Financial Insights
           </h1>
           <p className="text-body-sm text-text-secondary mt-0.5">
             Holistic trends, spending habits, budget adherence, and archived monthly statements
@@ -512,7 +512,7 @@ export * from './cards';
 export * from './charts';
 export * from './toolbar';
 export * from './types';
-export * from './use-reports-data';
+export * from './use-insights-data';
 export * from './budget-heat-table';
 export * from './splits-table';
 export * from './wealth-goals-section';

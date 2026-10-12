@@ -170,30 +170,11 @@ export const SIDEBAR_NAVS_ITEMS: NavSection[] = [
         ],
       },
       {
-        label: 'Reports & Analytics',
-        href: '/dashboard/reports',
+        label: 'Financial Insights',
+        href: '/dashboard/insights',
         icon: BarChart3,
-        description: 'Monthly expense snapshots and trend analysis.',
+        description: 'Cashflow trends, spending breakdowns, and smart observations.',
       },
-      // Phase 2 roadmap items — kept in the nav (disabled) so the
-      // information architecture is visible while the backend/API
-      // routes are still being built out.
-      // {
-      //   label: 'Accounts',
-      //   href: '/dashboard/accounts',
-      //   icon: Wallet,
-      //   disabled: true,
-      //   badge: 'Soon',
-      //   description: 'Bank, cash, and virtual account balances (Coming soon).',
-      // },
-      // {
-      //   label: 'Recurring Bills',
-      //   href: '/dashboard/recurring',
-      //   icon: Repeat,
-      //   disabled: true,
-      //   badge: 'Soon',
-      //   description: 'Subscriptions and automated EMIs (Coming soon).',
-      // },
     ],
   },
   {

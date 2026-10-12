@@ -1,5 +1,5 @@
 /**
- * Export utilities for Reports & Analytics
+ * Export utilities for Financial Insights
  */
 
 export function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {

@@ -157,7 +157,7 @@ function computeDatePeriods(preset: ReportRangePreset, customStart: string, cust
   return { currentPeriod, previousPeriod };
 }
 
-export function useReportsData() {
+export function useInsightsData() {
   const [preset, setPreset] = useState<ReportRangePreset>('last_6_months');
   const [customStart, setCustomStart] = useState<string>(() => {
     const cur = getCurrentMonthString();

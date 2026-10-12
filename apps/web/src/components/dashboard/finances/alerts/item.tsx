@@ -105,7 +105,7 @@ function getDeepLink(alert: Alert): { href: string; label: string } | null {
     return { href: '/dashboard/goals', label: 'View goal' };
   }
   if (alert.type === 'system') {
-    return { href: '/dashboard/reports', label: 'View report' };
+    return { href: '/dashboard/insights', label: 'View insights' };
   }
   if (alert.reference_type === 'expense' || alert.reference_type === 'income') {
     return { href: '/dashboard/transactions', label: 'View transaction' };

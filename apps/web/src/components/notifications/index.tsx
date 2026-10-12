@@ -89,7 +89,7 @@ export const NotificationPanel = React.forwardRef<HTMLDivElement, NotificationPa
               : a.reference_type === 'goal'
                 ? '/dashboard/goals'
                 : a.type === 'system'
-                  ? '/dashboard/reports'
+                  ? '/dashboard/insights'
                   : '/dashboard/transactions',
       }));
     }, [serverAlerts]);

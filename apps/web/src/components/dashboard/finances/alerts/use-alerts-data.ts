@@ -210,7 +210,7 @@ export function useAlertsData() {
             : a.reference_type === 'goal'
               ? '/dashboard/goals'
               : a.type === 'system'
-                ? '/dashboard/reports'
+                ? '/dashboard/insights'
                 : '/dashboard/transactions',
       actionLabel:
         a.reference_type === 'budget'
