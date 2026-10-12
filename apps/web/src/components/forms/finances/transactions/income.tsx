@@ -246,13 +246,13 @@ export function IncomeForm({ open, onOpenChange, income, onSave }: IncomeFormPro
 
         {/* 50/30/20 Rule Preview Allocation Helper */}
         {computedTotal > 0 && (
-          <div className="rounded-xl border border-border/60 bg-surface-raised/40 p-3.5 space-y-2">
+          <div className="rounded-xl border border-border/60 bg-surface-raised/40 p-3 sm:p-3.5 space-y-2">
             <div className="flex items-center gap-1.5 text-caption font-medium text-text-secondary">
-              <Sparkles size={14} className="text-primary" />
+              <Sparkles size={14} className="text-primary shrink-0" />
               <span>50 / 30 / 20 Budget Guidelines Preview</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-1 text-center font-numeric">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-center font-numeric">
               <div className="rounded-lg border border-border/40 bg-surface p-2">
                 <span className="text-[11px] text-text-muted block">Needs (50%)</span>
                 <span className="text-body-sm font-semibold text-text-primary">

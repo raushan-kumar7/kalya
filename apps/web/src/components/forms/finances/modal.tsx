@@ -16,6 +16,7 @@ import {
   ModalTitle,
   ModalTrigger,
 } from '@/components/ui';
+import { cn } from '@/libs/utils';
 
 // HELPER: Flexible Icon Renderer (supports LucideIcon component or ReactNode)
 function renderIcon(icon?: ReactNode | LucideIcon, className = 'h-5 w-5'): ReactNode {
@@ -127,26 +128,41 @@ export function FinanceFormModal<
     <Modal open={open} onOpenChange={handleOpenChange}>
       {trigger && <ModalTrigger asChild>{trigger}</ModalTrigger>}
 
-      <ModalContent size={size} hideClose={hideClose} className={className}>
+      <ModalContent
+        size={size}
+        hideClose={hideClose}
+        className={cn('w-[calc(100vw-1.5rem)] sm:w-full max-h-[92dvh] sm:max-h-[85vh]', className)}
+      >
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
             noValidate
           >
-            <ModalHeader tone={tone} icon={renderIcon(icon)}>
+            <ModalHeader tone={tone} icon={renderIcon(icon)} className="px-4 py-4 sm:px-6 sm:py-5">
               <ModalTitle>{title}</ModalTitle>
               {description && <ModalDescription>{description}</ModalDescription>}
             </ModalHeader>
 
-            <ModalBody className={bodyClassName}>{children}</ModalBody>
+            <ModalBody className={cn('px-4 py-4 sm:px-6 sm:py-5', bodyClassName)}>
+              {children}
+            </ModalBody>
 
-            <ModalFooter className="items-center justify-between sm:justify-between">
-              {footerExtra ? <div className="flex items-center gap-2">{footerExtra}</div> : <div />}
+            <ModalFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-2 px-4 py-3 sm:px-6 sm:py-4 w-full">
+              {footerExtra ? (
+                <div className="flex items-center gap-2 w-full sm:w-auto">{footerExtra}</div>
+              ) : (
+                <div className="hidden sm:block" />
+              )}
 
-              <div className="flex items-center gap-2">
-                <ModalClose asChild>
-                  <Button type="button" variant="outline" disabled={submitting}>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <ModalClose asChild className="flex-1 sm:flex-initial">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={submitting}
+                    className="w-full sm:w-auto"
+                  >
                     {cancelLabel}
                   </Button>
                 </ModalClose>
@@ -155,6 +171,7 @@ export function FinanceFormModal<
                   type="submit"
                   isLoading={submitting}
                   disabled={submitting || submitDisabled}
+                  className="w-full sm:w-auto flex-1 sm:flex-initial"
                 >
                   {submitLabel}
                 </Button>

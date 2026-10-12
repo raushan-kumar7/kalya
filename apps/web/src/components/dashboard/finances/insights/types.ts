@@ -1,29 +1,20 @@
-import type { Bucket, Category, Decimal, Expense, Income, MonthString } from '@kalya/types';
+import type { MonthString } from '@kalya/types';
 
 export type ReportRangePreset =
-  | 'this_month'
-  | 'last_month'
-  | 'last_3_months'
-  | 'last_6_months'
-  | 'last_12_months'
-  | 'financial_year'
-  | 'custom';
+  'this_month' | 'last_month' | 'last_3_months' | 'last_6_months' | 'custom';
 
 export type ReportTab =
-  'cashflow' | 'spending' | 'budgets' | 'splits' | 'wealth' | 'goals' | 'statements';
+  'income' | 'expenses' | 'buckets' | 'categories' | 'budgets' | 'goals' | 'assets';
 
-export interface ReportFilterState {
-  preset: ReportRangePreset;
-  customStart?: string;
-  customEnd?: string;
-  compareWithPrevious: boolean;
-  activeTab: ReportTab;
-}
+export type ViewMode = 'chart' | 'table';
+
+export type Granularity = 'daily' | 'weekly' | 'monthly';
 
 export interface DateRangePeriod {
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
   label: string;
+  comparisonLabel?: string;
   months: string[]; // ['2026-08', '2026-09', '2026-10']
 }
 
@@ -33,14 +24,19 @@ export interface MetricWithChange {
   previousValue: number;
   previousFormatted: string;
   deltaPct: number; // e.g. +14.2 or -5.1
+  hasComparison: boolean;
+  isNew: boolean;
   isPositiveGood?: boolean; // income: positive is good; expense: negative is good
+  sparkline: number[];
 }
 
 export interface ReportKpis {
   income: MetricWithChange;
   spent: MetricWithChange;
   netSavings: MetricWithChange;
-  savingsRate: MetricWithChange;
+  savingsRate: MetricWithChange & {
+    targetBenchmark: number; // e.g. 20%
+  };
   avgDailySpend: { value: number; formatted: string };
   largestExpense: {
     amount: number;
@@ -53,20 +49,57 @@ export interface ReportKpis {
     value: number;
     previousValue: number;
     deltaPct: number;
+    hasComparison: boolean;
   };
 }
 
-export interface CashflowTrendPoint {
-  month: string;
-  label: string;
-  income: number;
-  expense: number;
-  savings: number;
-  savingsRate: number;
-  cumulativeSavings: number;
+export type InsightSeverity = 'warning' | 'info' | 'positive';
+
+export interface ReportInsight {
+  id: string;
+  title: string;
+  description: string;
+  severity: InsightSeverity;
+  metric?: string;
+  actionLabel?: string;
+  targetTab?: ReportTab;
+  filterKey?: 'category' | 'bucket' | 'month';
+  filterValue?: string;
 }
 
-export interface CategoryBreakdownItem {
+// ── Tab Data Models ──────────────────────────────────────────
+
+export interface IncomeTableRecord {
+  id: string;
+  date: string;
+  source: string;
+  account: string;
+  amount: number;
+}
+
+export interface ExpenseTableRecord {
+  id: string;
+  date: string;
+  merchant: string;
+  category: string;
+  categoryColor: string;
+  bucket: string;
+  amount: number;
+}
+
+export interface BucketAllocationRecord {
+  id: string;
+  name: string;
+  type: 'needs' | 'wants' | 'savings' | 'custom';
+  color: string;
+  allocated: number;
+  spent: number;
+  remaining: number;
+  pct: number;
+  targetPct: number;
+}
+
+export interface CategoryBreakdownRecord {
   id: string;
   name: string;
   color: string;
@@ -75,120 +108,60 @@ export interface CategoryBreakdownItem {
   count: number;
   previousAmount: number;
   changePct: number;
-  bucketName?: string;
+  hasComparison: boolean;
 }
 
-export interface CategoryTrendPoint {
-  month: string;
-  label: string;
-  [categoryKey: string]: string | number;
-}
-
-export interface BucketAllocationPoint {
-  month: string;
-  label: string;
-  needsActual: number;
-  needsTarget: number;
-  wantsActual: number;
-  wantsTarget: number;
-  savingsActual: number;
-  savingsTarget: number;
-  totalIncome: number;
-}
-
-export interface WeekdaySpendPoint {
-  day: string;
-  dayIndex: number;
-  shortDay: string;
-  total: number;
-  average: number;
-  count: number;
-}
-
-export interface DailyHeatmapCell {
-  date: string; // YYYY-MM-DD
-  dayOfWeek: number; // 0=Sun .. 6=Sat
-  dayOfMonth: number;
-  monthKey: string;
-  amount: number;
-  level: 0 | 1 | 2 | 3 | 4;
-}
-
-export interface PaymentMethodItem {
-  method: string;
-  label: string;
-  amount: number;
-  count: number;
-  percent: number;
-  color?: string;
-}
-
-export interface TopExpenseItem {
+export interface BudgetStatusRecord {
   id: string;
-  description: string;
-  amount: number;
-  date: string;
-  categoryName: string;
-  categoryColor: string;
-  paymentMethod?: string | null;
-}
-
-export interface FrequentMerchantItem {
-  description: string;
-  count: number;
-  totalAmount: number;
-  avgAmount: number;
-  categoryName: string;
-}
-
-export interface BudgetHeatCell {
-  month: string;
-  monthLabel: string;
-  budgeted: number;
+  name: string;
+  limit: number;
   spent: number;
+  remaining: number;
   pct: number;
   status: 'within' | 'warning' | 'over' | 'unbudgeted';
 }
 
-export interface BudgetHeatRow {
-  bucketId: string;
-  bucketName: string;
-  bucketType: 'needs' | 'wants' | 'savings' | 'custom';
-  color: string;
-  cells: BudgetHeatCell[];
-  monthsOverBudget: number;
-  averageAdherencePct: number;
-}
-
-export interface SplitFriendBalance {
-  contactId: string;
-  name: string;
-  avatar?: string;
-  totalPaidForThem: number;
-  owedToYou: number;
-  youOwe: number;
-  netBalance: number; // positive = they owe you, negative = you owe them
-  settledAmount: number;
-  settledTransactionsCount: number;
-  pendingTransactionsCount: number;
-}
-
-export interface SplitReportTotals {
-  paidForFriends: number;
-  owedToYou: number;
-  youOwe: number;
-  settled: number;
-}
-
-export interface ReportInsight {
+export interface GoalStatusRecord {
   id: string;
-  title: string;
-  description: string;
-  tone: 'positive' | 'warning' | 'negative' | 'neutral';
-  metric?: string;
-  actionLabel?: string;
-  filterKey?: 'category' | 'bucket' | 'month';
-  filterValue?: string;
+  name: string;
+  target: number;
+  saved: number;
+  pct: number;
+  eta: string;
+  color?: string;
+}
+
+export interface AssetAllocationRecord {
+  id: string;
+  name: string;
+  value: number;
+  allocationPct: number;
+  change: number;
+  color: string;
+}
+
+// ── Chart Trend Points ───────────────────────────────────────
+
+export interface IncomeExpenseTrendPoint {
+  periodKey: string;
+  label: string;
+  income: number;
+  expense: number;
+  previousIncome?: number;
+  previousExpense?: number;
+}
+
+export interface BucketTrendPoint {
+  periodKey: string;
+  label: string;
+  needs: number;
+  wants: number;
+  savings: number;
+}
+
+export interface NetWorthTrendPoint {
+  label: string;
+  netWorth: number;
 }
 
 export interface StatementSummaryRecord {
@@ -200,11 +173,4 @@ export interface StatementSummaryRecord {
   generatedAt: string;
   bucketTotals: Record<string, { spent: number; budgeted: number; status: string }>;
   categoryTotals: Record<string, { spent: number }>;
-}
-
-export interface DrilldownTarget {
-  type: 'category' | 'bucket' | 'month';
-  id?: string;
-  title: string;
-  subtitle?: string;
 }

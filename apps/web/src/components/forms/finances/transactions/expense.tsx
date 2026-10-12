@@ -403,7 +403,7 @@ export function ExpenseForm({
             />
 
             {/* Switch to Split Bill Helper Link */}
-            <div className="flex items-center justify-between rounded-lg border border-dashed border-border/80 bg-surface-raised/30 p-3 text-caption">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-dashed border-border/80 bg-surface-raised/30 p-3 text-caption">
               <span className="text-text-muted">Need to split this bill with friends?</span>
               <button
                 type="button"
@@ -421,7 +421,7 @@ export function ExpenseForm({
                     setSplitValues(defaultVals);
                   }
                 }}
-                className="text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
               >
                 <span>Split this with friends instead</span>
                 <ArrowRight size={13} />

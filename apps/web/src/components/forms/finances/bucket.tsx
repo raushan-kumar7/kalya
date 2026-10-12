@@ -265,7 +265,7 @@ export function BucketForm({
             {customHex && (
               <Input
                 placeholder="#7C3AED"
-                wrapperClassName="w-32"
+                wrapperClassName="w-full sm:w-32 mt-1 sm:mt-0"
                 className="font-numeric uppercase h-8 text-caption"
                 value={selectedColor ?? ''}
                 errorMessage={form.formState.errors.color?.message}
@@ -278,8 +278,8 @@ export function BucketForm({
           </div>
         </Field>
 
-        <div className="border-border bg-surface-raised flex items-center justify-between rounded-lg border px-3.5 py-2.5">
-          <Label htmlFor="has-target" className="mb-0 cursor-pointer">
+        <div className="border-border bg-surface-raised flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5">
+          <Label htmlFor="has-target" className="mb-0 cursor-pointer text-body-sm">
             Give this bucket a target allocation
           </Label>
           <Switch id="has-target" checked={hasTarget} onCheckedChange={handleToggleTarget} />

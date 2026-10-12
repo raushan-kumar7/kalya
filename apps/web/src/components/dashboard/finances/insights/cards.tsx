@@ -1,349 +1,459 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  AlertCircle,
   AlertTriangle,
   ArrowDownRight,
-  ArrowRight,
   ArrowUpRight,
-  Calendar,
-  CheckCircle2,
-  DollarSign,
+  ChevronDown,
+  ChevronUp,
   Flame,
+  Info,
   Minus,
   Percent,
   PiggyBank,
   Receipt,
   Sparkles,
-  TrendingDown,
-  TrendingUp,
   Wallet,
   X,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { formatInr } from '@kalya/utils';
+import { Card } from '@/components/ui/data-display/card';
+import { Badge } from '@/components/ui/data-display/badge';
 import { Button } from '@/components/ui/forms/button';
-import { KpiCard, KpiGrid } from '@/components/shared';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/overlays/tooltip';
-import type { ReportInsight, ReportKpis } from './types';
+import { Skeleton } from '@/components/ui/states/skeleton';
+import { RadialChart } from '@/components/ui/charts/radial-chart';
+import type { MetricWithChange, ReportInsight, ReportKpis, ReportTab } from './types';
 
-interface ComparisonBadgeProps {
-  deltaPct: number;
-  isPositiveGood?: boolean;
-  previousFormatted?: string;
-  showVsLabel?: boolean;
-}
+// ============================================================
+// 1. HONEST DELTA PILL
+// ============================================================
 
-export function ComparisonBadge({
-  deltaPct,
-  isPositiveGood = true,
-  previousFormatted,
-  showVsLabel = true,
-}: ComparisonBadgeProps) {
-  if (!Number.isFinite(deltaPct) || deltaPct === 0) {
+export function HonestDeltaPill({
+  metric,
+  invertFavorable = false,
+}: {
+  metric: MetricWithChange;
+  invertFavorable?: boolean; // if true, decrease is favorable (e.g. expenses)
+}) {
+  if (metric.isNew) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted">
-        <Minus className="h-3 w-3" />
-        <span>0% change</span>
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-primary-subtle text-primary border border-primary/20">
+        New
       </span>
     );
   }
 
-  const isUp = deltaPct > 0;
-  // If positive is good (like income or savings), up = success, down = danger.
-  // If positive is bad (like expenses), up = danger, down = success.
-  const isFavorable = isPositiveGood ? isUp : !isUp;
+  if (!metric.hasComparison || !Number.isFinite(metric.deltaPct)) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-text-muted">
+        <Minus className="h-3 w-3" />
+        <span>—</span>
+      </span>
+    );
+  }
+
+  const isUp = metric.deltaPct > 0;
+  // If invertFavorable is false (income): up = positive, down = negative
+  // If invertFavorable is true (spent): down = positive, up = negative
+  const isFavorable = invertFavorable ? !isUp : isUp;
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={cn(
-          'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] font-semibold tracking-tight',
-          isFavorable
-            ? 'bg-success-subtle text-success border border-success/20'
-            : 'bg-danger-subtle text-danger border border-danger/20'
-        )}
-      >
-        {isUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-        <span>{isUp ? `+${deltaPct.toFixed(1)}%` : `${deltaPct.toFixed(1)}%`}</span>
-      </span>
-      {showVsLabel && (
-        <span className="text-caption text-text-muted truncate">
-          vs prev {previousFormatted ? `(${previousFormatted})` : ''}
-        </span>
+    <span
+      className={cn(
+        'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] font-semibold tracking-tight',
+        isFavorable
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
       )}
+    >
+      {isUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      <span>{isUp ? `+${metric.deltaPct.toFixed(1)}%` : `${metric.deltaPct.toFixed(1)}%`}</span>
+    </span>
+  );
+}
+
+// ============================================================
+// 2. HONEST MINI SPARKLINE
+// ============================================================
+
+export function MiniSparkline({
+  points,
+  color = 'var(--primary)',
+}: {
+  points: number[];
+  color?: string;
+}) {
+  if (!points || points.length === 0) return null;
+
+  // Honest data states: single data point renders as a clean bar
+  if (points.length === 1) {
+    return (
+      <div className="h-8 flex items-end">
+        <div className="w-4 rounded-t bg-primary/40 h-5" style={{ backgroundColor: color }} />
+      </div>
+    );
+  }
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const width = 80;
+  const height = 28;
+
+  const coords = points.map((val, idx) => {
+    const x = (idx / (points.length - 1)) * width;
+    const y = height - ((val - min) / range) * (height - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return (
+    <div className="shrink-0 flex items-center">
+      <svg width={width} height={height} className="overflow-visible">
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={coords.join(' ')}
+          className="opacity-80"
+        />
+      </svg>
     </div>
   );
 }
 
-interface ReportKpiStripProps {
+// ============================================================
+// 3. KPI HERO DECK
+// ============================================================
+
+interface ReportKpiDeckProps {
   kpis: ReportKpis;
   isLoading?: boolean;
-  compareWithPrevious?: boolean;
+  onSelectTab: (tab: ReportTab) => void;
   onDrilldownExpense?: () => void;
 }
 
-export function ReportKpiStrip({
+export function ReportKpiDeck({
   kpis,
   isLoading,
-  compareWithPrevious = true,
+  onSelectTab,
   onDrilldownExpense,
-}: ReportKpiStripProps) {
+}: ReportKpiDeckProps) {
+  const [showSecondaryStats, setShowSecondaryStats] = useState(false);
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Primary KPI Strip */}
-      <KpiGrid cols={4}>
-        {/* Income */}
-        <KpiCard
-          title="Total Income"
-          value={kpis.income.formatted}
-          icon={Wallet}
-          tone="default"
-          isLoading={isLoading}
-          trend={
-            compareWithPrevious && !isLoading && Number.isFinite(kpis.income.deltaPct)
-              ? {
-                  value: kpis.income.deltaPct,
-                  label: kpis.income.previousFormatted
-                    ? `vs ${kpis.income.previousFormatted}`
-                    : 'vs prev',
-                  invert: false,
-                }
-              : undefined
-          }
-        />
-
-        {/* Spent */}
-        <KpiCard
-          title="Spent (Your Share)"
-          value={kpis.spent.formatted}
-          icon={Receipt}
-          tone="negative"
-          isLoading={isLoading}
-          trend={
-            compareWithPrevious && !isLoading && Number.isFinite(kpis.spent.deltaPct)
-              ? {
-                  value: kpis.spent.deltaPct,
-                  label: kpis.spent.previousFormatted
-                    ? `vs ${kpis.spent.previousFormatted}`
-                    : 'vs prev',
-                  invert: true,
-                }
-              : undefined
-          }
-        />
-
-        {/* Net Savings */}
-        <KpiCard
-          title="Net Savings"
-          value={kpis.netSavings.formatted}
-          icon={PiggyBank}
-          tone={kpis.netSavings.value >= 0 ? 'positive' : 'negative'}
-          isLoading={isLoading}
-          trend={
-            compareWithPrevious && !isLoading && Number.isFinite(kpis.netSavings.deltaPct)
-              ? {
-                  value: kpis.netSavings.deltaPct,
-                  label: kpis.netSavings.previousFormatted
-                    ? `vs ${kpis.netSavings.previousFormatted}`
-                    : 'vs prev',
-                  invert: false,
-                }
-              : undefined
-          }
-        />
-
-        {/* Savings Rate */}
-        <KpiCard
-          title="Savings Rate"
-          value={kpis.savingsRate.formatted}
-          icon={Percent}
-          tone="accent"
-          isLoading={isLoading}
-          trend={
-            compareWithPrevious && !isLoading && Number.isFinite(kpis.savingsRate.deltaPct)
-              ? {
-                  value: kpis.savingsRate.deltaPct,
-                  label: kpis.savingsRate.previousFormatted
-                    ? `vs ${kpis.savingsRate.previousFormatted}`
-                    : 'vs prev',
-                  invert: false,
-                }
-              : undefined
-          }
-        />
-      </KpiGrid>
-
-      {/* Secondary Metrics Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Average Daily Spend */}
-        <div className="rounded-lg border border-border/80 bg-surface/60 px-4 py-2.5 flex items-center justify-between">
-          <div className="min-w-0">
-            <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-              Avg Daily Spend
-            </span>
-            <div className="font-numeric text-body-md font-semibold text-text-primary">
-              {isLoading ? '—' : kpis.avgDailySpend.formatted}
-            </div>
-          </div>
-          <Flame className="h-4 w-4 text-warning opacity-70 shrink-0" />
-        </div>
-
-        {/* Largest Single Expense */}
-        <div
-          onClick={onDrilldownExpense}
-          className={cn(
-            'rounded-lg border border-border/80 bg-surface/60 px-4 py-2.5 flex items-center justify-between group transition-colors',
-            onDrilldownExpense && 'cursor-pointer hover:border-primary/40 hover:bg-surface'
-          )}
+      {/* Primary 4 Cards: 4 across, 2x2 tablet, stacked mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Income */}
+        <Card
+          onClick={() => onSelectTab('income')}
+          className="p-4 bg-surface border-border hover:border-emerald-500/40 hover:shadow-card transition-all cursor-pointer group"
         >
-          <div className="min-w-0 pr-2">
-            <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-              Largest Expense
+          <div className="flex items-start justify-between">
+            <span className="text-caption font-semibold text-text-secondary uppercase tracking-wider">
+              Income
             </span>
-            <div className="flex items-baseline gap-1.5 truncate">
-              <span className="font-numeric text-body-md font-semibold text-text-primary">
-                {isLoading ? '—' : kpis.largestExpense.formatted}
-              </span>
-              <span className="text-caption text-text-muted truncate">
-                {isLoading ? '' : `• ${kpis.largestExpense.description || 'N/A'}`}
-              </span>
+            <div className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <Wallet className="h-3.5 w-3.5" />
             </div>
           </div>
-          <Receipt className="h-4 w-4 text-text-muted group-hover:text-primary transition-colors shrink-0" />
+
+          <div className="mt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-28 my-1" />
+            ) : (
+              <div className="font-numeric text-title-md font-bold text-text-primary tracking-tight">
+                {kpis.income.formatted}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between pt-2 border-t border-border/50">
+            <HonestDeltaPill metric={kpis.income} invertFavorable={false} />
+            <MiniSparkline points={kpis.income.sparkline} color="var(--chart-1)" />
+          </div>
+        </Card>
+
+        {/* Card 2: Spent */}
+        <Card
+          onClick={() => onSelectTab('expenses')}
+          className="p-4 bg-surface border-border hover:border-rose-500/40 hover:shadow-card transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <span className="text-caption font-semibold text-text-secondary uppercase tracking-wider">
+              Spent
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <Receipt className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          <div className="mt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-28 my-1" />
+            ) : (
+              <div className="font-numeric text-title-md font-bold text-text-primary tracking-tight">
+                {kpis.spent.formatted}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between pt-2 border-t border-border/50">
+            {/* Decrease in spending is favorable (green) */}
+            <HonestDeltaPill metric={kpis.spent} invertFavorable={true} />
+            <MiniSparkline points={kpis.spent.sparkline} color="var(--chart-5)" />
+          </div>
+        </Card>
+
+        {/* Card 3: Net Savings */}
+        <Card
+          onClick={() => onSelectTab('income')}
+          className="p-4 bg-surface border-border hover:border-primary/40 hover:shadow-card transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <span className="text-caption font-semibold text-text-secondary uppercase tracking-wider">
+              Net Savings
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-primary-subtle border border-primary/20 flex items-center justify-center text-primary">
+              <PiggyBank className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          <div className="mt-2">
+            {isLoading ? (
+              <Skeleton className="h-8 w-28 my-1" />
+            ) : (
+              <div
+                className={cn(
+                  'font-numeric text-title-md font-bold tracking-tight',
+                  kpis.netSavings.value >= 0
+                    ? 'text-text-primary'
+                    : 'text-rose-600 dark:text-rose-400'
+                )}
+              >
+                {kpis.netSavings.formatted}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between pt-2 border-t border-border/50">
+            <HonestDeltaPill metric={kpis.netSavings} invertFavorable={false} />
+            <MiniSparkline points={kpis.netSavings.sparkline} color="var(--chart-2)" />
+          </div>
+        </Card>
+
+        {/* Card 4: Savings Rate */}
+        <Card
+          onClick={() => onSelectTab('budgets')}
+          className="p-4 bg-surface border-border hover:border-accent/40 hover:shadow-card transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="text-caption font-semibold text-text-secondary uppercase tracking-wider">
+                Savings Rate
+              </span>
+              <Badge variant="subtle" size="sm" className="text-[10px] px-1 py-0 font-medium">
+                Target: {kpis.savingsRate.targetBenchmark}%
+              </Badge>
+            </div>
+            <div className="h-7 w-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+              <Percent className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-center justify-between">
+            {isLoading ? (
+              <Skeleton className="h-8 w-20 my-1" />
+            ) : (
+              <div className="font-numeric text-title-md font-bold text-text-primary tracking-tight">
+                {kpis.savingsRate.formatted}
+              </div>
+            )}
+
+            {/* Mini Progress Ring */}
+            <div className="h-10 w-10">
+              <RadialChart
+                value={kpis.savingsRate.value}
+                max={100}
+                color={kpis.savingsRate.value >= 20 ? 'var(--chart-1)' : 'var(--chart-5)'}
+                height={40}
+                centerText=""
+              />
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between pt-2 border-t border-border/50">
+            <HonestDeltaPill metric={kpis.savingsRate} invertFavorable={false} />
+            <span className="text-[11px] text-text-muted">
+              {kpis.savingsRate.value >= 20 ? 'Above target' : 'Below target'}
+            </span>
+          </div>
+        </Card>
+      </div>
+
+      {/* Secondary Stats Slim Strip / Expander */}
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between px-1">
+          <button
+            type="button"
+            onClick={() => setShowSecondaryStats((prev) => !prev)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-text-primary transition-colors cursor-pointer select-none"
+          >
+            <span>{showSecondaryStats ? 'Hide details' : 'More stats'}</span>
+            {showSecondaryStats ? (
+              <ChevronUp className="h-3 w-3" />
+            ) : (
+              <ChevronDown className="h-3 w-3" />
+            )}
+          </button>
         </div>
 
-        {/* Total Transactions */}
-        <div className="rounded-lg border border-border/80 bg-surface/60 px-4 py-2.5 flex items-center justify-between">
-          <div className="min-w-0">
-            <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-              Transactions Tracked
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-numeric text-body-md font-semibold text-text-primary">
-                {isLoading ? '—' : kpis.transactionCount.value}
+        {showSecondaryStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-2 animate-in fade-in-50 duration-200">
+            <div className="rounded-lg border border-border/70 bg-surface/60 px-3.5 py-2 flex items-center justify-between">
+              <span className="text-caption text-text-secondary">Avg Daily Spend</span>
+              <span className="font-numeric text-body-sm font-semibold text-text-primary flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-warning" />
+                {isLoading ? '—' : kpis.avgDailySpend.formatted}
               </span>
-              {compareWithPrevious && !isLoading && (
-                <span className="text-caption text-text-muted">
-                  ({kpis.transactionCount.deltaPct >= 0 ? '+' : ''}
-                  {kpis.transactionCount.deltaPct.toFixed(0)}% vs prev)
-                </span>
-              )}
+            </div>
+
+            <div
+              onClick={onDrilldownExpense}
+              className="rounded-lg border border-border/70 bg-surface/60 px-3.5 py-2 flex items-center justify-between hover:border-primary/40 transition-colors cursor-pointer"
+            >
+              <span className="text-caption text-text-secondary">Largest Outlay</span>
+              <span className="font-numeric text-body-sm font-semibold text-text-primary truncate max-w-37.5">
+                {isLoading
+                  ? '—'
+                  : `${kpis.largestExpense.formatted} (${kpis.largestExpense.description})`}
+              </span>
+            </div>
+
+            <div className="rounded-lg border border-border/70 bg-surface/60 px-3.5 py-2 flex items-center justify-between">
+              <span className="text-caption text-text-secondary">Tracked Transactions</span>
+              <span className="font-numeric text-body-sm font-semibold text-text-primary">
+                {isLoading ? '—' : `${kpis.transactionCount.value} items`}
+              </span>
             </div>
           </div>
-          <Calendar className="h-4 w-4 text-primary opacity-70 shrink-0" />
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Insights Panel                                                     */
-/* ------------------------------------------------------------------ */
+// ============================================================
+// 4. INSIGHTS STRIP (Max 3, Collapsible)
+// ============================================================
 
-interface ReportInsightsPanelProps {
+interface ReportInsightsStripProps {
   insights: ReportInsight[];
-  onActionClick?: (insight: ReportInsight) => void;
-  onDismiss?: (id: string) => void;
+  onActionClick: (insight: ReportInsight) => void;
 }
 
-export function ReportInsightsPanel({
-  insights,
-  onActionClick,
-  onDismiss,
-}: ReportInsightsPanelProps) {
-  if (!insights.length) return null;
+export function ReportInsightsStrip({ insights, onActionClick }: ReportInsightsStripProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  const visibleInsights = insights.filter((i) => !dismissedIds.includes(i.id));
+  if (visibleInsights.length === 0) return null;
+
+  if (isCollapsed) {
+    return (
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-caption font-semibold bg-primary-subtle text-primary border border-primary/20 hover:bg-primary-subtle/80 transition-colors cursor-pointer"
+        >
+          <Sparkles className="h-3 w-3" />
+          <span>{visibleInsights.length} insights available</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {insights.map((item) => {
-        const isPositive = item.tone === 'positive';
-        const isWarning = item.tone === 'warning';
-        const isNegative = item.tone === 'negative';
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1">
+          <Sparkles className="h-3 w-3 text-primary" />
+          <span>Key Insights ({visibleInsights.length})</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(true)}
+          className="text-[11px] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+        >
+          Collapse
+        </button>
+      </div>
 
-        return (
-          <div
-            key={item.id}
-            className={cn(
-              'group relative flex items-start justify-between gap-3 rounded-xl border p-3.5 shadow-2xs transition-all',
-              isPositive && 'border-success/30 bg-success-subtle/30 text-text-primary',
-              isWarning && 'border-warning/30 bg-warning-subtle/30 text-text-primary',
-              isNegative && 'border-danger/30 bg-danger-subtle/30 text-text-primary',
-              !isPositive && !isWarning && !isNegative && 'border-border bg-surface-raised/60'
-            )}
-          >
-            <div className="flex items-start gap-3 min-w-0">
-              <span
-                className={cn(
-                  'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
-                  isPositive && 'bg-success text-on-success shadow-xs',
-                  isWarning && 'bg-warning text-on-warning shadow-xs',
-                  isNegative && 'bg-danger text-on-danger shadow-xs',
-                  !isPositive && !isWarning && !isNegative && 'bg-primary text-on-primary shadow-xs'
-                )}
-              >
-                {isPositive ? (
-                  <Sparkles className="h-4 w-4" />
-                ) : isNegative ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : isWarning ? (
-                  <AlertTriangle className="h-4 w-4" />
-                ) : (
-                  <TrendingUp className="h-4 w-4" />
-                )}
-              </span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+        {visibleInsights.map((ins) => {
+          const isWarning = ins.severity === 'warning';
+          const isPositive = ins.severity === 'positive';
 
-              <div className="min-w-0 pr-1">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="font-display text-body-sm font-semibold text-text-primary truncate">
-                    {item.title}
-                  </h4>
-                  {item.metric && (
-                    <span className="text-[11px] font-semibold text-text-muted">
-                      • {item.metric}
-                    </span>
-                  )}
+          return (
+            <div
+              key={ins.id}
+              className={cn(
+                'relative flex flex-col justify-between p-3 rounded-xl border text-body-sm transition-all',
+                isWarning &&
+                  'bg-amber-500/5 border-amber-500/20 text-amber-900 dark:text-amber-100',
+                isPositive &&
+                  'bg-emerald-500/5 border-emerald-500/20 text-emerald-900 dark:text-emerald-100',
+                !isWarning && !isPositive && 'bg-surface border-border text-text-primary'
+              )}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 pr-4">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {isWarning && <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />}
+                    {isPositive && <Sparkles className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
+                    {!isWarning && !isPositive && (
+                      <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+                    )}
+                    <span className="font-semibold text-caption truncate">{ins.title}</span>
+                  </div>
                 </div>
-                <p className="mt-0.5 text-caption text-text-secondary leading-snug line-clamp-2">
-                  {item.description}
+
+                <p className="text-caption text-text-secondary mt-1 line-clamp-2">
+                  {ins.description}
                 </p>
               </div>
-            </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 self-center">
-              {item.actionLabel && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onActionClick?.(item)}
-                  className="gap-1 text-caption font-medium h-7 px-2.5 bg-surface/90 hover:bg-surface border-border/80"
-                >
-                  <span>{item.actionLabel}</span>
-                  <ArrowRight className="h-3 w-3" />
-                </Button>
-              )}
+              <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-border/40 text-[11px]">
+                {ins.actionLabel ? (
+                  <button
+                    type="button"
+                    onClick={() => onActionClick(ins)}
+                    className="font-semibold text-primary hover:underline cursor-pointer select-none"
+                  >
+                    {ins.actionLabel} →
+                  </button>
+                ) : (
+                  <span />
+                )}
 
-              {onDismiss && (
                 <button
                   type="button"
-                  onClick={() => onDismiss(item.id)}
-                  className="h-6 w-6 inline-flex items-center justify-center rounded text-text-muted hover:text-text-primary hover:bg-surface transition-colors cursor-pointer"
-                  aria-label="Dismiss insight"
+                  onClick={() => setDismissedIds((prev) => [...prev, ins.id])}
+                  className="text-text-muted hover:text-text-primary p-0.5 rounded cursor-pointer"
+                  title="Dismiss insight"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
-              )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -187,9 +187,9 @@ export function SplitContactForm({
         {/* Registered-user lookup (shown when not yet linked, in both Add and Edit modes) */}
         {!isLinked && (
           <div className="rounded-xl border border-dashed border-border/80 bg-surface-raised/30 p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
               <span className="text-caption font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" />
+                <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
                 Find on Kalya
               </span>
               <span className="text-[11px] text-text-muted">Auto-fill & link profile</span>
@@ -246,7 +246,7 @@ export function SplitContactForm({
         {/* Linked member card */}
         {isLinked && (
           <div className="relative overflow-hidden rounded-xl border border-success/30 bg-success-subtle/15 dark:bg-success-subtle/10 p-3.5 transition-all shadow-xs">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2.5 sm:gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar
                   size="md"
@@ -285,7 +285,7 @@ export function SplitContactForm({
                 variant="ghost"
                 size="sm"
                 onClick={unlink}
-                className="text-text-muted hover:text-danger hover:bg-danger-subtle/30 shrink-0 text-caption gap-1 px-2.5 h-7 transition-colors"
+                className="text-text-muted hover:text-danger hover:bg-danger-subtle/30 shrink-0 text-caption gap-1 px-2.5 h-7 transition-colors self-end sm:self-auto"
               >
                 <Unlink className="h-3.5 w-3.5" />
                 <span>Unlink</span>

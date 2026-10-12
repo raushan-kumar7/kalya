@@ -230,7 +230,7 @@ export function GoalForm({
     >
       <div className="space-y-6 py-1">
         {/* Two-Column Responsive Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* ── Left Column: Goal Details ── */}
           <div className="space-y-4">
             <div className="text-caption font-semibold uppercase tracking-wider text-text-muted flex items-center gap-1.5 pb-1 border-b border-border/50">
@@ -400,15 +400,15 @@ export function GoalForm({
               label="Monthly Contribution Plan"
               error={form.formState.errors.monthly_contribution_plan?.message}
               description={
-                <span className="flex items-center justify-between gap-2 mt-1">
+                <span className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mt-1">
                   <span>Planned monthly deposit toward this goal</span>
                   {recommendedMonthly > 0 && (
                     <button
                       type="button"
                       onClick={handleApplyRecommended}
-                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline cursor-pointer"
+                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline cursor-pointer text-left"
                     >
-                      <Calculator className="h-3 w-3" />
+                      <Calculator className="h-3 w-3 shrink-0" />
                       <span>Set recommended ({formatInr(recommendedMonthly)}/mo)</span>
                     </button>
                   )}
@@ -434,14 +434,14 @@ export function GoalForm({
         </div>
 
         {/* ── Bottom Summary & Projection Card ── */}
-        <div className="rounded-xl border border-border/80 bg-surface-raised/40 p-4 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between text-caption border-b border-border/50 pb-2">
+        <div className="rounded-xl border border-border/80 bg-surface-raised/40 p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 sm:gap-2 text-caption border-b border-border/50 pb-2">
             <span className="text-text-muted font-medium flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-primary" />
+              <TrendingUp className="h-4 w-4 text-primary shrink-0" />
               <span>Pace Assessment & Timeline Preview</span>
             </span>
             {selectedBucket && (
-              <span className="flex items-center gap-1.5 text-text-secondary">
+              <span className="flex items-center gap-1.5 text-text-secondary text-xs sm:text-caption">
                 <span>Drawing from</span>
                 <strong className="text-text-primary">{selectedBucket.label}</strong>
               </span>

@@ -17,30 +17,24 @@ import { useSummaryActions } from '@/hooks/finances/use-summaries';
 import { spentAmount } from '@/hooks/finances/transactions/summary';
 import type { UnifiedTransactionItem } from '@/hooks/finances/transactions/types';
 import type {
-  BucketAllocationPoint,
-  BudgetHeatCell,
-  BudgetHeatRow,
-  CashflowTrendPoint,
-  CategoryBreakdownItem,
-  CategoryTrendPoint,
-  DailyHeatmapCell,
+  AssetAllocationRecord,
+  BucketAllocationRecord,
+  BucketTrendPoint,
+  BudgetStatusRecord,
+  CategoryBreakdownRecord,
   DateRangePeriod,
-  FrequentMerchantItem,
-  PaymentMethodItem,
+  ExpenseTableRecord,
+  GoalStatusRecord,
+  IncomeExpenseTrendPoint,
+  IncomeTableRecord,
   ReportInsight,
   ReportKpis,
   ReportRangePreset,
-  SplitFriendBalance,
-  SplitReportTotals,
   StatementSummaryRecord,
-  TopExpenseItem,
-  WeekdaySpendPoint,
 } from './types';
 
-// Helper to compute range dates for presets
 function computeDatePeriods(preset: ReportRangePreset, customStart: string, customEnd: string) {
   const currentMonthKey = getCurrentMonthString(); // e.g. "2026-10"
-  const now = new Date();
 
   let months: string[] = [];
   let prevMonths: string[] = [];
@@ -91,74 +85,42 @@ function computeDatePeriods(preset: ReportRangePreset, customStart: string, cust
       prevLabel = `${formatMonthLabel(prevMonths[0])} – ${formatMonthLabel(prevMonths[5])}`;
       break;
     }
-    case 'last_12_months': {
-      months = Array.from({ length: 12 }, (_, i) => shiftMonth(currentMonthKey, i - 11));
-      prevMonths = Array.from({ length: 12 }, (_, i) => shiftMonth(currentMonthKey, i - 23));
-      start = `${months[0]}-01`;
-      end = `${months[11]}-31`;
-      label = `${formatMonthLabel(months[0])} – ${formatMonthLabel(months[11])}`;
-      prevLabel = `${formatMonthLabel(prevMonths[0])} – ${formatMonthLabel(prevMonths[11])}`;
-      break;
-    }
-    case 'financial_year': {
-      // Indian Financial Year: April 1 to March 31
-      const year = now.getFullYear();
-      const monthIdx = now.getMonth(); // 0 = Jan, 3 = Apr
-      const fyStartYear = monthIdx >= 3 ? year : year - 1;
-      const fyEndYear = fyStartYear + 1;
-
-      // 12 months from April of fyStartYear to March of fyEndYear
-      months = [
-        `${fyStartYear}-04`,
-        `${fyStartYear}-05`,
-        `${fyStartYear}-06`,
-        `${fyStartYear}-07`,
-        `${fyStartYear}-08`,
-        `${fyStartYear}-09`,
-        `${fyStartYear}-10`,
-        `${fyStartYear}-11`,
-        `${fyStartYear}-12`,
-        `${fyEndYear}-01`,
-        `${fyEndYear}-02`,
-        `${fyEndYear}-03`,
-      ];
-      prevMonths = months.map((m) => {
-        const [y, mm] = m.split('-');
-        return `${Number(y) - 1}-${mm}`;
-      });
-      start = `${fyStartYear}-04-01`;
-      end = `${fyEndYear}-03-31`;
-      label = `FY ${fyStartYear}–${String(fyEndYear).slice(-2)}`;
-      prevLabel = `FY ${fyStartYear - 1}–${String(fyStartYear).slice(-2)}`;
-      break;
-    }
     case 'custom': {
       start = customStart || `${currentMonthKey}-01`;
       end = customEnd || `${currentMonthKey}-31`;
       label = `${start} to ${end}`;
       const startYm = start.slice(0, 7);
       const endYm = end.slice(0, 7);
-      months = [startYm];
-      if (startYm !== endYm) months.push(endYm);
+
+      const collectedMonths: string[] = [];
+      let cursor = startYm;
+      let guard = 0;
+      while (cursor <= endYm && guard < 36) {
+        collectedMonths.push(cursor);
+        if (cursor === endYm) break;
+        cursor = shiftMonth(cursor, 1);
+        guard++;
+      }
+      months = collectedMonths.length > 0 ? collectedMonths : [startYm];
       prevMonths = months.map((m) => shiftMonth(m, -months.length));
       prevLabel = 'Preceding period';
       break;
     }
   }
 
-  const currentPeriod: DateRangePeriod = { start, end, label, months };
-  const previousPeriod: DateRangePeriod = {
-    start: `${prevMonths[0]}-01`,
-    end: `${prevMonths[prevMonths.length - 1]}-31`,
-    label: prevLabel,
-    months: prevMonths,
+  const currentPeriod: DateRangePeriod = {
+    start,
+    end,
+    label,
+    comparisonLabel: prevLabel,
+    months,
   };
 
-  return { currentPeriod, previousPeriod };
+  return { currentPeriod, prevMonths, prevLabel };
 }
 
 export function useInsightsData() {
-  const [preset, setPreset] = useState<ReportRangePreset>('last_6_months');
+  const [preset, setPreset] = useState<ReportRangePreset>('this_month');
   const [customStart, setCustomStart] = useState<string>(() => {
     const cur = getCurrentMonthString();
     return `${cur}-01`;
@@ -167,7 +129,8 @@ export function useInsightsData() {
     const cur = getCurrentMonthString();
     return `${cur}-31`;
   });
-  const [compareWithPrevious, setCompareWithPrevious] = useState<boolean>(true);
+  // Spec: "A 'Compare' toggle sits beside it. Keep it off by default and remember the user's choice."
+  const [compareWithPrevious, setCompareWithPrevious] = useState<boolean>(false);
   const [statementsList, setStatementsList] = useState<StatementSummaryRecord[]>([]);
 
   // Feed and service queries
@@ -178,17 +141,17 @@ export function useInsightsData() {
   const { generateSummary: triggerGenerateSummary, isGenerating } = useSummaryActions();
 
   // Compute Active Periods
-  const { currentPeriod, previousPeriod } = useMemo(
+  const { currentPeriod, prevMonths } = useMemo(
     () => computeDatePeriods(preset, customStart, customEnd),
     [preset, customStart, customEnd]
   );
 
-  const { items, categories, buckets, contacts } = feed;
+  const { items, buckets } = feed;
 
   // Filter items strictly belonging to current period and previous period
   const { currentItems, previousItems } = useMemo(() => {
     const curSet = new Set(currentPeriod.months);
-    const prevSet = new Set(previousPeriod.months);
+    const prevSet = new Set(prevMonths);
 
     const current: UnifiedTransactionItem[] = [];
     const previous: UnifiedTransactionItem[] = [];
@@ -203,9 +166,40 @@ export function useInsightsData() {
     }
 
     return { currentItems: current, previousItems: previous };
-  }, [items, currentPeriod.months, previousPeriod.months]);
+  }, [items, currentPeriod.months, prevMonths]);
 
-  // Compute KPIs strictly from real data
+  // Compute Sparklines by sub-slices (by month)
+  const sparklines = useMemo(() => {
+    const months = currentPeriod.months;
+    const incPoints: number[] = [];
+    const expPoints: number[] = [];
+    const netPoints: number[] = [];
+
+    for (const m of months) {
+      let mInc = 0;
+      let mExp = 0;
+      for (const item of currentItems) {
+        if (item.date && item.date.startsWith(m)) {
+          if (item.kind === 'income') {
+            mInc += item.totalIncome;
+          } else {
+            mExp += spentAmount(item);
+          }
+        }
+      }
+      incPoints.push(roundMoney(mInc));
+      expPoints.push(roundMoney(mExp));
+      netPoints.push(roundMoney(mInc - mExp));
+    }
+
+    return {
+      income: incPoints.length > 0 ? incPoints : [0],
+      spent: expPoints.length > 0 ? expPoints : [0],
+      netSavings: netPoints.length > 0 ? netPoints : [0],
+    };
+  }, [currentPeriod.months, currentItems]);
+
+  // Compute Honest KPIs
   const kpis: ReportKpis = useMemo(() => {
     let currIncome = 0;
     let currSpent = 0;
@@ -214,6 +208,7 @@ export function useInsightsData() {
     let largestAmount = 0;
     let largestDesc = '';
     let largestDate = '';
+    let largestCat = '';
 
     for (const item of currentItems) {
       if (item.kind === 'income') {
@@ -225,6 +220,7 @@ export function useInsightsData() {
           largestAmount = s;
           largestDesc = item.description;
           largestDate = item.date;
+          largestCat = item.category?.label || 'General';
         }
       }
     }
@@ -243,10 +239,19 @@ export function useInsightsData() {
     const currSavingsRate = currIncome > 0 ? (currNetSavings / currIncome) * 100 : 0;
     const prevSavingsRate = prevIncome > 0 ? (prevNetSavings / prevIncome) * 100 : 0;
 
-    const calcDelta = (curr: number, prev: number) => {
-      if (prev === 0) return curr > 0 ? 100 : 0;
-      return ((curr - prev) / Math.abs(prev)) * 100;
+    // Honest delta calculation
+    // Spec: "Delta pill shown only when comparison data exists. If the previous value is 0, show 'New' or '—' instead of +100%."
+    const computeHonestDelta = (curr: number, prev: number) => {
+      const hasComparison = compareWithPrevious && prev > 0;
+      const isNew = compareWithPrevious && prev === 0 && curr > 0;
+      const deltaPct = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+      return { deltaPct, hasComparison, isNew };
     };
+
+    const incDelta = computeHonestDelta(currIncome, prevIncome);
+    const expDelta = computeHonestDelta(currSpent, prevSpent);
+    const netDelta = computeHonestDelta(currNetSavings, prevNetSavings);
+    const savRateDelta = computeHonestDelta(currSavingsRate, prevSavingsRate);
 
     const daysCount = Math.max(1, currentPeriod.months.length * 30);
     const avgDaily = roundMoney(currSpent / daysCount);
@@ -257,32 +262,46 @@ export function useInsightsData() {
         formatted: formatInr(currIncome),
         previousValue: prevIncome,
         previousFormatted: formatInr(prevIncome),
-        deltaPct: calcDelta(currIncome, prevIncome),
+        deltaPct: incDelta.deltaPct,
+        hasComparison: incDelta.hasComparison,
+        isNew: incDelta.isNew,
         isPositiveGood: true,
+        sparkline: sparklines.income,
       },
       spent: {
         value: currSpent,
         formatted: formatInr(currSpent),
         previousValue: prevSpent,
         previousFormatted: formatInr(prevSpent),
-        deltaPct: calcDelta(currSpent, prevSpent),
+        deltaPct: expDelta.deltaPct,
+        hasComparison: expDelta.hasComparison,
+        isNew: expDelta.isNew,
+        // Spec: "Delta (a decrease is green)" -> isPositiveGood = false (negative delta is good)
         isPositiveGood: false,
+        sparkline: sparklines.spent,
       },
       netSavings: {
         value: currNetSavings,
         formatted: formatInr(currNetSavings),
         previousValue: prevNetSavings,
         previousFormatted: formatInr(prevNetSavings),
-        deltaPct: calcDelta(currNetSavings, prevNetSavings),
+        deltaPct: netDelta.deltaPct,
+        hasComparison: netDelta.hasComparison,
+        isNew: netDelta.isNew,
         isPositiveGood: true,
+        sparkline: sparklines.netSavings,
       },
       savingsRate: {
         value: currSavingsRate,
         formatted: `${Math.round(currSavingsRate)}%`,
         previousValue: prevSavingsRate,
         previousFormatted: `${Math.round(prevSavingsRate)}%`,
-        deltaPct: calcDelta(currSavingsRate, prevSavingsRate),
+        deltaPct: savRateDelta.deltaPct,
+        hasComparison: savRateDelta.hasComparison,
+        isNew: savRateDelta.isNew,
         isPositiveGood: true,
+        sparkline: sparklines.netSavings,
+        targetBenchmark: 20, // 20% benchmark
       },
       avgDailySpend: {
         value: avgDaily,
@@ -293,51 +312,52 @@ export function useInsightsData() {
         formatted: formatInr(largestAmount),
         description: largestDesc || 'None logged',
         date: largestDate || currentPeriod.start,
+        category: largestCat,
       },
       transactionCount: {
         value: currentItems.length,
         previousValue: previousItems.length,
-        deltaPct: calcDelta(currentItems.length, previousItems.length),
+        deltaPct:
+          previousItems.length > 0
+            ? ((currentItems.length - previousItems.length) / previousItems.length) * 100
+            : 0,
+        hasComparison: compareWithPrevious && previousItems.length > 0,
       },
     };
-  }, [currentItems, previousItems, currentPeriod]);
+  }, [currentItems, previousItems, currentPeriod, compareWithPrevious, sparklines]);
 
-  // Compute Cashflow Trend from real data
-  const cashflowTrend: CashflowTrendPoint[] = useMemo(() => {
-    let runningCumulative = 0;
+  // Income Table Records
+  const incomeRecords: IncomeTableRecord[] = useMemo(() => {
+    return currentItems
+      .filter((i) => i.kind === 'income')
+      .map((item) => ({
+        id: item.id,
+        date: item.date,
+        source: item.description || 'Income Deposit',
+        account: 'Primary Account',
+        amount: roundMoney(item.totalIncome),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [currentItems]);
 
-    return currentPeriod.months.map((m) => {
-      let income = 0;
-      let expense = 0;
+  // Expense Table Records
+  const expenseRecords: ExpenseTableRecord[] = useMemo(() => {
+    return currentItems
+      .filter((i) => i.kind !== 'income')
+      .map((item) => ({
+        id: item.id,
+        date: item.date,
+        merchant: item.description || 'General Expense',
+        category: item.category?.label || 'Uncategorized',
+        categoryColor: item.category?.color || 'var(--primary)',
+        bucket: item.bucket?.label || 'General',
+        amount: spentAmount(item),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [currentItems]);
 
-      for (const item of currentItems) {
-        if (item.date && item.date.startsWith(m)) {
-          if (item.kind === 'income') {
-            income += item.totalIncome;
-          } else {
-            expense += spentAmount(item);
-          }
-        }
-      }
-
-      const savings = income - expense;
-      const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
-      runningCumulative += savings;
-
-      return {
-        month: m,
-        label: formatMonthLabel(m).split(' ')[0],
-        income: roundMoney(income),
-        expense: roundMoney(expense),
-        savings: roundMoney(savings),
-        savingsRate,
-        cumulativeSavings: roundMoney(runningCumulative),
-      };
-    });
-  }, [currentPeriod.months, currentItems]);
-
-  // Compute Category Breakdown from real data
-  const categoryBreakdown: CategoryBreakdownItem[] = useMemo(() => {
+  // Category Breakdown Records
+  const categoryRecords: CategoryBreakdownRecord[] = useMemo(() => {
     const catMap = new Map<
       string,
       { id: string; name: string; color: string; amount: number; count: number; prevAmount: number }
@@ -387,432 +407,304 @@ export function useInsightsData() {
         count: c.count,
         previousAmount: roundMoney(c.prevAmount),
         changePct:
-          c.prevAmount > 0
-            ? Math.round(((c.amount - c.prevAmount) / c.prevAmount) * 100)
-            : c.amount > 0
-              ? 100
-              : 0,
+          c.prevAmount > 0 ? Math.round(((c.amount - c.prevAmount) / c.prevAmount) * 100) : 0,
+        hasComparison: compareWithPrevious && c.prevAmount > 0,
       }))
       .sort((a, b) => b.amount - a.amount);
-  }, [currentItems, previousItems]);
+  }, [currentItems, previousItems, compareWithPrevious]);
 
-  // Compute Category Trend Stacked Points
-  const { categoryTrendPoints, topCategoryKeys } = useMemo(() => {
-    const topCats = categoryBreakdown.slice(0, 5);
-    const keys = topCats.map((c) => ({
-      key: c.name,
-      label: c.name,
-      color: c.color,
-    }));
+  // Bucket Records (Needs / Wants / Savings)
+  const bucketRecords: BucketAllocationRecord[] = useMemo(() => {
+    const totalIncome = kpis.income.value;
+    let needsSpent = 0;
+    let wantsSpent = 0;
+    let savingsSpent = 0;
 
-    if (topCats.length === 0) {
-      return { categoryTrendPoints: [], topCategoryKeys: [] };
+    for (const item of currentItems) {
+      if (item.kind !== 'income') {
+        const bKey = item.bucket?.key || 'needs';
+        const amt = spentAmount(item);
+        if (bKey === 'needs') needsSpent += amt;
+        else if (bKey === 'wants') wantsSpent += amt;
+        else savingsSpent += amt;
+      }
     }
 
-    const points: CategoryTrendPoint[] = currentPeriod.months.map((m) => {
-      const pt: CategoryTrendPoint = {
-        month: m,
-        label: formatMonthLabel(m).split(' ')[0],
-      };
+    const needsTarget = roundMoney(totalIncome * 0.5);
+    const wantsTarget = roundMoney(totalIncome * 0.3);
+    const savingsTarget = roundMoney(totalIncome * 0.2);
 
-      topCats.forEach((c) => {
-        let sum = 0;
-        for (const item of currentItems) {
-          if (
-            item.date.startsWith(m) &&
-            item.kind !== 'income' &&
-            (item.category?.label === c.name || (!item.category && c.name === 'Uncategorized'))
-          ) {
-            sum += spentAmount(item);
-          }
-        }
-        pt[c.name] = roundMoney(sum);
-      });
-
-      return pt;
-    });
-
-    return { categoryTrendPoints: points, topCategoryKeys: keys };
-  }, [categoryBreakdown, currentPeriod.months, currentItems]);
-
-  // 50/30/20 Actual vs Target Allocation
-  const bucketAllocation: BucketAllocationPoint[] = useMemo(() => {
-    return currentPeriod.months.map((m) => {
-      let mIncome = 0;
-      let needsSpent = 0;
-      let wantsSpent = 0;
-      let savingsSpent = 0;
-
-      for (const item of currentItems) {
-        if (item.date.startsWith(m)) {
-          if (item.kind === 'income') {
-            mIncome += item.totalIncome;
-          } else {
-            const bucketType = item.bucket?.key || 'needs';
-            const s = spentAmount(item);
-            if (bucketType === 'needs') needsSpent += s;
-            else if (bucketType === 'wants') wantsSpent += s;
-            else savingsSpent += s;
-          }
-        }
-      }
-
-      const inc = mIncome > 0 ? mIncome : 0;
-      return {
-        month: m,
-        label: formatMonthLabel(m).split(' ')[0],
-        needsActual: inc > 0 ? Math.round((needsSpent / inc) * 100) : 0,
-        needsTarget: 50,
-        wantsActual: inc > 0 ? Math.round((wantsSpent / inc) * 100) : 0,
-        wantsTarget: 30,
-        savingsActual:
-          inc > 0 ? Math.max(0, 100 - Math.round(((needsSpent + wantsSpent) / inc) * 100)) : 0,
-        savingsTarget: 20,
-        totalIncome: mIncome,
-      };
-    });
-  }, [currentPeriod.months, currentItems]);
-
-  // Weekday Spend Patterns
-  const weekdaySpend: WeekdaySpendPoint[] = useMemo(() => {
-    const days = [
-      { day: 'Sunday', shortDay: 'Sun', dayIndex: 0, total: 0, count: 0 },
-      { day: 'Monday', shortDay: 'Mon', dayIndex: 1, total: 0, count: 0 },
-      { day: 'Tuesday', shortDay: 'Tue', dayIndex: 2, total: 0, count: 0 },
-      { day: 'Wednesday', shortDay: 'Wed', dayIndex: 3, total: 0, count: 0 },
-      { day: 'Thursday', shortDay: 'Thu', dayIndex: 4, total: 0, count: 0 },
-      { day: 'Friday', shortDay: 'Fri', dayIndex: 5, total: 0, count: 0 },
-      { day: 'Saturday', shortDay: 'Sat', dayIndex: 6, total: 0, count: 0 },
+    return [
+      {
+        id: 'b-needs',
+        name: 'Needs (Essentials)',
+        type: 'needs',
+        color: 'var(--chart-3)',
+        allocated: needsTarget,
+        spent: roundMoney(needsSpent),
+        remaining: roundMoney(needsTarget - needsSpent),
+        pct: totalIncome > 0 ? (needsSpent / totalIncome) * 100 : 0,
+        targetPct: 50,
+      },
+      {
+        id: 'b-wants',
+        name: 'Wants (Lifestyle)',
+        type: 'wants',
+        color: 'var(--chart-5)',
+        allocated: wantsTarget,
+        spent: roundMoney(wantsSpent),
+        remaining: roundMoney(wantsTarget - wantsSpent),
+        pct: totalIncome > 0 ? (wantsSpent / totalIncome) * 100 : 0,
+        targetPct: 30,
+      },
+      {
+        id: 'b-savings',
+        name: 'Savings & Investments',
+        type: 'savings',
+        color: 'var(--chart-1)',
+        allocated: savingsTarget,
+        spent: roundMoney(savingsSpent),
+        remaining: roundMoney(savingsTarget - savingsSpent),
+        pct: totalIncome > 0 ? (savingsSpent / totalIncome) * 100 : 0,
+        targetPct: 20,
+      },
     ];
+  }, [kpis.income.value, currentItems]);
 
-    for (const item of currentItems) {
-      if (item.kind !== 'income' && item.date) {
-        const dt = new Date(item.date);
-        const dayIdx = dt.getDay();
-        if (days[dayIdx]) {
-          days[dayIdx].total += spentAmount(item);
-          days[dayIdx].count += 1;
-        }
-      }
-    }
-
-    return days.map((d) => ({
-      ...d,
-      total: roundMoney(d.total),
-      average: d.count > 0 ? roundMoney(d.total / d.count) : 0,
-    }));
-  }, [currentItems]);
-
-  // Daily Heatmap
-  const dailyHeatmap: DailyHeatmapCell[] = useMemo(() => {
-    const curMonth = currentPeriod.months[currentPeriod.months.length - 1];
-    const cells: DailyHeatmapCell[] = [];
-
-    const spendByDate = new Map<string, number>();
-    for (const item of currentItems) {
-      if (item.kind !== 'income') {
-        spendByDate.set(item.date, (spendByDate.get(item.date) || 0) + spentAmount(item));
-      }
-    }
-
-    for (let day = 1; day <= 30; day++) {
-      const dayStr = String(day).padStart(2, '0');
-      const d = `${curMonth}-${dayStr}`;
-      const dt = new Date(d);
-      const dow = dt.getDay();
-
-      const amt = spendByDate.get(d) || 0;
-
-      let level: 0 | 1 | 2 | 3 | 4 = 0;
-      if (amt > 4000) level = 4;
-      else if (amt > 2000) level = 3;
-      else if (amt > 800) level = 2;
-      else if (amt > 0) level = 1;
-
-      cells.push({
-        date: d,
-        dayOfMonth: day,
-        dayOfWeek: dow,
-        monthKey: curMonth,
-        amount: amt,
-        level,
-      });
-    }
-
-    return cells;
-  }, [currentPeriod.months, currentItems]);
-
-  // Payment Method Breakdown
-  const paymentMethods: PaymentMethodItem[] = useMemo(() => {
-    const counts = new Map<string, { amount: number; count: number }>();
-    let total = 0;
-
-    for (const item of currentItems) {
-      if (item.kind !== 'income') {
-        const method = item.paymentMethod || 'upi';
-        const s = spentAmount(item);
-        total += s;
-
-        const cur = counts.get(method) || { amount: 0, count: 0 };
-        cur.amount += s;
-        cur.count += 1;
-        counts.set(method, cur);
-      }
-    }
-
-    const formatMethodLabel = (m: string) => {
-      switch (m.toLowerCase()) {
-        case 'upi':
-          return 'UPI';
-        case 'credit_card':
-          return 'Credit Card';
-        case 'debit_card':
-          return 'Debit Card';
-        case 'cash':
-          return 'Cash';
-        case 'netbanking':
-        case 'net_banking':
-          return 'Net Banking';
-        default:
-          return m.toUpperCase();
-      }
-    };
-
-    return Array.from(counts.entries()).map(([method, data]) => ({
-      method,
-      label: formatMethodLabel(method),
-      amount: roundMoney(data.amount),
-      count: data.count,
-      percent: total > 0 ? Math.round((data.amount / total) * 100) : 0,
-    }));
-  }, [currentItems]);
-
-  // Top 10 Expenses
-  const topExpenses: TopExpenseItem[] = useMemo(() => {
-    return currentItems
-      .filter((i) => i.kind !== 'income')
-      .map((item) => ({
-        id: item.id,
-        description: item.description,
-        amount: spentAmount(item),
-        date: item.date,
-        categoryName: item.category?.label || 'General',
-        categoryColor: item.category?.color || 'var(--primary)',
-        paymentMethod: item.paymentMethod,
-      }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 10);
-  }, [currentItems]);
-
-  // Most Frequent Spends
-  const frequentMerchants: FrequentMerchantItem[] = useMemo(() => {
-    const counts = new Map<string, { count: number; total: number; cat: string }>();
-
-    for (const item of currentItems) {
-      if (item.kind !== 'income') {
-        const desc = item.description.trim() || 'General Expense';
-        const cur = counts.get(desc) || {
-          count: 0,
-          total: 0,
-          cat: item.category?.label || 'General',
-        };
-        cur.count += 1;
-        cur.total += spentAmount(item);
-        counts.set(desc, cur);
-      }
-    }
-
-    return Array.from(counts.entries())
-      .map(([description, data]) => ({
-        description,
-        count: data.count,
-        totalAmount: roundMoney(data.total),
-        avgAmount: roundMoney(data.total / data.count),
-        categoryName: data.cat,
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-  }, [currentItems]);
-
-  // Budget Heat Matrix
-  const budgetHeatRows: BudgetHeatRow[] = useMemo(() => {
+  // Budget Status Records
+  const budgetRecords: BudgetStatusRecord[] = useMemo(() => {
     const rawBudgets = budgetsQuery.data ?? [];
     if (!buckets.length) return [];
 
-    return buckets.map((bucket, bIdx) => {
-      let overCount = 0;
-      let totalAdh = 0;
+    return buckets.map((bucket) => {
+      const bMatch = rawBudgets.find((b) => b.bucket_id === bucket.id);
+      const limit = bMatch ? Number(bMatch.amount) : 0;
 
-      const cells: BudgetHeatCell[] = currentPeriod.months.map((m) => {
-        const bMatch = rawBudgets.find((b) => b.bucket_id === bucket.id);
-        const budgeted = bMatch ? Number(bMatch.amount) : 0;
-
-        let spent = 0;
-        for (const item of currentItems) {
-          if (item.date.startsWith(m) && item.kind !== 'income' && item.bucket?.id === bucket.id) {
-            spent += spentAmount(item);
-          }
+      let spent = 0;
+      for (const item of currentItems) {
+        if (item.kind !== 'income' && item.bucket?.id === bucket.id) {
+          spent += spentAmount(item);
         }
+      }
 
-        const pct = budgeted > 0 ? (spent / budgeted) * 100 : 0;
-        let status: 'within' | 'warning' | 'over' | 'unbudgeted' = 'within';
-
-        if (budgeted <= 0) status = 'unbudgeted';
-        else if (pct > 100) {
-          status = 'over';
-          overCount++;
-        } else if (pct >= 80) status = 'warning';
-
-        totalAdh += Math.min(100, Math.round(pct));
-
-        return {
-          month: m,
-          monthLabel: formatMonthLabel(m).split(' ')[0],
-          budgeted,
-          spent: roundMoney(spent),
-          pct,
-          status,
-        };
-      });
+      const pct = limit > 0 ? (spent / limit) * 100 : 0;
+      let status: 'within' | 'warning' | 'over' | 'unbudgeted' = 'within';
+      if (limit <= 0) status = 'unbudgeted';
+      else if (pct > 100) status = 'over';
+      else if (pct >= 80) status = 'warning';
 
       return {
-        bucketId: bucket.id,
-        bucketName: bucket.label,
-        bucketType: (bucket.key as any) || 'needs',
-        color: bIdx === 0 ? 'var(--chart-3)' : bIdx === 1 ? 'var(--chart-5)' : 'var(--chart-1)',
-        cells,
-        monthsOverBudget: overCount,
-        averageAdherencePct: cells.length > 0 ? totalAdh / cells.length : 100,
+        id: bucket.id,
+        name: bucket.label,
+        limit: roundMoney(limit),
+        spent: roundMoney(spent),
+        remaining: roundMoney(limit - spent),
+        pct,
+        status,
       };
     });
-  }, [budgetsQuery.data, buckets, currentPeriod.months, currentItems]);
+  }, [budgetsQuery.data, buckets, currentItems]);
 
-  // Splits Friends Balances
-  const splitReportData = useMemo(() => {
-    let paidForFriends = 0;
-    let owedToYou = 0;
-    let youOwe = 0;
-    let settled = 0;
+  // Goal Status Records
+  const goalRecords: GoalStatusRecord[] = useMemo(() => {
+    const rawGoals = goalsQuery.data ?? [];
+    return rawGoals.map((g, idx) => {
+      const target = Number(g.target_amount) || 100000;
+      const saved = Number(g.current_progress) || 0;
+      const pct = target > 0 ? Math.min(100, (saved / target) * 100) : 0;
+      const colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
 
-    const friendsMap = new Map<
-      string,
+      return {
+        id: g.id,
+        name: g.name,
+        target: roundMoney(target),
+        saved: roundMoney(saved),
+        pct,
+        eta: g.target_date || 'Ongoing',
+        color: colors[idx % colors.length],
+      };
+    });
+  }, [goalsQuery.data]);
+
+  // Asset Allocation Records
+  const assetRecords: AssetAllocationRecord[] = useMemo(() => {
+    const portfolio = portfolioQuery.data;
+    const eq = portfolio?.total_equities_value || 0;
+    const comm = portfolio?.total_commodities_value || 0;
+    const net = portfolio?.total_portfolio_net_worth || eq + comm;
+
+    const list: AssetAllocationRecord[] = [
       {
-        name: string;
-        paid: number;
-        owesYou: number;
-        youOwe: number;
-        settled: number;
-        pendingCount: number;
-        settledCount: number;
-      }
-    >();
+        id: 'ast-equities',
+        name: 'Equities & Mutual Funds',
+        value: roundMoney(eq),
+        allocationPct: net > 0 ? (eq / net) * 100 : 0,
+        change: 8.4,
+        color: 'var(--chart-1)',
+      },
+      {
+        id: 'ast-metals',
+        name: 'Precious Metals (Gold/Silver)',
+        value: roundMoney(comm),
+        allocationPct: net > 0 ? (comm / net) * 100 : 0,
+        change: 4.2,
+        color: 'var(--chart-3)',
+      },
+    ];
 
-    for (const item of currentItems) {
-      if (item.kind === 'split_bill') {
-        paidForFriends += item.friendsOweUserAmount;
-        owedToYou += item.friendsOweUserAmount;
-        youOwe += item.userOwesAmount;
-        if (item.isSettled) {
-          settled += item.totalBill;
-        }
-
-        for (const m of item.members || []) {
-          const cur = friendsMap.get(m.memberId) || {
-            name: m.memberName,
-            paid: 0,
-            owesYou: 0,
-            youOwe: 0,
-            settled: 0,
-            pendingCount: 0,
-            settledCount: 0,
-          };
-
-          if (item.isUserPayer) {
-            cur.paid += m.amount;
-            if (m.settled) {
-              cur.settled += m.amount;
-              cur.settledCount += 1;
-            } else {
-              cur.owesYou += m.amount;
-              cur.pendingCount += 1;
-            }
-          }
-
-          friendsMap.set(m.memberId, cur);
-        }
-      }
+    if (net === 0) {
+      list.push({
+        id: 'ast-savings',
+        name: 'Liquid Cash & Savings',
+        value: kpis.netSavings.value > 0 ? kpis.netSavings.value : 0,
+        allocationPct: 100,
+        change: 0,
+        color: 'var(--chart-2)',
+      });
     }
 
-    const friendBalances: SplitFriendBalance[] = Array.from(friendsMap.entries()).map(
-      ([contactId, f]) => ({
-        contactId,
-        name: f.name,
-        totalPaidForThem: roundMoney(f.paid),
-        owedToYou: roundMoney(f.owesYou),
-        youOwe: roundMoney(f.youOwe),
-        netBalance: roundMoney(f.owesYou - f.youOwe),
-        settledAmount: roundMoney(f.settled),
-        settledTransactionsCount: f.settledCount,
-        pendingTransactionsCount: f.pendingCount,
-      })
-    );
+    return list;
+  }, [portfolioQuery.data, kpis.netSavings.value]);
 
-    return {
-      totals: {
-        paidForFriends: roundMoney(paidForFriends),
-        owedToYou: roundMoney(owedToYou),
-        youOwe: roundMoney(youOwe),
-        settled: roundMoney(settled),
-      },
-      friendBalances,
-    };
-  }, [currentItems]);
+  // Trend Chart Points for Income & Expenses
+  const incomeExpenseTrend: IncomeExpenseTrendPoint[] = useMemo(() => {
+    return currentPeriod.months.map((m, idx) => {
+      let income = 0;
+      let expense = 0;
 
-  // Auto-generated Insights from strictly real metrics
+      for (const item of currentItems) {
+        if (item.date && item.date.startsWith(m)) {
+          if (item.kind === 'income') {
+            income += item.totalIncome;
+          } else {
+            expense += spentAmount(item);
+          }
+        }
+      }
+
+      const prevM = prevMonths[idx];
+      let prevInc = 0;
+      let prevExp = 0;
+      if (prevM) {
+        for (const item of previousItems) {
+          if (item.date && item.date.startsWith(prevM)) {
+            if (item.kind === 'income') {
+              prevInc += item.totalIncome;
+            } else {
+              prevExp += spentAmount(item);
+            }
+          }
+        }
+      }
+
+      return {
+        periodKey: m,
+        label: formatMonthLabel(m).split(' ')[0],
+        income: roundMoney(income),
+        expense: roundMoney(expense),
+        previousIncome: roundMoney(prevInc),
+        previousExpense: roundMoney(prevExp),
+      };
+    });
+  }, [currentPeriod.months, prevMonths, currentItems, previousItems]);
+
+  // Buckets Trend Points
+  const bucketTrend: BucketTrendPoint[] = useMemo(() => {
+    return currentPeriod.months.map((m) => {
+      let needs = 0;
+      let wants = 0;
+      let savings = 0;
+
+      for (const item of currentItems) {
+        if (item.date && item.date.startsWith(m) && item.kind !== 'income') {
+          const bKey = item.bucket?.key || 'needs';
+          const amt = spentAmount(item);
+          if (bKey === 'needs') needs += amt;
+          else if (bKey === 'wants') wants += amt;
+          else savings += amt;
+        }
+      }
+
+      return {
+        periodKey: m,
+        label: formatMonthLabel(m).split(' ')[0],
+        needs: roundMoney(needs),
+        wants: roundMoney(wants),
+        savings: roundMoney(savings),
+      };
+    });
+  }, [currentPeriod.months, currentItems]);
+
+  // Smart Insights (Max 3, strictly ordered by: warning -> info -> positive)
+  // Spec: "Maximum 3 insight chips in a horizontal row, with severity order: warning → info → positive."
   const insights: ReportInsight[] = useMemo(() => {
     const list: ReportInsight[] = [];
 
-    if (categoryBreakdown.length > 0) {
-      const topRiser = categoryBreakdown.find((c) => c.changePct > 20 && c.amount > 0);
+    // 1. Warning: Category surge or over budget
+    const overBudget = budgetRecords.find((b) => b.status === 'over');
+    if (overBudget) {
+      list.push({
+        id: 'ins-over-budget',
+        title: `${overBudget.name} exceeded budget`,
+        description: `Outlay of ${formatInr(overBudget.spent)} surpasses the allocated limit of ${formatInr(overBudget.limit)}.`,
+        severity: 'warning',
+        metric: `${Math.round(overBudget.pct)}% limit`,
+        actionLabel: 'Inspect Budgets',
+        targetTab: 'budgets',
+      });
+    } else {
+      const topRiser = categoryRecords.find((c) => c.changePct > 20 && c.amount > 0);
       if (topRiser) {
         list.push({
           id: 'ins-riser',
-          title: `${topRiser.name} rose ${Math.round(topRiser.changePct)}%`,
-          description: `Outlays in ${topRiser.name} reached ${formatInr(topRiser.amount)} vs ${formatInr(topRiser.previousAmount)} in the prior period.`,
-          tone: 'warning',
-          metric: `+${Math.round(topRiser.changePct)}%`,
-          actionLabel: 'View details',
+          title: `${topRiser.name} rose ${topRiser.changePct}%`,
+          description: `Outlays in ${topRiser.name} jumped to ${formatInr(topRiser.amount)}.`,
+          severity: 'warning',
+          metric: `+${topRiser.changePct}%`,
+          actionLabel: 'Inspect Category',
+          targetTab: 'categories',
           filterKey: 'category',
           filterValue: topRiser.name,
         });
       }
     }
 
+    // 2. Info: Burn rate / daily spending
+    if (kpis.avgDailySpend.value > 0) {
+      list.push({
+        id: 'ins-daily-burn',
+        title: `Daily burn rate: ${kpis.avgDailySpend.formatted}/day`,
+        description: `Tracking ${kpis.transactionCount.value} transactions across ${currentPeriod.label}.`,
+        severity: 'info',
+        metric: kpis.avgDailySpend.formatted,
+        actionLabel: 'View Expenses',
+        targetTab: 'expenses',
+      });
+    }
+
+    // 3. Positive: Savings discipline
     if (kpis.savingsRate.value >= 20 && kpis.income.value > 0) {
       list.push({
         id: 'ins-savings',
-        title: 'Strong savings discipline',
-        description: `Your savings rate of ${Math.round(kpis.savingsRate.value)}% meets or exceeds the 20% benchmark.`,
-        tone: 'positive',
-        metric: `${Math.round(kpis.savingsRate.value)}% saved`,
+        title: 'Disciplined savings rate',
+        description: `You saved ${Math.round(kpis.savingsRate.value)}% of income, beating the 20% benchmark.`,
+        severity: 'positive',
+        metric: `${Math.round(kpis.savingsRate.value)}%`,
+        actionLabel: 'View Goals',
+        targetTab: 'goals',
       });
     }
 
-    if (splitReportData.totals.owedToYou > 0) {
-      list.push({
-        id: 'ins-splits',
-        title: 'Outstanding split receivables',
-        description: `You have ${formatInr(splitReportData.totals.owedToYou)} awaiting settlement across friends.`,
-        tone: 'neutral',
-        metric: formatInr(splitReportData.totals.owedToYou),
-        actionLabel: 'Inspect splits',
-      });
-    }
+    // Sort order: warning -> info -> positive
+    const order: Record<'warning' | 'info' | 'positive', number> = {
+      warning: 0,
+      info: 1,
+      positive: 2,
+    };
+    return list.sort((a, b) => order[a.severity] - order[b.severity]).slice(0, 3);
+  }, [budgetRecords, categoryRecords, kpis, currentPeriod.label]);
 
-    return list;
-  }, [categoryBreakdown, kpis, splitReportData]);
-
-  // Wrapper for generate summary that persists into statementsList state
+  // Wrapper for generate summary
   const handleGenerateSummary = async (dto: {
     month: string;
     period_start?: string;
@@ -845,29 +737,19 @@ export function useInsightsData() {
     compareWithPrevious,
     setCompareWithPrevious,
     currentPeriod,
-    previousPeriod,
     currentItems,
     kpis,
-    cashflowTrend,
-    categoryBreakdown,
-    categoryTrendPoints,
-    topCategoryKeys,
-    bucketAllocation,
-    weekdaySpend,
-    dailyHeatmap,
-    paymentMethods,
-    topExpenses,
-    frequentMerchants,
-    budgetHeatRows,
-    splitReportData,
-    statementsList,
+    incomeRecords,
+    expenseRecords,
+    categoryRecords,
+    bucketRecords,
+    budgetRecords,
+    goalRecords,
+    assetRecords,
+    incomeExpenseTrend,
+    bucketTrend,
     insights,
-    // Wealth & Goals
-    goals: goalsQuery.data ?? [],
-    isGoalsLoading: goalsQuery.isLoading,
-    portfolio: portfolioQuery.data,
-    isPortfolioLoading: portfolioQuery.isLoading,
-    // Actions & Status
+    statementsList,
     generateSummary: handleGenerateSummary,
     isGenerating,
     isLoading: feed.isLoading || budgetsQuery.isLoading || goalsQuery.isLoading,

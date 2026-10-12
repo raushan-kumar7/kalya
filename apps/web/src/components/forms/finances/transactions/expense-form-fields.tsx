@@ -177,7 +177,7 @@ export function ExpensePaymentMethodField({
   return (
     <div className="space-y-1.5">
       <label className="text-body-sm font-medium text-text-primary block">{label}</label>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 sm:grid-cols-6">
         {PAYMENT_OPTIONS.map((method) => {
           const isSelected = (watchedPaymentMethod ?? 'upi') === method.id;
           const Icon = method.icon;
@@ -187,7 +187,7 @@ export function ExpensePaymentMethodField({
               type="button"
               onClick={() => form.setValue('payment_method', method.id, { shouldValidate: true })}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 rounded-lg border p-2 text-center transition-all cursor-pointer',
+                'flex flex-col items-center justify-center gap-1 rounded-lg border p-1.5 sm:p-2 text-center transition-all cursor-pointer',
                 isSelected
                   ? 'border-primary bg-primary-subtle/50 text-primary font-medium shadow-xs ring-1 ring-primary/30'
                   : 'border-border bg-surface text-text-secondary hover:border-border/80 hover:bg-surface-raised'

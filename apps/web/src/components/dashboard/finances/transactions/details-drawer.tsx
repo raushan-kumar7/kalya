@@ -22,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/data-display/avatar';
 import {
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
   CreditCard,
@@ -34,6 +35,7 @@ import type { UnifiedTransactionItem } from './types';
 import { formatCalendarDate, formatDateTime, formatTimeAgo, fromISO } from '@kalya/utils';
 import { getCategoryIcon } from '@/components/forms/finances/category';
 import { PAYMENT_OPTIONS } from '@/components/forms/finances/transactions/helper';
+import { TransactionStatusBadge } from './table/status-badge';
 
 export interface DetailsDrawerProps {
   open: boolean;
@@ -88,7 +90,7 @@ export function DetailsDrawer({
 
             <div className="min-w-0">
               <DrawerTitle>{item.description}</DrawerTitle>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="font-body text-caption text-text-muted">
                   {item.kind === 'personal_expense'
                     ? 'Personal Expense'
@@ -96,15 +98,7 @@ export function DetailsDrawer({
                       ? 'Split Bill'
                       : 'Income Inflow'}
                 </span>
-                {item.kind === 'split_bill' && (
-                  <Badge
-                    variant={item.isSettled ? 'success' : 'warning'}
-                    size="sm"
-                    className="font-medium"
-                  >
-                    {item.isSettled ? 'Settled' : 'Pending Dues'}
-                  </Badge>
-                )}
+                <TransactionStatusBadge item={item} showTooltip={false} />
               </div>
             </div>
           </div>
@@ -272,6 +266,14 @@ export function DetailsDrawer({
                             item.isUserPayer ? 'success' : item.isSettled ? 'success' : 'warning'
                           }
                           size="sm"
+                          leadingIcon={
+                            item.isUserPayer || item.isSettled ? (
+                              <Check className="h-3 w-3 stroke-[2.5]" />
+                            ) : undefined
+                          }
+                          dot={!item.isUserPayer && !item.isSettled}
+                          dotColor="warning"
+                          className="font-medium text-[11px]"
                         >
                           {item.isUserPayer ? 'Covered' : item.isSettled ? 'Settled' : 'Pending'}
                         </Badge>
@@ -296,7 +298,18 @@ export function DetailsDrawer({
                           ₹{member.amount.toLocaleString('en-IN')}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant={member.settled ? 'success' : 'warning'} size="sm">
+                          <Badge
+                            variant={member.settled ? 'success' : 'warning'}
+                            size="sm"
+                            leadingIcon={
+                              member.settled ? (
+                                <Check className="h-3 w-3 stroke-[2.5]" />
+                              ) : undefined
+                            }
+                            dot={!member.settled}
+                            dotColor="warning"
+                            className="font-medium text-[11px]"
+                          >
                             {member.settled ? 'Settled' : 'Pending'}
                           </Badge>
                         </TableCell>

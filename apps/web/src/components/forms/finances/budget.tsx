@@ -332,8 +332,8 @@ export function BudgetForm({
         </div>
 
         {/* Threshold triggers */}
-        <div className="rounded-xl border border-border/60 bg-surface-raised/30 p-4 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="rounded-xl border border-border/60 bg-surface-raised/30 p-3.5 sm:p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span className="text-body-sm font-semibold text-text-primary block">
                 Alert Triggers &amp; Thresholds
@@ -433,7 +433,7 @@ export function BudgetForm({
           </div>
 
           {/* Rollover switch */}
-          <div className="flex items-center justify-between pt-2 border-t border-border/40">
+          <div className="flex items-start sm:items-center justify-between gap-3 pt-2 border-t border-border/40">
             <div>
               <label
                 htmlFor="rollover-switch"
@@ -459,8 +459,8 @@ export function BudgetForm({
             <span className="text-caption font-semibold text-text-muted uppercase tracking-wider">
               Live Preview &amp; Triggers
             </span>
-            <div className="rounded-xl border border-border bg-surface p-4 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <span
                     className="h-3 w-3 rounded-full"
@@ -487,7 +487,7 @@ export function BudgetForm({
               </div>
 
               {/* Threshold rupee breakdown */}
-              <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-border/40 text-[11px]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-2 border-t border-border/40 text-[11px]">
                 <div className="rounded-lg bg-surface-raised/60 p-2.5">
                   <span className="text-text-muted block">Budget Limit</span>
                   <span className="font-numeric font-bold text-text-primary block mt-0.5 text-body-sm">

@@ -157,7 +157,7 @@ export function EquityForm({
       icon={TrendingUp}
       tone="accent"
       submitLabel={isEdit ? 'Save Changes' : 'Add Equity Asset'}
-      size="xl"
+      size="md"
     >
       <div className="space-y-4 text-text-primary">
         {/* Exchange Selector */}
@@ -169,19 +169,19 @@ export function EquityForm({
             aria-labelledby="exchange-label"
             value={watchExchange}
             onValueChange={handleExchangeChange}
-            className="mt-3 grid-cols-2 gap-3"
+            className="mt-3 grid-cols-2 gap-2.5 sm:gap-3"
           >
             <RadioCard
               value="NSE"
               label="NSE"
               description="National Stock Exchange"
-              wrapperClassName="p-3"
+              wrapperClassName="p-2.5 sm:p-3"
             />
             <RadioCard
               value="BSE"
               label="BSE"
               description="Bombay Stock Exchange"
-              wrapperClassName="p-3"
+              wrapperClassName="p-2.5 sm:p-3"
             />
           </RadioGroup>
         </div>
@@ -245,7 +245,7 @@ export function EquityForm({
         </div>
 
         {/* Auto Calculated Total Amount Summary */}
-        <Card variant="outlined" className="space-y-2 p-3">
+        <Card variant="outlined" className="space-y-2 p-3 sm:p-3.5">
           <p className="text-caption font-medium text-text-secondary">Investment Summary</p>
           <ComputedValue
             label={`${Number(watchShares) || 0} shares @ ${formatInr(Number(watchPrice) || 0)}`}

@@ -238,7 +238,7 @@ export function ExpenseSplitSection({
       {selectedMembers.length > 0 && (
         <div className="rounded-xl border border-border/70 bg-surface p-3.5 space-y-3 shadow-xs">
           {/* Split Mode Selector Tabs */}
-          <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
             <span className="text-caption font-medium text-text-secondary shrink-0">
               Split Method:
             </span>
@@ -280,7 +280,7 @@ export function ExpenseSplitSection({
                 <div
                   key={item.id}
                   className={cn(
-                    'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors',
+                    'flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 rounded-lg border px-3 py-2 transition-colors',
                     isSelf
                       ? 'border-primary/40 bg-primary-subtle/20 font-medium'
                       : 'border-border/60 bg-surface hover:border-border'
@@ -307,7 +307,7 @@ export function ExpenseSplitSection({
                   </div>
 
                   {/* Right: Allocation Control */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
                     {/* Equal mode: simple amount */}
                     {splitType === 'equal' && (
                       <span className="font-semibold text-text-primary font-numeric text-body-sm">
@@ -321,7 +321,7 @@ export function ExpenseSplitSection({
 
                     {/* Exact mode: numeric input with ₹ */}
                     {splitType === 'exact' && (
-                      <div className="relative w-28">
+                      <div className="relative w-full sm:w-28">
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-caption text-text-muted font-numeric">
                           ₹
                         </span>
@@ -347,7 +347,7 @@ export function ExpenseSplitSection({
 
                     {/* Percentage mode: % input and live computed ₹ amount */}
                     {splitType === 'percentage' && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                         <div className="relative w-20">
                           <input
                             type="number"
@@ -385,7 +385,7 @@ export function ExpenseSplitSection({
 
                     {/* Shares mode: parts input and live computed ₹ amount */}
                     {splitType === 'shares' && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
@@ -418,7 +418,7 @@ export function ExpenseSplitSection({
           </div>
 
           {/* Single Footer Status Line (replacing 3x redundant balance widgets) */}
-          <div className="border-t border-border/60 pt-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="border-t border-border/60 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="space-y-0.5">
               {splitBreakdown.isBalanced ? (
                 <div className="flex items-center gap-1.5 text-caption font-medium text-success font-numeric">
@@ -458,7 +458,7 @@ export function ExpenseSplitSection({
 
             {/* Quick Actions (Auto-balance & Reset) */}
             {splitType !== 'equal' && (
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 self-end sm:self-auto sm:ml-auto">
                 {!splitBreakdown.isBalanced &&
                   (splitType === 'exact' || splitType === 'percentage') && (
                     <button

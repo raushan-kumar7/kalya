@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Calendar, CheckCircle2, Download, FileText, Printer, Sparkles, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, FileText, Sparkles, X } from 'lucide-react';
 import {
   Modal,
   ModalContent,
@@ -12,8 +12,110 @@ import {
 } from '@/components/ui/overlays/modal';
 import { Button } from '@/components/ui/forms/button';
 import { Badge } from '@/components/ui/data-display/badge';
-import { formatCardDate, formatInr, formatMonthLabel } from '@kalya/utils';
+import { DatePicker } from '@/components/ui/forms/date-picker';
+import { formatCardDate, formatInr, formatMonthLabel, getCurrentMonthString } from '@kalya/utils';
 import type { StatementSummaryRecord } from './types';
+
+// ============================================================
+// 1. GENERATE STATEMENT MODAL (Uses DatePicker)
+// ============================================================
+
+interface GenerateStatementModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  defaultMonth?: string;
+  isGenerating?: boolean;
+  onConfirmGenerate: (month: string) => Promise<void>;
+}
+
+export function GenerateStatementModal({
+  open,
+  onOpenChange,
+  defaultMonth,
+  isGenerating = false,
+  onConfirmGenerate,
+}: GenerateStatementModalProps) {
+  const currentYm = defaultMonth || getCurrentMonthString();
+  const [selectedDate, setSelectedDate] = useState<string>(`${currentYm}-01`);
+
+  const handleGenerate = async () => {
+    const ym = selectedDate.slice(0, 7);
+    await onConfirmGenerate(ym);
+    onOpenChange(false);
+  };
+
+  return (
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent className="max-w-md">
+        <ModalHeader>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary-subtle border border-primary/20 flex items-center justify-center text-primary">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <ModalTitle className="text-body-lg font-bold">Generate Monthly Statement</ModalTitle>
+              <ModalDescription className="text-caption text-text-muted">
+                Create an archived snapshot of your cashflow and outlays
+              </ModalDescription>
+            </div>
+          </div>
+        </ModalHeader>
+
+        <div className="flex flex-col gap-4 py-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-caption font-semibold text-text-secondary uppercase tracking-wider">
+              Statement Month
+            </label>
+            {/* Date selection using components/ui/forms/date-picker.tsx */}
+            <DatePicker
+              date={selectedDate}
+              onDateChange={(_d, plainDate) => {
+                if (plainDate) {
+                  setSelectedDate(plainDate.toString());
+                }
+              }}
+              placeholder="Pick month"
+              formatStyle="card"
+              clearable={false}
+            />
+            <span className="text-[11px] text-text-muted">
+              Generates an immutable ledger snapshot for{' '}
+              <strong className="text-text-primary">
+                {formatMonthLabel(selectedDate.slice(0, 7))}
+              </strong>
+              .
+            </span>
+          </div>
+
+          <div className="rounded-lg border border-border bg-surface-raised/70 p-3 text-caption text-text-secondary">
+            💡 This snapshot archives your monthly bucket allocations, category spendings, and net
+            savings for tax and historical reviews.
+          </div>
+        </div>
+
+        <ModalFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-1.5"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{isGenerating ? 'Generating…' : 'Generate Snapshot'}</span>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+// ============================================================
+// 2. VIEW STATEMENT MODAL
+// ============================================================
 
 interface ViewStatementModalProps {
   open: boolean;
@@ -100,125 +202,24 @@ export function ViewStatementModal({
               </div>
             )}
           </div>
-
-          {/* Timestamp Info */}
-          <div className="text-[11px] text-text-muted border-t border-border/60 pt-2 flex items-center justify-between">
-            <span>Generated At: {formatCardDate(statement.generatedAt)}</span>
-            <span>Record ID: {statement.id.slice(0, 8)}</span>
-          </div>
         </div>
 
         <ModalFooter>
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
-            <Printer className="h-3.5 w-3.5" />
-            <span>Print</span>
-          </Button>
-
           {onDownload && (
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={() => onDownload(statement)}
-              className="gap-1.5"
+              className="gap-1.5 mr-auto"
             >
               <Download className="h-3.5 w-3.5" />
               <span>Download JSON</span>
             </Button>
           )}
+          <Button variant="primary" size="sm" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
         </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-}
-
-interface GenerateStatementModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedMonth: string;
-  isGenerating?: boolean;
-  onConfirmGenerate: (month: string) => Promise<void>;
-}
-
-export function GenerateStatementModal({
-  open,
-  onOpenChange,
-  selectedMonth,
-  isGenerating,
-  onConfirmGenerate,
-}: GenerateStatementModalProps) {
-  const [monthInput, setMonthInput] = React.useState(selectedMonth);
-
-  React.useEffect(() => {
-    setMonthInput(selectedMonth);
-  }, [selectedMonth]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onConfirmGenerate(monthInput);
-    onOpenChange(false);
-  };
-
-  return (
-    <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="max-w-md">
-        <form onSubmit={handleSubmit}>
-          <ModalHeader>
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary-subtle border border-primary/20 flex items-center justify-center text-primary">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div>
-                <ModalTitle className="text-body-lg font-bold">
-                  Generate Monthly Statement
-                </ModalTitle>
-                <ModalDescription className="text-caption text-text-muted">
-                  Create an immutable snapshot of your monthly finances
-                </ModalDescription>
-              </div>
-            </div>
-          </ModalHeader>
-
-          <div className="py-4 flex flex-col gap-3">
-            <p className="text-body-sm text-text-secondary leading-relaxed">
-              Generating a statement will compute and store the final expenditure totals, bucket
-              budget adherence, and category breakdowns for{' '}
-              <strong className="text-text-primary">{formatMonthLabel(monthInput)}</strong>.
-            </p>
-
-            <div>
-              <label
-                htmlFor="statement-month"
-                className="text-caption font-medium text-text-secondary mb-1.5 block"
-              >
-                Target Month (YYYY-MM)
-              </label>
-              <input
-                id="statement-month"
-                type="month"
-                value={monthInput}
-                onChange={(e) => setMonthInput(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-body-sm font-numeric text-text-primary focus:border-primary focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-
-          <ModalFooter>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              disabled={isGenerating}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={isGenerating} className="gap-2">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{isGenerating ? 'Generating…' : 'Generate Snapshot'}</span>
-            </Button>
-          </ModalFooter>
-        </form>
       </ModalContent>
     </Modal>
   );

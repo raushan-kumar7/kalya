@@ -206,7 +206,7 @@ export function GoldSilverForm({
       icon={Coins}
       tone="accent"
       submitLabel={isEdit ? 'Save Changes' : 'Record Purchase'}
-      size="xl"
+      size="md"
     >
       <div className="space-y-4 text-text-primary">
         {/* Metal Choice Selector */}
@@ -217,7 +217,7 @@ export function GoldSilverForm({
           <div
             role="radiogroup"
             aria-labelledby="metal-type-label"
-            className="grid grid-cols-2 gap-3 mt-3"
+            className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-2 sm:mt-3"
           >
             <button
               type="button"
@@ -225,7 +225,7 @@ export function GoldSilverForm({
               aria-checked={selectedType === 'gold'}
               onClick={() => handleTypeSelect('gold')}
               className={cn(
-                'group relative flex items-center gap-3 rounded-xl border p-3 text-left text-body-sm font-medium transition-all cursor-pointer',
+                'group relative flex items-center gap-2.5 sm:gap-3 rounded-xl border p-2.5 sm:p-3 text-left text-body-sm font-medium transition-all cursor-pointer',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                 selectedType === 'gold'
                   ? 'border-amber-500/80 bg-amber-500/10 text-text-primary shadow-xs ring-1 ring-amber-500/30'
@@ -234,11 +234,11 @@ export function GoldSilverForm({
             >
               <Coins
                 className={cn(
-                  'h-5 w-5 transition-colors',
+                  'h-5 w-5 shrink-0 transition-colors',
                   selectedType === 'gold' ? 'text-amber-500' : 'text-text-muted'
                 )}
               />
-              Gold
+              <span>Gold</span>
             </button>
 
             <button
@@ -247,7 +247,7 @@ export function GoldSilverForm({
               aria-checked={selectedType === 'silver'}
               onClick={() => handleTypeSelect('silver')}
               className={cn(
-                'group relative flex items-center gap-3 rounded-xl border p-3 text-left text-body-sm font-medium transition-all cursor-pointer',
+                'group relative flex items-center gap-2.5 sm:gap-3 rounded-xl border p-2.5 sm:p-3 text-left text-body-sm font-medium transition-all cursor-pointer',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                 selectedType === 'silver'
                   ? 'border-slate-400 bg-slate-400/10 text-text-primary shadow-xs ring-1 ring-slate-400/30'
@@ -256,11 +256,11 @@ export function GoldSilverForm({
             >
               <Coins
                 className={cn(
-                  'h-5 w-5 transition-colors',
+                  'h-5 w-5 shrink-0 transition-colors',
                   selectedType === 'silver' ? 'text-slate-400' : 'text-text-muted'
                 )}
               />
-              Silver
+              <span>Silver</span>
             </button>
           </div>
         </div>
@@ -349,7 +349,7 @@ export function GoldSilverForm({
         </div>
 
         {/* GST 3% Breakdown */}
-        <Card variant="outlined" className="space-y-2 p-3">
+        <Card variant="outlined" className="space-y-2 p-3 sm:p-3.5">
           <p className="text-caption font-medium text-text-secondary">Purchase Summary</p>
           <ComputedValue label="Base Bullion Value" value={formatInr(computedBaseCost)} />
           <ComputedValue label="GST (3% on Bullion)" value={`+ ${formatInr(computedGst)}`} />

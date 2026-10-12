@@ -243,7 +243,7 @@ export function CategoryForm({
       icon={<Tag className="h-5 w-5" />}
       submitLabel={category ? 'Save Changes' : 'Create Category'}
       isSubmitting={form.formState.isSubmitting}
-      size="xl"
+      size="md"
     >
       <div className="space-y-4">
         {/* Category Live Preview */}
@@ -525,7 +525,7 @@ export function CategoryForm({
             {customHex && (
               <Input
                 placeholder="#7C3AED"
-                wrapperClassName="w-32"
+                wrapperClassName="w-full sm:w-32 mt-1 sm:mt-0"
                 className="font-numeric text-caption h-8 uppercase"
                 value={selectedColor ?? ''}
                 errorMessage={form.formState.errors.color?.message}

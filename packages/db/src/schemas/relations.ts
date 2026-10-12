@@ -27,8 +27,10 @@ export const userRelations = relations(user, ({ many }) => ({
   budgets: many(budget),
   goals: many(goal),
   expenses: many(expense),
-  splitExpenses: many(splitExpense),
-  splitContactMembers: many(splitContactMember),
+  splitExpenses: many(splitExpense, { relationName: 'splitExpenseOwner' }),
+  createdSplitExpenses: many(splitExpense, { relationName: 'expenseCreator' }),
+  splitContactMembers: many(splitContactMember, { relationName: 'contactOwner' }),
+  linkedSplitContacts: many(splitContactMember, { relationName: 'linkedUserProfile' }),
   sentSplitInvitations: many(splitInvitation, { relationName: 'sentInvitations' }),
   receivedSplitInvitations: many(splitInvitation, { relationName: 'receivedInvitations' }),
   digitalAssets: many(digitalAsset),
@@ -116,7 +118,11 @@ export const splitContactMemberRelations = relations(splitContactMember, ({ one,
 }));
 
 export const splitExpenseRelations = relations(splitExpense, ({ one }) => ({
-  owner: one(user, { fields: [splitExpense.userId], references: [user.id] }),
+  owner: one(user, {
+    fields: [splitExpense.userId],
+    references: [user.id],
+    relationName: 'splitExpenseOwner',
+  }),
   expense: one(expense, {
     fields: [splitExpense.expenseId],
     references: [expense.id],

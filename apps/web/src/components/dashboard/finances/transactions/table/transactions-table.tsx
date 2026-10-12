@@ -31,6 +31,8 @@ import type { Category } from '@kalya/types';
 import type { ColumnVisibilityState } from './column-visibility-menu';
 import { ExcelColumnFilter } from './excel-column-filter';
 import { RowActionsMenu } from './actions';
+import { TransactionStatusBadge } from './status-badge';
+import { DateDisplay } from '@/components/ui/data-display';
 import { formatCardDate, formatDateTime, fromISO, isSameDay, Temporal } from '@kalya/utils';
 import { PAYMENT_OPTIONS } from '@/components/forms/finances/transactions/helper';
 import { cn } from '@/libs/utils';
@@ -338,12 +340,41 @@ export function TransactionsTable({
                 <React.Fragment key={item.id}>
                   {/* Optional Day Divider Row */}
                   {showDayGroupDividers && isNewDay && (
-                    <tr className="bg-surface-raised/50 border-y border-border/40 select-none">
-                      <td
-                        colSpan={10}
-                        className="py-1 px-4 text-[11px] font-semibold text-text-muted tracking-wider uppercase font-body"
-                      >
-                        {dayLabel}
+                    <tr className="bg-surface-raised/40 border-y border-border/50 select-none">
+                      <td colSpan={10} className="py-1.5 px-4 font-body">
+                        <div className="inline-flex items-center gap-2">
+                          {plainDate && isSameDay(plainDate, today) ? (
+                            <>
+                              <Badge
+                                variant="subtle"
+                                size="sm"
+                                className="font-bold text-[10px] tracking-wider uppercase h-4.5 px-1.5"
+                              >
+                                Today
+                              </Badge>
+                              <span className="text-[11px] font-medium text-text-secondary font-numeric">
+                                {formatCardDate(plainDate)}
+                              </span>
+                            </>
+                          ) : plainDate && isSameDay(plainDate, yesterday) ? (
+                            <>
+                              <Badge
+                                variant="secondary"
+                                size="sm"
+                                className="font-bold text-[10px] tracking-wider uppercase h-4.5 px-1.5 text-text-muted"
+                              >
+                                Yesterday
+                              </Badge>
+                              <span className="text-[11px] font-medium text-text-secondary font-numeric">
+                                {formatCardDate(plainDate)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-text-muted tracking-wider uppercase font-numeric">
+                              {dayLabel}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -366,14 +397,9 @@ export function TransactionsTable({
                       />
                     </TableCell>
 
-                    {/* 1. Date (with hover time tooltip) */}
-                    <TableCell
-                      className="font-numeric text-caption text-text-secondary whitespace-nowrap"
-                      title={
-                        item.createdAt ? formatDateTime(item.createdAt, 'Asia/Kolkata') : item.date
-                      }
-                    >
-                      {formatCardDate(item.date)}
+                    {/* 1. Date */}
+                    <TableCell className="whitespace-nowrap">
+                      <DateDisplay date={item.date} timestamp={item.createdAt} withTooltip />
                     </TableCell>
 
                     {/* 2. Description (with Paid by friend subline for split bills) */}
@@ -407,21 +433,29 @@ export function TransactionsTable({
                     {columnVisibility.type && (
                       <TableCell className="hidden md:table-cell whitespace-nowrap">
                         {item.kind === 'personal_expense' && (
-                          <Badge variant="subtle" size="sm" className="font-medium text-[11px]">
+                          <Badge
+                            variant="secondary"
+                            size="sm"
+                            className="font-medium text-[11px] bg-surface-raised border-border/70 text-text-secondary shadow-2xs"
+                          >
                             Expense
                           </Badge>
                         )}
                         {item.kind === 'split_bill' && (
                           <Badge
-                            variant="outline"
+                            variant="subtle"
                             size="sm"
-                            className="font-medium text-[11px] border-primary/40 text-primary bg-primary-subtle/30"
+                            className="font-medium text-[11px] border-primary/20 bg-primary-subtle/50 text-primary shadow-2xs"
                           >
                             Split
                           </Badge>
                         )}
                         {item.kind === 'income' && (
-                          <Badge variant="success" size="sm" className="font-medium text-[11px]">
+                          <Badge
+                            variant="success"
+                            size="sm"
+                            className="font-medium text-[11px] shadow-2xs"
+                          >
                             Income
                           </Badge>
                         )}
@@ -478,44 +512,13 @@ export function TransactionsTable({
                     {/* 8. Status */}
                     {columnVisibility.status && (
                       <TableCell className="whitespace-nowrap">
-                        {item.kind === 'split_bill' ? (
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onViewDetails(item);
-                            }}
-                            className="inline-block"
-                          >
-                            {item.isSettled ? (
-                              <Badge
-                                variant="success"
-                                size="sm"
-                                className="gap-1 font-medium text-[11px] cursor-pointer"
-                              >
-                                <Check className="h-3 w-3" />
-                                <span>Settled</span>
-                              </Badge>
-                            ) : item.isUserPayer ? (
-                              <Badge
-                                variant="subtle"
-                                size="sm"
-                                className="font-medium text-[11px] text-accent cursor-pointer hover:bg-accent-subtle/50"
-                              >
-                                {item.pendingDuesNarration || 'Pending Dues'}
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="warning"
-                                size="sm"
-                                className="font-medium text-[11px] cursor-pointer hover:bg-warning-subtle/50"
-                              >
-                                {item.pendingDuesNarration || 'You owe pending'}
-                              </Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-text-muted px-2 select-none">—</span>
-                        )}
+                        <TransactionStatusBadge
+                          item={item}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails(item);
+                          }}
+                        />
                       </TableCell>
                     )}
 
