@@ -103,6 +103,7 @@ export const UpdateExpenseSchema: z.ZodType<UpdateExpenseDto> = z.object({
   paid_by: UUIDSchema.nullable().optional(),
   your_share: PositiveMoneySchema.optional(),
   split_type: SplitTypeSchema.optional(),
+  splits: z.array(SplitExpenseShareInputSchema).optional(),
 });
 export type UpdateExpenseInput = z.infer<typeof UpdateExpenseSchema>;
 

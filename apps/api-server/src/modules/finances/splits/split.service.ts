@@ -24,8 +24,16 @@ import {
 import { BaseFinanceService } from '../common';
 import { roundMoney } from '@kalya/utils';
 import { BadRequestError, NotFoundError } from '@/errors';
+import type { JobQueueService } from '../../jobs/job-queue.service';
 
 export class SplitService extends BaseFinanceService {
+  constructor(
+    db: any,
+    private readonly jobQueue?: JobQueueService
+  ) {
+    super(db);
+  }
+
   /**
    * Retrieves user's split contacts, automatically syncing profile details from linked users.
    */
@@ -348,7 +356,7 @@ export class SplitService extends BaseFinanceService {
 
     // Action: Accept -> Create reciprocal mirror expense in receiver's ledger
     // better-sqlite3 transactions are strictly SYNCHRONOUS: no async/await inside callback.
-    return this.db.transaction((tx) => {
+    const accepted = this.db.transaction((tx) => {
       // 1. Mark invitation accepted
       const acceptedInvitation = tx
         .update(splitInvitation)
@@ -667,6 +675,49 @@ export class SplitService extends BaseFinanceService {
 
       return acceptedInvitation;
     });
+
+    // Mark any invitation alert for this receiver as read
+    try {
+      await this.db
+        .update(alert)
+        .set({ isRead: true, readAt: new Date() })
+        .where(and(eq(alert.userId, userId), eq(alert.referenceId, invitationId)))
+        .run();
+    } catch {
+      // Non-critical cleanup
+    }
+
+    // Trigger instant push notification to sender that their split was accepted
+    if (this.jobQueue && accepted) {
+      try {
+        const origExpense = await this.db.query.expense.findFirst({
+          where: eq(expense.id, accepted.expenseId),
+        });
+        const receiverUser = await this.db.query.user.findFirst({
+          where: eq(schema.user.id, userId),
+        });
+
+        await this.jobQueue.enqueue(
+          'notification',
+          'DISPATCH_PUSH',
+          {
+            userId: accepted.senderUserId,
+            title: 'Split Accepted',
+            body: `${receiverUser?.name || 'Your friend'} accepted the split for "${origExpense?.description || 'expense'}".`,
+            url: '/dashboard/splits',
+            data: {
+              splitExpenseId: accepted.splitExpenseId,
+              invitationId: accepted.id,
+            },
+          },
+          { priority: 1 }
+        );
+      } catch {
+        // Non-blocking background notification
+      }
+    }
+
+    return accepted;
   }
 
   /**
@@ -750,6 +801,21 @@ export class SplitService extends BaseFinanceService {
           settledAt: settlementDate,
         })
         .where(eq(splitExpense.id, share.peerSplitExpenseId));
+    }
+
+    if (isFullySettled) {
+      try {
+        const relevantIds = [shareId, share.peerSplitExpenseId].filter(Boolean) as string[];
+        for (const refId of relevantIds) {
+          await this.db
+            .update(alert)
+            .set({ isRead: true, readAt: new Date() })
+            .where(eq(alert.referenceId, refId))
+            .run();
+        }
+      } catch {
+        // Non-blocking cleanup
+      }
     }
 
     return updated;

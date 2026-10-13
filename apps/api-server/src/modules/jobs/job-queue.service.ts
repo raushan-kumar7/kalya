@@ -3,7 +3,26 @@ import { EnqueueJobOptions, JobQueueName, JobType } from '@kalya/types';
 import { log } from '@/logger';
 
 export class JobQueueService {
+  private onJobEnqueuedCallbacks: Array<() => void> = [];
+
   constructor(private readonly db: any) {}
+
+  /**
+   * Register a wake-up callback triggered immediately when an urgent job is enqueued.
+   */
+  onJobEnqueued(cb: () => void): void {
+    this.onJobEnqueuedCallbacks.push(cb);
+  }
+
+  private notifyEnqueued(): void {
+    for (const cb of this.onJobEnqueuedCallbacks) {
+      try {
+        cb();
+      } catch {
+        // Safe fallback
+      }
+    }
+  }
 
   /**
    * Enqueue a background job for immediate or scheduled asynchronous execution.
@@ -40,7 +59,55 @@ export class JobQueueService {
       scheduledFor: scheduledFor.toISOString(),
     });
 
+    // If scheduled for immediate run (no future delay), instantly wake up worker
+    if (!options?.delayMs && (!options?.scheduledFor || scheduledFor <= new Date())) {
+      this.notifyEnqueued();
+    }
+
     return job;
+  }
+
+  /**
+   * Atomically dequeue and lock up to `limit` pending jobs for concurrent execution.
+   */
+  async dequeueBatch(workerId: string, limit: number = 5): Promise<JobQueueRow[]> {
+    const now = new Date();
+
+    const candidates = await this.db
+      .select({ id: jobQueue.id })
+      .from(jobQueue)
+      .where(
+        and(
+          eq(jobQueue.status, 'pending'),
+          or(isNull(jobQueue.scheduledFor), lte(jobQueue.scheduledFor, now)),
+          or(
+            isNull(jobQueue.lockedAt),
+            lte(jobQueue.lockedAt, new Date(Date.now() - 5 * 60 * 1000))
+          )
+        )
+      )
+      .orderBy(desc(jobQueue.priority), jobQueue.createdAt)
+      .limit(limit);
+
+    if (!candidates.length) return [];
+
+    const lockedJobs: JobQueueRow[] = [];
+    for (const candidate of candidates) {
+      const [locked] = await this.db
+        .update(jobQueue)
+        .set({
+          status: 'processing',
+          lockedAt: now,
+          lockedBy: workerId,
+          attempts: sql`${jobQueue.attempts} + 1`,
+        })
+        .where(and(eq(jobQueue.id, candidate.id), eq(jobQueue.status, 'pending')))
+        .returning();
+
+      if (locked) lockedJobs.push(locked);
+    }
+
+    return lockedJobs;
   }
 
   /**

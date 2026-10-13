@@ -29,8 +29,9 @@ export const jobsPlugin: FastifyPluginAsync = fp(
     fastify.decorate('jobQueue', jobQueue);
     fastify.decorate('pushService', pushService);
 
-    // 3. Instantiate & Start Background Worker
+    // 3. Instantiate & Start Background Worker with instant wake-up
     const worker = new JobWorker(jobQueue, emailHandler, pushHandler, 3000);
+    jobQueue.onJobEnqueued(() => worker.wakeUp());
     worker.start();
 
     // 4. Setup Cron Evaluators (runs every 30 minutes in development/production)

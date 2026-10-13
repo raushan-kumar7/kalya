@@ -174,50 +174,7 @@ export class AlertService extends BaseFinanceService {
         }
       }
 
-      // 3. Evaluate Pending Splits
-      const pendingSplits = await this.db
-        .select({
-          id: splitExpense.id,
-          amount: splitExpense.amount,
-          contactName: splitContactMember.name,
-        })
-        .from(splitExpense)
-        .leftJoin(splitContactMember, eq(splitExpense.splitMemberId, splitContactMember.id))
-        .where(and(eq(splitExpense.userId, userId), eq(splitExpense.settled, false)))
-        .limit(5);
-
-      for (const sp of pendingSplits) {
-        const [existing] = await this.db
-          .select({ id: alert.id })
-          .from(alert)
-          .where(
-            and(
-              eq(alert.userId, userId),
-              eq(alert.type, 'split_update'),
-              eq(alert.referenceId, sp.id)
-            )
-          )
-          .limit(1);
-
-        if (!existing) {
-          await this.db.insert(alert).values({
-            userId,
-            type: 'split_update',
-            title: `Split Reminder: ${sp.contactName || 'Pending Share'}`,
-            message: `Pending unsettled balance of ₹${Math.round(sp.amount ?? 0).toLocaleString('en-IN')} with ${sp.contactName || 'a contact'}.`,
-            isRead: false,
-            referenceType: 'split_expense',
-            referenceId: sp.id,
-            metadata: {
-              amount: sp.amount,
-              contact: sp.contactName,
-              severity: 'warning',
-            },
-          });
-        }
-      }
-
-      // 4. Evaluate Monthly Statement
+      // 3. Evaluate Monthly Statement
       const [latestSummary] = await this.db
         .select()
         .from(monthlySummary)
@@ -260,9 +217,6 @@ export class AlertService extends BaseFinanceService {
   }
 
   async listAlerts(userId: string, query: AlertFilterQueryDto) {
-    // Proactively sync/evaluate active financial alerts with duplicate protection
-    await this.syncOrGenerateAlerts(userId).catch(() => {});
-
     const conditions = [eq(alert.userId, userId)];
 
     if (query.is_read !== undefined) conditions.push(eq(alert.isRead, query.is_read));

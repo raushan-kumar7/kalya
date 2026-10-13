@@ -433,6 +433,7 @@ export interface UpdateExpenseDto {
   paid_by?: UUID | null;
   your_share?: Decimal;
   split_type?: SplitType;
+  splits?: SplitExpenseShareInput[];
 }
 
 /** Filter criteria for expense list queries */

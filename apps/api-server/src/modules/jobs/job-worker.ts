@@ -33,6 +33,20 @@ export class JobWorker {
     log.info(`Background Job Worker stopped [${this.workerId}]`);
   }
 
+  wakeUp(): void {
+    if (!this.isRunning) return;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    // Instantly wake up worker on next tick
+    setImmediate(() => {
+      this.tick().catch((err) => {
+        log.error('Unexpected error in JobWorker instant wakeUp tick', { error: String(err) });
+      });
+    });
+  }
+
   private scheduleNextTick(delayMs?: number): void {
     if (!this.isRunning) return;
     this.timer = setTimeout(() => {
@@ -45,19 +59,19 @@ export class JobWorker {
   private async tick(): Promise<void> {
     if (!this.isRunning) return;
 
-    let processedCount = 0;
-    // Process up to 5 jobs in a batch before yielding
-    while (this.isRunning && processedCount < 5) {
-      const job = await this.jobQueue.dequeueNext(this.workerId);
-      if (!job) break;
+    // Dequeue batch of ready jobs
+    const jobs = await this.jobQueue.dequeueBatch(this.workerId, 5);
 
-      await this.processJob(job);
-      processedCount++;
+    if (jobs.length > 0) {
+      // Process batch concurrently so slow email requests don't block fast push notifications
+      await Promise.allSettled(jobs.map((job) => this.processJob(job)));
+
+      // If jobs were processed, yield briefly and drain remaining immediately
+      this.scheduleNextTick(25);
+    } else {
+      // Queue is empty, wait for next poll interval or immediate wakeUp signal
+      this.scheduleNextTick(this.pollIntervalMs);
     }
-
-    // Schedule next polling tick: faster if jobs were found, standard interval if queue was empty
-    const nextDelay = processedCount > 0 ? 500 : this.pollIntervalMs;
-    this.scheduleNextTick(nextDelay);
   }
 
   private async processJob(job: JobQueueRow): Promise<void> {

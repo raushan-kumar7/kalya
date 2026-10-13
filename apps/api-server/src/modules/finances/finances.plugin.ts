@@ -182,9 +182,12 @@ export const financesPlugin: FastifyPluginAsync = fp(
       );
 
       // 5. Splits
-      await scope.register(createSplitRoutes(new SplitController(new SplitService(db))), {
-        prefix: `${basePrefix}/splits`,
-      });
+      await scope.register(
+        createSplitRoutes(new SplitController(new SplitService(db, fastify.jobQueue))),
+        {
+          prefix: `${basePrefix}/splits`,
+        }
+      );
 
       // 6. Goals
       await scope.register(createGoalRoutes(new GoalController(new GoalService(db))), {
