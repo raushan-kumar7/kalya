@@ -19,6 +19,7 @@ import {
 import { log } from '@/logger';
 import { FastifyError, FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
+import { appErrorsTotal } from './metrics-plugin';
 
 /**
  * Normalizes raw runtime errors (Fastify schema errors, SQLite violations, JWT errors)
@@ -127,6 +128,10 @@ export const errorHandlerPlugin = fp(
       });
 
       request.errorLogged = true;
+      appErrorsTotal.inc({
+        error_code: err.code,
+        status_code: err.statusCode.toString(),
+      });
       reply.status(err.statusCode).send(buildBody(err));
     });
 
@@ -158,6 +163,10 @@ export const errorHandlerPlugin = fp(
         }
 
         request.errorLogged = true;
+        appErrorsTotal.inc({
+          error_code: appErr.code,
+          status_code: appErr.statusCode.toString(),
+        });
         reply.status(appErr.statusCode).send(buildBody(appErr));
       }
     );

@@ -16,8 +16,13 @@ export const requestLoggerPlugin = fp(
       // Prevent duplicate logging if already recorded by errorHandlerPlugin
       if (request.errorLogged) return;
 
-      // Filter automated health check polling
-      if (request.url === '/health') return;
+      // Filter automated health check and metrics scrape polling
+      if (
+        request.url === '/health' ||
+        request.url === '/metrics' ||
+        request.url.startsWith('/health/')
+      )
+        return;
 
       // In production, suppress 2xx/3xx to keep log volume efficient unless configured
       if (!env.isDev && reply.statusCode < 400) return;

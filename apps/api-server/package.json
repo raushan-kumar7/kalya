@@ -34,6 +34,7 @@
     "geoip-lite": "^2.0.3",
     "nodemailer": "^10.0.11",
     "picocolors": "^1.1.1",
+    "prom-client": "^15.1.3",
     "resend": "^6.30.0",
     "sharp": "^0.35.4",
     "slugify": "^1.6.9",

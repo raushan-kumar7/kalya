@@ -10,6 +10,7 @@ import {
 import {
   databasePlugin,
   errorHandlerPlugin,
+  metricsPlugin,
   multipartPlugin,
   requestLoggerPlugin,
   securityPlugin,
@@ -81,13 +82,16 @@ export const buildApp = (): FastifyInstance => {
   // 5. API Documentation & OpenAPI Specification (Registered before route modules)
   app.register(swaggerPlugin);
 
-  // 6. Application Modules (Auth, Health, and domain features)
+  // 6. Metrics & Observability (Prometheus Telemetry)
+  app.register(metricsPlugin);
+
+  // 7. Application Modules (Auth, Health, and domain features)
   app.register(modulesPlugin);
 
-  // 6. Observability & Logging
+  // 8. Request Observability & Latency Logging
   app.register(requestLoggerPlugin);
 
-  // 7. Global Error & 404 Handling (Registered after hooks to catch all unhandled exceptions)
+  // 9. Global Error & 404 Handling (Registered after hooks to catch all unhandled exceptions)
   app.register(errorHandlerPlugin);
 
   return app;
