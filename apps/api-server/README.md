@@ -1,6 +1,6 @@
 # @kalya/api-server
 
-High-performance, secure, and production-ready Fastify backend API for the Kalya platform. Built with TypeScript, Drizzle ORM, Better-Auth, and React-Email.
+High-performance, secure, and production-ready Fastify backend API for the Kalya platform. Built with TypeScript, Drizzle ORM, Better-Auth, React-Email, Prometheus observability, and asynchronous background job workers.
 
 ---
 
@@ -15,12 +15,16 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
   - [3. User Profile & Compliance Subsystem](#3-user-profile--compliance-subsystem)
   - [4. Transactional Mail Service](#4-transactional-mail-service)
   - [5. Media & Storage Abstraction](#5-media--storage-abstraction)
-  - [6. Health & Observability](#6-health--observability)
+  - [6. Health & Subsystem Diagnostics](#6-health--subsystem-diagnostics)
   - [7. Error Handling & Standard Responses](#7-error-handling--standard-responses)
   - [8. Personal Finances Engine](#8-personal-finances-engine)
   - [9. Notifications & Alert Dispatch Engine](#9-notifications--alert-dispatch-engine)
+  - [10. Web & Mobile Push Notification Engine](#10-web--mobile-push-notification-engine)
+  - [11. Asynchronous Job Queue & Schedulers](#11-asynchronous-job-queue--schedulers)
+  - [12. Observability, Prometheus Metrics & OpenAPI Documentation](#12-observability-prometheus-metrics--openapi-documentation)
 - [API Route Reference](#-api-route-reference)
   - [Health & Monitoring](#health--monitoring)
+  - [OpenAPI Documentation](#openapi-documentation)
   - [Authentication](#authentication-apiv1auth)
   - [User Profile & Account Management](#user-profile--account-management-apiv1users)
   - [Personal Finances](#personal-finances-apiv1finances)
@@ -32,24 +36,35 @@ High-performance, secure, and production-ready Fastify backend API for the Kalya
 
 ## 🚀 Overview
 
-`@kalya/api-server` is the central API service powering Kalya web and mobile clients. It enforces type safety from HTTP request boundaries down to database persistence, provides real-time client telemetry, automated email triggers for critical user security events, and handles GDPR-compliant data operations such as scheduled account deletions with grace periods. It also serves as the host for the complete personal finance engine (budgeting, categories, split expenses, multi-asset portfolio tracking, financial summaries) and user-configurable alert notifications.
+`@kalya/api-server` is the central API service powering Kalya web and mobile clients. It enforces type safety from HTTP request boundaries down to database persistence, provides real-time client telemetry, automated email triggers for critical user security events, and handles GDPR-compliant data operations such as scheduled account deletions with grace periods.
+
+It also serves as the host for:
+
+- The complete **personal finance engine** (50/30/20 allocation buckets, categories, income tracking, real-time budget health meters, transaction logging, contact-linked expense splits, savings goals, and multi-asset commodity/equity portfolio tracking).
+- An **asynchronous durable job queue** with instant worker wake-up for high-reliability background email and push notification dispatch.
+- **Automated cron schedulers** for real-time budget threshold warnings and pending split debt reminders.
+- **Enterprise-grade observability** featuring Prometheus runtime/HTTP metrics, Grafana dashboards, and interactive OpenAPI 3.1 Swagger documentation.
 
 ---
 
 ## 🛠 Architecture & Tech Stack
 
-| Domain                           | Technology / Library                                                                     | Purpose                                                                    |
-| -------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **Runtime & Framework**          | [Node.js](https://nodejs.org/) + [Fastify v5](https://fastify.dev/)                      | High-throughput asynchronous HTTP API server                               |
-| **Language**                     | [TypeScript](https://www.typescriptlang.org/) (strict mode)                              | End-to-end type safety                                                     |
-| **Validation & Schemas**         | [Zod](https://zod.dev/) + `fastify-type-provider-zod`                                    | Runtime schema validation and typed request/response contracts             |
-| **Authentication**               | [Better-Auth v1.7+](https://www.better-auth.com/)                                        | Session-based authentication with Drizzle SQLite adapter                   |
-| **Database & ORM**               | [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/) via `@kalya/db` | ACID transactions, WAL mode, migrations, typed queries                     |
-| **Finance Utilities**            | `@kalya/utils`                                                                           | Minor-unit currency rounding, split arithmetic, valuations & goal pacing   |
-| **Client Intelligence**          | `ua-parser-js` v2 + `geoip-lite` + Client Hints                                          | Real-time browser, OS, hardware, bot/crawler detection, and IP geolocation |
-| **Email Subsystem**              | `@kalya/email` (React-Email) + Resend / Nodemailer                                       | Transactional email templates with dynamic provider fallback               |
-| **Storage & Image Optimization** | Local disk / Cloudinary + [Sharp](https://sharp.pixelplumbing.com/)                      | Avatar upload, resize, WebP conversion, and asset distribution             |
-| **Logging & Diagnostics**        | [Winston](https://github.com/winstonjs/winston) + `winston-daily-rotate-file`            | Structured JSON and colored console logging with daily file rotation       |
+| Domain                           | Technology / Library                                                                     | Purpose                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Runtime & Framework**          | [Node.js](https://nodejs.org/) + [Fastify v5](https://fastify.dev/)                      | High-throughput asynchronous HTTP API server                                |
+| **Language**                     | [TypeScript](https://www.typescriptlang.org/) (strict mode)                              | End-to-end type safety                                                      |
+| **Validation & Schemas**         | [Zod](https://zod.dev/) + `fastify-type-provider-zod`                                    | Runtime schema validation and typed request/response contracts              |
+| **Authentication**               | [Better-Auth v1.7+](https://www.better-auth.com/)                                        | Session-based authentication with Drizzle SQLite adapter & Google OAuth 2.0 |
+| **Database & ORM**               | [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/) via `@kalya/db` | ACID transactions, WAL mode, migrations, typed queries                      |
+| **Finance Utilities**            | `@kalya/utils`                                                                           | Minor-unit currency rounding, split arithmetic, valuations & goal pacing    |
+| **Background Jobs & Worker**     | Custom SQLite durable queue + `EventEmitter` wake-up                                     | Non-blocking task dispatch, exponential retry backoff, and cron schedulers  |
+| **Push Notifications**           | `web-push` (VAPID) + Expo Push Token SDK                                                 | Cross-platform browser Web Push & mobile device alert delivery              |
+| **Observability & Metrics**      | `prom-client` + Prometheus + Grafana                                                     | HTTP request metrics, memory/heap gauges, latency histograms, error counts  |
+| **API Documentation**            | `@fastify/swagger` + `@fastify/swagger-ui` (OpenAPI 3.1)                                 | Interactive API documentation, test harness, and schema explorer            |
+| **Client Intelligence**          | `ua-parser-js` v2 + `geoip-lite` + Client Hints                                          | Real-time browser, OS, hardware, bot/crawler detection, and IP geolocation  |
+| **Email Subsystem**              | `@kalya/email` (React-Email) + Resend / Nodemailer                                       | Transactional email templates with dynamic provider fallback                |
+| **Storage & Image Optimization** | Local disk / Cloudinary + [Sharp](https://sharp.pixelplumbing.com/)                      | Avatar upload, resize, WebP conversion, and asset distribution              |
+| **Logging & Diagnostics**        | [Winston](https://github.com/winstonjs/winston) + `winston-daily-rotate-file`            | Structured JSON and colored console logging with daily file rotation        |
 
 ---
 
@@ -77,33 +92,43 @@ apps/api-server/
 │   │   ├── users/              # User profile, sessions, deletion, email change, policy broadcast
 │   │   ├── finances/           # Personal finance engine (9 modular domains)
 │   │   │   ├── common/         # BaseFinanceService (ownership assertion & relation guards)
-│   │   │   ├── buckets/        # Allocation buckets (Needs/Wants/Savings)
-│   │   │   ├── categories/     # Nested expense categories with theme & icons
+│   │   │   ├── buckets/        # Allocation buckets (Needs/Wants/Savings 50/30/20)
+│   │   │   ├── categories/     # Nested expense categories with UI icons & hex colors
 │   │   │   ├── income/         # Monthly income tracking & carryover calculation
 │   │   │   ├── budgets/        # Budget plans, real-time health & threshold alerting
 │   │   │   ├── expenses/       # Transaction logging & atomic split management
-│   │   │   ├── splits/         # Contact directory & share obligation settlement
+│   │   │   ├── splits/         # Contact directory, account linking, invitations & settlements
 │   │   │   ├── goals/          # Savings targets & timeline pacing metrics
-│   │   │   ├── assets/         # Commodities & equities portfolio valuation
-│   │   │   ├── summaries/      # Dashboard KPI overview & monthly statements
-│   │   │   ├── finances.plugin.ts # Mounts all finance domain routes
+│   │   │   ├── assets/         # Multi-class digital commodities (gold/silver) & equities
+│   │   │   ├── summaries/      # Dashboard overview KPIs & immutable statement snapshots
+│   │   │   ├── finances.plugin.ts # Mounts all finance domain routes with snake_case response hook
 │   │   │   └── index.ts        # Module export
 │   │   ├── notifications/      # Notification & alert dispatch subsystem
 │   │   │   ├── alert-dispatcher.service.ts # Multi-channel preference-aware dispatcher
 │   │   │   ├── alerts/         # In-app alerts, unread counters & batch operations
 │   │   │   ├── preferences/    # Channel & frequency delivery preference matrix
+│   │   │   ├── push/           # Web Push (VAPID) & mobile device registration
 │   │   │   ├── notifications.plugin.ts # Mounts notification routes & decorates dispatcher
 │   │   │   └── index.ts        # Module export
+│   │   ├── jobs/               # Background task queue & worker subsystem
+│   │   │   ├── handlers/       # Email & Push notification job processors
+│   │   │   ├── schedulers/     # BudgetEvaluatorCron & SplitReminderCron evaluators
+│   │   │   ├── job-queue.service.ts # Durable SQLite FIFO task queue
+│   │   │   ├── job-worker.ts   # Event-driven polling worker with instant wake-up
+│   │   │   ├── jobs.plugin.ts  # Decorates fastify.jobQueue and fastify.pushService
+│   │   │   └── index.ts        # Module export
 │   │   ├── health/             # Liveness, readiness, and subsystem diagnostics
-│   │   ├── helpers/            # Client intelligence, username generators, formatters
+│   │   ├── helpers/            # Client intelligence, username generators, snake_case hooks
 │   │   └── index.ts            # Root module aggregator plugin
 │   ├── plugins/                # Core Fastify infrastructure plugins
 │   │   ├── db-plugin.ts        # Database client decoration (`fastify.db`, `request.db`)
 │   │   ├── err_handler-plugin.ts # Global error interceptor & RFC 7807 formatting
+│   │   ├── metrics-plugin.ts   # Prometheus metrics registry & /metrics scrape endpoint
 │   │   ├── multipart-plugin.ts # File upload handling (@fastify/multipart)
 │   │   ├── req_logs-plugin.ts  # HTTP request/response observability hook
 │   │   ├── security-plugin.ts  # Helmet security headers & policies
-│   │   └── static-plugin.ts    # Static file serving for local uploads
+│   │   ├── static-plugin.ts    # Static file serving for local uploads
+│   │   └── swagger-plugin.ts   # OpenAPI 3.1 Swagger & Swagger UI documentation (/docs)
 │   ├── responses/              # Standard envelope response builder (`ApiResponse.ok`)
 │   └── types/                  # Fastify module augmentation (`fastify.d.ts`)
 ├── .env.example                # Canonical environment variable template
@@ -117,7 +142,7 @@ apps/api-server/
 
 ### 1. Authentication & Security Engine
 
-Implemented in [`src/modules/auth/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/auth).
+Implemented in `src/modules/auth/`.
 
 - **Better-Auth Integration**: Powered by Better-Auth with the Drizzle SQLite adapter. Supports email/password, Google OAuth 2.0 social identity federation, session management, and credential updates.
 - **Google OAuth 2.0 & Identity Federation**:
@@ -128,13 +153,13 @@ Implemented in [`src/modules/auth/`](file:///d:/Projects/personal/kalya/apps/api
   - `fastify.authenticate`: Verifies active session token from cookie/headers; populates `request.user` and `request.session`.
   - `fastify.requireVerifiedEmail`: Guard ensuring the authenticated user has verified their primary email address.
 - **Lifecycle Database Hooks**:
-  - `on-new-device.ts`: Attached to `databaseHooks.session.create.after`. Detects if the session IP has not been seen before across active sessions. Skips automated bot logins, resolves client telemetry (OS, browser, city/country), and dispatches the `NewDeviceLogin` React-Email alert.
+  - `on-new-device.ts`: Attached to `databaseHooks.session.create.after`. Detects if the session IP has not been seen before across active sessions. Skips automated bot logins, resolves client telemetry (OS, browser, city/country), and enqueues the `NewDeviceLogin` React-Email alert.
   - `on-password-reset.ts`: Attached to `databaseHooks.account.update.after` and Better-Auth reset workflows. Dispatches `ResetPassword` with token link, and `PasswordChangedNotice` with device context upon credential mutation.
   - `on-email-change.ts`: Handles transactional verification for sign-up (`VerifyEmail`) and primary address updates (`VerifyEmailChange`).
 
 ### 2. Client Intelligence & Telemetry
 
-Implemented in [`src/modules/helpers/client-info.ts`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/helpers/client-info.ts) and decorated onto every request via [`clientInfoPlugin`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/helpers/client-info.plugin.ts).
+Implemented in `src/modules/helpers/client-info.ts` and decorated onto every request via `clientInfoPlugin`.
 
 - **High-Performance Parsing**: Combines `ua-parser-js` v2 and `geoip-lite` entirely in-memory with zero external network latency.
 - **Client Hints Extraction**: Injects `Accept-CH` headers (`Sec-CH-UA-Platform-Version`, `Sec-CH-UA-Model`, `Sec-CH-UA-Arch`, `Sec-CH-UA-Bitness`).
@@ -148,39 +173,39 @@ Implemented in [`src/modules/helpers/client-info.ts`](file:///d:/Projects/person
 
 ### 3. User Profile & Compliance Subsystem
 
-Implemented in [`src/modules/users/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/users).
+Implemented in `src/modules/users/`.
 
 - **Profile Management**: Fetch and patch profile attributes (name, bio, timezone, language, locale).
-- **Collision-Resistant Username Engine**: [`username.ts`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/helpers/username.ts) generates clean slugs using `@kalya/utils` and automatically increments numeric suffixes when collisions occur in the database.
+- **Collision-Resistant Username Engine**: `username.ts` generates clean slugs using `@kalya/utils` and automatically increments numeric suffixes when collisions occur in the database.
 - **Avatar Media Pipeline**: Multi-part upload with Sharp optimization (resized to 256x256, 82% WebP quality, stripped metadata). Configurable between local disk or Cloudinary CDN.
 - **Session Management**: Lists all active sessions for the current user, allows revoking individual sessions or bulk-revoking all other sessions with a single action.
 - **Account Deletion & Grace Period**:
-  - `POST /schedule-deletion`: Enforces a 14-day grace period. Sets `sync_status = 'PENDING'` and dispatches `AccountDeletionNotice` email.
+  - `POST /schedule-deletion`: Enforces a 14-day grace period. Sets `sync_status = 'PENDING'` and enqueues the `AccountDeletionNotice` email.
   - `POST /cancel-deletion`: Restores active status during the grace window.
 - **Primary Email Change**: Generates secure verification token and sends `VerifyEmailChange` template to the requested new address.
 - **Admin Policy Broadcast**: Broadcasts updated Terms of Service or Privacy Policy notifications (`PolicyUpdateNotice`) to all verified users in memory-safe batches of 50 with rate-limited delays.
 
 ### 4. Transactional Mail Service
 
-Implemented in [`src/libs/mail/`](file:///d:/Projects/personal/kalya/apps/api-server/src/libs/mail).
+Implemented in `src/libs/mail/`.
 
 - **Provider Agnostic**: Unified `MailerService` interface allowing switching between **Resend** (`ResendMailProvider`) and **SMTP / Nodemailer** (`SmtpMailProvider`) via environment configuration (`KALYA_MAIL.PROVIDER`).
 - **React-Email Integration**: Direct compilation of templates from `@kalya/email` (`sendTemplate`) with automatic plain-text fallback generation.
 - **Reliability & Resilience**: Input normalization (handles strings and arrays of recipients), recipient deduplication, connection verification on startup, and graceful transporter teardown.
-- **Local Mail Testing (MailDev)**: Run `pnpm docker:up` from the root to spin up MailDev on port `1025` (SMTP) with a web inbox at `http://localhost:1080`.
+- **Local Mail Testing (MailDev)**: Run `pnpm docker:up` from the root to spin up MailDev on port `1025` (SMTP) with an interactive web inbox at `http://localhost:1080`.
 
 ### 5. Media & Storage Abstraction
 
-Implemented in [`src/libs/storage/`](file:///d:/Projects/personal/kalya/apps/api-server/src/libs/storage).
+Implemented in `src/libs/storage/`.
 
 - **Providers Supported**:
   - `local`: Writes optimized files to local disk (`uploads/avatars/`), served statically via `@fastify/static`.
   - `cloudinary`: Uploads optimized buffers to Cloudinary CDN with automatic remote deletion of old assets.
 - **Optimization Pipeline**: Powered by `sharp` with automatic orientation correction, dimension clamping, and WebP conversion.
 
-### 6. Health & Observability
+### 6. Health & Subsystem Diagnostics
 
-Implemented in [`src/modules/health/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/health) and [`src/logger/`](file:///d:/Projects/personal/kalya/apps/api-server/src/logger).
+Implemented in `src/modules/health/` and `src/logger/`.
 
 - **Probes**:
   - `GET /health/live`: Fast liveness probe confirming Node.js event loop responsiveness.
@@ -190,7 +215,7 @@ Implemented in [`src/modules/health/`](file:///d:/Projects/personal/kalya/apps/a
 
 ### 7. Error Handling & Standard Responses
 
-Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-server/src/errors) and [`src/responses/`](file:///d:/Projects/personal/kalya/apps/api-server/src/responses).
+Implemented in `src/errors/` and `src/responses/`.
 
 - **Error Hierarchy**: Strongly typed `AppError` subclasses:
   - `BadRequestError` (400)
@@ -206,27 +231,27 @@ Implemented in [`src/errors/`](file:///d:/Projects/personal/kalya/apps/api-serve
 
 ### 8. Personal Finances Engine
 
-Implemented in [`src/modules/finances/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/finances).
+Implemented in `src/modules/finances/`.
 
 - **Shared Domain Foundation**:
-  - [`BaseFinanceService`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/finances/common/base-finance.service.ts) provides strict tenant boundary isolation via `assertEntityOwnership` (protects against accessing or mutating another user's records) and `verifyParentExists` (verifies existence and user-ownership of parent entities like buckets and categories before child inserts).
+  - `BaseFinanceService` provides strict tenant boundary isolation via `assertEntityOwnership` (protects against accessing or mutating another user's records) and `verifyParentExists` (verifies existence and user-ownership of parent entities before child inserts).
 - **Sub-Modules Breakdown**:
   - **Buckets (`buckets/`)**: Allocation categories aligned with budgeting principles (Needs, Wants, Savings). Features automated default seeding for the 50/30/20 rule, origin classification (`built-in` vs `custom`), and deletion guards protecting built-in buckets or those with active categories.
   - **Categories (`categories/`)**: Hierarchical expenditure categories attached to parent allocation buckets, configured with UI icon keys and hex color themes.
   - **Income Tracking (`income/`)**: Monthly income records capturing primary salary, secondary/freelance income, and previous-month carryover with automated `calculateNetIncome` derivation.
-  - **Budgets & Real-Time Health (`budgets/`)**: Period-based expenditure caps (monthly, quarterly, annual) with real-time health checks (`calculateBudgetStatus`). Evaluates percentage consumed, remaining allowance, and amber (default 80%) / red (default 100%) alert thresholds.
+  - **Budgets & Real-Time Health (`budgets/`)**: Period-based expenditure caps (monthly, quarterly, annual) with real-time health checks (`calculateBudgetStatus`). Evaluates percentage consumed, remaining allowance, and amber (80%) / red (100%) alert thresholds.
   - **Expenses & Split Processing (`expenses/`)**: Transaction tracking with payment methods (`upi`, `phonepe`, `paytm`, `gpay`, `debit_card`, `credit_card`) and atomic split transaction creation in SQLite transactions.
-  - **Expense Splits (`splits/`)**: Split contact management, pending obligation tracking, and partial or complete debt settlement calculations with debt validation.
+  - **Expense Splits (`splits/`)**: Split contact management, linking unlinked contacts to registered Kalya users, incoming invitation acceptance/rejection flow, reciprocal split deletion, and partial or complete debt settlement calculations.
   - **Goals (`goals/`)**: Savings goals with target dates, progress tracking, timeline pace evaluation (`calculateGoalPace`), and monthly planned contribution monitoring.
-  - **Multi-Class Assets (`assets/`)**: Digital commodity tracking (gold/silver, grams, platform, 3% GST calculation) and equities (NSE/BSE, company, shares, purchase price), along with aggregated portfolio valuation summaries.
+  - **Multi-Class Assets (`assets/`)**: Digital commodity tracking (gold/silver, grams, platform, 3% GST calculation) and equities (NSE/BSE, company, shares, purchase price), full CRUD mutations, and aggregated portfolio valuation summaries (`/portfolio-summary`).
   - **Summaries (`summaries/`)**: Real-time financial dashboard metrics (total income, expenses, net savings, savings rate, adherence %, unsettled splits) and immutable monthly statement snapshot generation.
 
 ### 9. Notifications & Alert Dispatch Engine
 
-Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/notifications).
+Implemented in `src/modules/notifications/`.
 
 - **Preference-Aware Alert Dispatcher**:
-  - [`AlertDispatcherService`](file:///d:/Projects/personal/kalya/apps/api-server/src/modules/notifications/alert-dispatcher.service.ts) coordinates notification routing by inspecting the user's `notification_preference` table. If a category is muted or disabled, dispatch is gracefully bypassed.
+  - `AlertDispatcherService` coordinates notification routing by inspecting the user's `notification_preference` table. If a category is muted or disabled, dispatch is gracefully bypassed.
   - Decorated onto the Fastify instance as `fastify.alertDispatcher` for cross-domain alert triggering.
 - **In-App Notification Feed (`alerts/`)**:
   - Polymorphic reference tracking (`referenceType`, `referenceId`), structured JSON metadata, unread count caching, single mark-as-read, and batch mark-as-read operations.
@@ -234,17 +259,69 @@ Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya
   - Granular control over categories (`statement`, `budget_alerts`, `split_reminders`, `marketing`) and channels (`email`, `push`).
   - Supports multiple delivery frequencies: `immediate`, `daily`, `weekly`, `monthly`, or `custom` cron expressions validated via `cron-parser`.
 
+### 10. Web & Mobile Push Notification Engine
+
+Implemented in `src/modules/notifications/push/`.
+
+- **Browser Web Push (VAPID)**:
+  - Cryptographic key exchange via `GET /api/v1/notifications/push/vapid-key`.
+  - Browser push subscription registration and automatic refresh handling invalid/expired push subscriptions (`web-push` library).
+- **Mobile Device Registration**:
+  - Device token management supporting Expo Push Tokens and Firebase Cloud Messaging (FCM).
+- **Device Management**:
+  - Device inventory (`GET /devices`), per-device revocation (`DELETE /devices/:id`), and diagnostic immediate push testing (`POST /test`).
+
+### 11. Asynchronous Job Queue & Schedulers
+
+Implemented in `src/modules/jobs/`.
+
+- **Durable SQLite Queue**:
+  - `JobQueueService` provides persistent FIFO task queuing in the database with status tracking (`pending`, `processing`, `completed`, `failed`), execution attempts, error logs, and retry limits.
+- **Instant Event-Driven Worker**:
+  - `JobWorker` polls periodically but wakes up **immediately** when a new job is enqueued via internal event emitters (`onJobEnqueued`), preventing unnecessary background latency.
+- **Job Processors**:
+  - `EmailJobHandler`: Renders and delivers transactional React-Email templates via the configured mailer.
+  - `PushJobHandler`: Delivers high-priority push notifications to all active registered devices for a user.
+- **Autonomous Cron Schedulers**:
+  - `BudgetEvaluatorCron`: Runs periodically to assess user budget consumption against warning (80%) and limit (100%) thresholds, dispatching notifications automatically.
+  - `SplitReminderCron`: Identifies pending, unsettled split bill debts older than threshold grace periods and sends non-intrusive reminder alerts.
+
+### 12. Observability, Prometheus Metrics & OpenAPI Documentation
+
+Implemented in `src/plugins/metrics-plugin.ts` and `src/plugins/swagger-plugin.ts`.
+
+- **Prometheus Metrics Exporter**:
+  - Scrape target exposed at `GET /metrics`.
+  - Default Node.js runtime metrics: CPU utilization, event loop lag, memory RSS/heap, GC runs.
+  - Application-specific metrics:
+    - `kalya_http_requests_total`: Counter partitioned by method, route template, and HTTP status code.
+    - `kalya_http_request_duration_seconds`: Histogram of request processing latency.
+    - `kalya_http_requests_in_flight`: Gauge of concurrent in-flight requests.
+    - `kalya_http_response_size_bytes`: Histogram of response payload sizes.
+- **Interactive OpenAPI 3.1 Documentation**:
+  - Served at `GET /docs` via `@fastify/swagger-ui`.
+  - Complete schema introspection generated on-the-fly using `fastify-type-provider-zod`.
+  - Includes authentication headers, sample JSON payloads, and test console.
+
 ---
 
 ## 📡 API Route Reference
 
 ### Health & Monitoring
 
-| Method | Endpoint        | Auth   | Description                                    |
-| ------ | --------------- | ------ | ---------------------------------------------- |
-| `GET`  | `/health/live`  | Public | Liveness probe (event loop responsiveness)     |
-| `GET`  | `/health/ready` | Public | Readiness probe (database connection & memory) |
-| `GET`  | `/health`       | Public | Detailed operational subsystem report          |
+| Method | Endpoint        | Auth   | Description                                           |
+| ------ | --------------- | ------ | ----------------------------------------------------- |
+| `GET`  | `/health/live`  | Public | Liveness probe (event loop responsiveness)            |
+| `GET`  | `/health/ready` | Public | Readiness probe (database connection & memory limits) |
+| `GET`  | `/health`       | Public | Detailed operational subsystem report                 |
+| `GET`  | `/metrics`      | Public | Prometheus formatted runtime and HTTP metrics scrape  |
+
+### OpenAPI Documentation
+
+| Method | Endpoint | Auth   | Description                                  |
+| ------ | -------- | ------ | -------------------------------------------- |
+| `GET`  | `/docs`  | Public | Interactive Swagger UI API documentation     |
+| `GET`  | `/docs/` | Public | OpenAPI 3.1 specification schema (JSON/YAML) |
 
 ### Authentication (`/api/v1/auth/*`)
 
@@ -276,7 +353,7 @@ Implemented in [`src/modules/notifications/`](file:///d:/Projects/personal/kalya
 
 ### Personal Finances (`/api/v1/finances/*`)
 
-All finance routes require the `authenticate` preHandler guard.
+All finance routes require the `authenticate` preHandler guard and output JSON normalized by the `snakeCaseResponseHook`.
 
 #### Allocation Buckets (`/api/v1/finances/buckets`)
 
@@ -333,13 +410,19 @@ All finance routes require the `authenticate` preHandler guard.
 
 #### Split Contacts & Obligations (`/api/v1/finances/splits`)
 
-| Method  | Endpoint                                    | Description                                     |
-| ------- | ------------------------------------------- | ----------------------------------------------- |
-| `GET`   | `/api/v1/finances/splits/contacts`          | List user split contacts                        |
-| `POST`  | `/api/v1/finances/splits/contacts`          | Register new split contact member               |
-| `PATCH` | `/api/v1/finances/splits/contacts/:id`      | Update split contact details                    |
-| `GET`   | `/api/v1/finances/splits/shares/pending`    | List unsettled split shares owed to user        |
-| `POST`  | `/api/v1/finances/splits/shares/:id/settle` | Settle split share obligation (partial or full) |
+| Method   | Endpoint                                          | Description                                                            |
+| -------- | ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/splits/contacts`                | List user split contacts                                               |
+| `POST`   | `/api/v1/finances/splits/contacts`                | Register new split contact member                                      |
+| `PATCH`  | `/api/v1/finances/splits/contacts/:id`            | Update split contact details                                           |
+| `POST`   | `/api/v1/finances/splits/contacts/:id/link`       | Link unlinked split contact to an active Kalya user                    |
+| `POST`   | `/api/v1/finances/splits/contacts/:id/unlink`     | Unlink split contact from Kalya user                                   |
+| `GET`    | `/api/v1/finances/splits/contacts/suggestions`    | Get intelligent linking suggestions matching registered platform users |
+| `DELETE` | `/api/v1/finances/splits/contacts/:id`            | Delete split contact member                                            |
+| `GET`    | `/api/v1/finances/splits/invitations`             | List incoming pending split account link invitations                   |
+| `POST`   | `/api/v1/finances/splits/invitations/:id/respond` | Accept or decline split account invitation                             |
+| `GET`    | `/api/v1/finances/splits/pending`                 | List unsettled split expense shares owed to or by user                 |
+| `POST`   | `/api/v1/finances/splits/shares/:id/settle`       | Record payment settlement on a split share obligation (partial/full)   |
 
 #### Financial Goals (`/api/v1/finances/goals`)
 
@@ -353,13 +436,17 @@ All finance routes require the `authenticate` preHandler guard.
 
 #### Multi-Class Assets (`/api/v1/finances/assets`)
 
-| Method | Endpoint                          | Description                                                 |
-| ------ | --------------------------------- | ----------------------------------------------------------- |
-| `GET`  | `/api/v1/finances/assets/digital` | List digital commodities (gold, silver)                     |
-| `POST` | `/api/v1/finances/assets/digital` | Log digital commodity purchase with auto GST valuation      |
-| `GET`  | `/api/v1/finances/assets/equity`  | List equity holdings                                        |
-| `POST` | `/api/v1/finances/assets/equity`  | Log equity share purchase with valuation                    |
-| `GET`  | `/api/v1/finances/assets/summary` | Get aggregated portfolio valuation (commodities + equities) |
+| Method   | Endpoint                                    | Description                                                   |
+| -------- | ------------------------------------------- | ------------------------------------------------------------- |
+| `GET`    | `/api/v1/finances/assets/digital`           | List digital commodities (gold, silver)                       |
+| `POST`   | `/api/v1/finances/assets/digital`           | Log digital commodity purchase with auto 3% GST valuation     |
+| `PATCH`  | `/api/v1/finances/assets/digital/:id`       | Update digital commodity purchase entry                       |
+| `DELETE` | `/api/v1/finances/assets/digital/:id`       | Delete digital commodity purchase entry                       |
+| `GET`    | `/api/v1/finances/assets/equities`          | List equity holdings portfolio (NSE/BSE)                      |
+| `POST`   | `/api/v1/finances/assets/equities`          | Record equity share purchase with valuation                   |
+| `PATCH`  | `/api/v1/finances/assets/equities/:id`      | Update equity share purchase entry                            |
+| `DELETE` | `/api/v1/finances/assets/equities/:id`      | Delete equity share purchase entry                            |
+| `GET`    | `/api/v1/finances/assets/portfolio-summary` | Aggregated portfolio total net worth (commodities + equities) |
 
 #### Dashboard Summaries (`/api/v1/finances/summaries`)
 
@@ -370,7 +457,7 @@ All finance routes require the `authenticate` preHandler guard.
 
 ### Notifications & Alerts (`/api/v1/notifications/*`)
 
-All notification routes require the `authenticate` preHandler guard.
+All notification routes require the `authenticate` preHandler guard (except VAPID public key retrieval).
 
 #### In-App Alerts (`/api/v1/notifications/alerts`)
 
@@ -382,13 +469,25 @@ All notification routes require the `authenticate` preHandler guard.
 | `POST`   | `/api/v1/notifications/alerts/mark-read`    | Batch mark alerts as read (`alert_ids` or `all`) |
 | `DELETE` | `/api/v1/notifications/alerts/:id`          | Dismiss/delete an alert notification             |
 
-#### Notification Preferences (`/api/v1/notifications/preferences`)
+#### Delivery Preferences (`/api/v1/notifications/preferences`)
 
 | Method  | Endpoint                                | Description                                                       |
 | ------- | --------------------------------------- | ----------------------------------------------------------------- |
 | `GET`   | `/api/v1/notifications/preferences`     | List notification channel and category preferences                |
 | `PUT`   | `/api/v1/notifications/preferences`     | Upsert delivery preference for channel and category               |
 | `PATCH` | `/api/v1/notifications/preferences/:id` | Partially update preference (enabled status, frequency, schedule) |
+
+#### Push Notifications (`/api/v1/notifications/push`)
+
+| Method   | Endpoint                                     | Auth Guard     | Description                                                     |
+| -------- | -------------------------------------------- | -------------- | --------------------------------------------------------------- |
+| `GET`    | `/api/v1/notifications/push/vapid-key`       | Public         | Retrieve server VAPID public key for Web Push subscription      |
+| `POST`   | `/api/v1/notifications/push/web/subscribe`   | `authenticate` | Register or update browser Web Push subscription (`keys`, etc.) |
+| `POST`   | `/api/v1/notifications/push/web/unsubscribe` | `authenticate` | Unregister browser Web Push subscription endpoint               |
+| `POST`   | `/api/v1/notifications/push/mobile/register` | `authenticate` | Register or refresh mobile push device token (Expo/FCM)         |
+| `GET`    | `/api/v1/notifications/push/devices`         | `authenticate` | List authenticated user active registered push devices          |
+| `DELETE` | `/api/v1/notifications/push/devices/:id`     | `authenticate` | Revoke and deactivate a push device                             |
+| `POST`   | `/api/v1/notifications/push/test`            | `authenticate` | Send an immediate diagnostic test push notification             |
 
 ---
 
@@ -400,7 +499,7 @@ Copy `.env.example` to `.env` in `apps/api-server/` before starting:
 cp .env.example .env
 ```
 
-### Configuration Sections
+### Configuration Template
 
 ```ini
 # ---- Application ----
@@ -454,16 +553,17 @@ KALYA_OBSERVABILITY.HEALTH_CHECKS.CHECKS=database,memory
 KALYA_MAIL.PROVIDER=smtp
 KALYA_MAIL.FROM=Kalya <noreply@kalya.io>
 
-# SMTP Configuration
-KALYA_SMTP.HOST=smtp.mailtrap.io
-KALYA_SMTP.PORT=2525
+# SMTP Configuration (defaults for local MailDev container via pnpm docker:up)
+KALYA_SMTP.HOST=localhost
+KALYA_SMTP.PORT=1025
 KALYA_SMTP.SECURE=false
-KALYA_SMTP.USER=your-smtp-user
-KALYA_SMTP.PASSWORD=your-smtp-password
+KALYA_SMTP.USER=
+KALYA_SMTP.PASSWORD=
 KALYA_SMTP.EMAIL=noreply@kalya.io
 
 # Resend Configuration (used if KALYA_MAIL.PROVIDER=resend)
 KALYA_MAIL.RESEND_API_KEY=re_123456789
+EMAIL_ASSETS_URL=
 
 # ---- Storage ----
 # Provider: local | cloudinary
@@ -476,6 +576,12 @@ KALYA_STORAGE.CLOUDINARY_CLOUD_NAME=
 KALYA_STORAGE.CLOUDINARY_API_KEY=
 KALYA_STORAGE.CLOUDINARY_API_SECRET=
 KALYA_STORAGE.CLOUDINARY_FOLDER=kalya
+
+# ---- Push Notifications ----
+KALYA_PUSH.VAPID_PUBLIC_KEY=your-vapid-public-key
+KALYA_PUSH.VAPID_PRIVATE_KEY=your-vapid-private-key
+KALYA_PUSH.VAPID_SUBJECT=mailto:admin@kalya.io
+KALYA_PUSH.EXPO_ACCESS_TOKEN=
 ```
 
 ---
@@ -484,22 +590,26 @@ KALYA_STORAGE.CLOUDINARY_FOLDER=kalya
 
 All commands can be executed from the monorepo root using `pnpm` filter or directly within `apps/api-server`.
 
-| Command            | Description                                                           |
-| ------------------ | --------------------------------------------------------------------- |
-| `pnpm dev`         | Starts API server with hot-reload via `tsx watch`                     |
-| `pnpm build`       | Compiles TypeScript to JavaScript in `dist/`                          |
-| `pnpm start`       | Runs the compiled production server (`node dist/index.js`)            |
-| `pnpm typecheck`   | Validates TypeScript types across the package (`tsc --noEmit`)        |
-| `pnpm lint`        | Runs ESLint analysis across all source files                          |
-| `pnpm docker:up`   | Starts local infrastructure (MailDev web at `:1080`, SMTP at `:1025`) |
-| `pnpm docker:down` | Stops and tears down local Docker containers                          |
-| `pnpm docker:logs` | Tails Docker container logs in real time                              |
+| Command            | Description                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `pnpm dev`         | Starts API server with hot-reload via `tsx watch` (port `3600`)                             |
+| `pnpm build`       | Compiles TypeScript to JavaScript in `dist/`                                                |
+| `pnpm start`       | Runs the compiled production server (`node dist/index.js`)                                  |
+| `pnpm typecheck`   | Validates TypeScript types across the package (`tsc --noEmit`)                              |
+| `pnpm lint`        | Runs ESLint analysis across all source files                                                |
+| `pnpm docker:up`   | Starts local infrastructure (MailDev at `:1080`, Prometheus at `:9090`, Grafana at `:3100`) |
+| `pnpm docker:down` | Stops and tears down local Docker containers                                                |
+| `pnpm docker:logs` | Tails Docker container logs in real time                                                    |
 
 ### Monorepo Workflows
 
 ```bash
-# From workspace root:
+# Start API server in dev mode
 pnpm --filter @kalya/api-server dev
+
+# Typecheck backend
 pnpm --filter @kalya/api-server typecheck
+
+# Run linter
 pnpm --filter @kalya/api-server lint
 ```
