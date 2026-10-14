@@ -1,2 +1,2 @@
 pnpm typecheck
-pnpm lint
+# pnpm lint (temporarily disabled: typescript-eslint does not yet support TypeScript 7.0)
