@@ -1,4 +1,4 @@
-import type { ComponentType } from '@kalya/email';
+export type ComponentType<P = any> = (props: P) => any;
 
 export interface SendMailOptions {
   to: string | string[];

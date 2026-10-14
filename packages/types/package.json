@@ -17,9 +17,6 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@kalya/email": "workspace:*"
-  },
   "devDependencies": {
     "@kalya/eslint-config": "workspace:*",
     "@kalya/typescript-config": "workspace:*",
