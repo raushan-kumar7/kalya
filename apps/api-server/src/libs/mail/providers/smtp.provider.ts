@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { AppConfig, MailProvider, SendMailOptions, SendMailResult } from '@kalya/types';
 import { InternalServerError, ServiceUnavailableError } from '@/errors';
 import { log } from '@/logger';
@@ -11,14 +12,14 @@ import { log } from '@/logger';
  */
 export class SmtpMailProvider implements MailProvider {
   readonly name = 'smtp';
-  private readonly transporter: Transporter;
+  private readonly transporter: Transporter<SMTPTransport.SentMessageInfo>;
   private readonly config: AppConfig['smtp'];
 
   /**
    * Initializes the SMTP transporter with host, port, credentials, and TLS settings.
    *
    * @param {AppConfig['smtp']} config - The SMTP configuration settings from AppConfig.
-   * @throws {InternalServerError} If SMTP host or port configuration is missing.
+   * @throws {InternalServerError} If SMTP host/port is missing or credentials are incomplete.
    */
   constructor(config: AppConfig['smtp']) {
     if (!config?.host || !config?.port) {
@@ -29,11 +30,26 @@ export class SmtpMailProvider implements MailProvider {
       );
     }
 
+    // Fail early instead of silently sending without auth.
+    if (config.user && !config.password) {
+      throw new InternalServerError(
+        'SMTP password is missing while SMTP user is set',
+        'MAIL_CONFIG_INVALID',
+        { provider: 'smtp', host: config.host, port: config.port }
+      );
+    }
+
     this.config = config;
-    this.transporter = nodemailer.createTransport({
+
+    const port = Number(config.port);
+    // Env vars may arrive as strings; "false" would otherwise be truthy.
+    const secure = String(config.secure) === 'true';
+
+    const options: SMTPTransport.Options = {
       host: config.host,
-      port: config.port,
-      secure: config.secure,
+      port,
+      secure, // true for 465 (implicit TLS), false for 587 (STARTTLS)
+      requireTLS: !secure, // on 587, refuse to send without STARTTLS
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 15_000,
@@ -44,7 +60,9 @@ export class SmtpMailProvider implements MailProvider {
               pass: config.password,
             }
           : undefined,
-    });
+    };
+
+    this.transporter = nodemailer.createTransport(options);
   }
 
   /**
@@ -57,8 +75,15 @@ export class SmtpMailProvider implements MailProvider {
   async send(options: SendMailOptions): Promise<SendMailResult> {
     try {
       const recipient = Array.isArray(options.to) ? options.to.join(', ') : options.to;
+
+      // Gmail only allows the authenticated account as sender, so fall back to it.
+      const from = options.from || this.config.email || this.config.user;
+      if (!from) {
+        throw new Error('No sender address configured (options.from, smtp.email or smtp.user)');
+      }
+
       const info = await this.transporter.sendMail({
-        from: options.from || this.config.email,
+        from,
         to: recipient,
         subject: options.subject,
         html: options.html,
@@ -82,6 +107,8 @@ export class SmtpMailProvider implements MailProvider {
         action: 'SMTP_SEND_FAILED',
         to: options.to,
         subject: options.subject,
+        host: this.config.host,
+        port: this.config.port,
       });
 
       throw new InternalServerError(

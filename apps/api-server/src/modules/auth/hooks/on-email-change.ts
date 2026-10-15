@@ -30,10 +30,10 @@ export interface SendEmailChangePayload {
  * @param payload - Verification email payload from Better-Auth.
  * @param _request - Inbound HTTP request.
  */
-export async function handleSendVerificationEmail(
+export function handleSendVerificationEmail(
   payload: SendVerificationEmailPayload,
   _request?: Request | null
-): Promise<void> {
+): void {
   const { user, url, token } = payload;
   const userName = resolveDisplayName(user);
   const tz = resolveUserTimezone(user.timezone);
@@ -50,8 +50,8 @@ export async function handleSendVerificationEmail(
     verificationUrl,
   });
 
-  try {
-    await getMailer().sendTemplate({
+  void getMailer()
+    .sendTemplate({
       template: VerifyEmail,
       props: {
         userName,
@@ -62,19 +62,21 @@ export async function handleSendVerificationEmail(
       },
       to: user.email,
       subject: 'Verify your Kalya account',
+    })
+    .then(() => {
+      log.info('Verification email sent', {
+        action: 'VERIFICATION_EMAIL_SENT',
+        userId: user.id,
+        to: user.email,
+      });
+    })
+    .catch((err) => {
+      log.error(err, {
+        action: 'VERIFY_EMAIL_FAILED',
+        userId: user.id,
+        to: user.email,
+      });
     });
-    log.info('Verification email sent', {
-      action: 'VERIFICATION_EMAIL_SENT',
-      userId: user.id,
-      to: user.email,
-    });
-  } catch (err) {
-    log.error(err, {
-      action: 'VERIFY_EMAIL_FAILED',
-      userId: user.id,
-      to: user.email,
-    });
-  }
 }
 
 /**

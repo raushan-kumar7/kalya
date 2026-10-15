@@ -30,10 +30,10 @@ export interface PasswordChangedContext {
  * @param payload - Reset password payload from Better-Auth callback.
  * @param request - Optional inbound HTTP request.
  */
-export async function handleSendResetPassword(
+export function handleSendResetPassword(
   payload: SendResetPasswordPayload,
   request?: Request | null
-): Promise<void> {
+): void {
   const { user, url, token } = payload;
   const client = parseClientInfo(
     request?.headers?.get('user-agent'),
@@ -57,8 +57,8 @@ export async function handleSendResetPassword(
     resetUrl,
   });
 
-  try {
-    await getMailer().sendTemplate({
+  void getMailer()
+    .sendTemplate({
       template: ResetPassword,
       props: {
         userName,
@@ -70,19 +70,21 @@ export async function handleSendResetPassword(
       },
       to: user.email,
       subject: 'Reset your Kalya account password',
+    })
+    .then(() => {
+      log.info('Password reset email sent', {
+        action: 'RESET_PASSWORD_EMAIL_SENT',
+        userId: user.id,
+        to: user.email,
+      });
+    })
+    .catch((err) => {
+      log.error(err, {
+        action: 'RESET_PASSWORD_EMAIL_FAILED',
+        userId: user.id,
+        to: user.email,
+      });
     });
-    log.info('Password reset email sent', {
-      action: 'RESET_PASSWORD_EMAIL_SENT',
-      userId: user.id,
-      to: user.email,
-    });
-  } catch (err) {
-    log.error(err, {
-      action: 'RESET_PASSWORD_EMAIL_FAILED',
-      userId: user.id,
-      to: user.email,
-    });
-  }
 }
 
 /**
