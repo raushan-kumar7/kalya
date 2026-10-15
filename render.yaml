@@ -11,7 +11,7 @@ services:
   - type: web
     name: kalya-api
     runtime: docker
-    region: singapore # or frankfurt, ohio, singapore
+    region: oregon # or frankfurt, ohio, singapore
     branch: main
     plan: free # 100% Free Plan: $0/mo (0.1 CPU, 512 MB RAM)
 
@@ -22,7 +22,7 @@ services:
     # Health Check (Render verifies this before routing traffic to the new deployment)
     healthCheckPath: /health/live
 
-    # Environment Variables
+    # Environment Variables (Matched 1-to-1 against @kalya/validations envSchema)
     envVars:
       # ---- Primary Environment ----
       - key: KALYA_PRIMARY_ENV
@@ -41,8 +41,16 @@ services:
         value: 0.0.0.0
       - key: KALYA_SERVER_PORT
         value: '3600'
+      - key: KALYA_SERVER_READ_TIMEOUT
+        value: '30'
+      - key: KALYA_SERVER_WRITE_TIMEOUT
+        value: '30'
+      - key: KALYA_SERVER_IDLE_TIMEOUT
+        value: '60'
       - key: KALYA_SERVER_CORS_ALLOWED_ORIGINS
         sync: false # Set in Render UI: https://<your-web-app>.vercel.app
+      - key: KALYA_SERVER_CORS_ALLOWED_METHODS
+        value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 
       # ---- Database (Ephemeral SQLite for Free Tier) ----
       - key: KALYA_DATABASE_URL
@@ -57,6 +65,12 @@ services:
         value: 15m
       - key: KALYA_AUTH_REFRESH_TOKEN_EXPIRES_LIFE
         value: 7d
+
+      # ---- Google Auth (Optional) ----
+      - key: KALYA_AUTH_GOOGLE_CLIENT_ID
+        sync: false # Optional: Set if using Google OAuth
+      - key: KALYA_AUTH_GOOGLE_CLIENT_SECRET
+        sync: false # Optional: Set if using Google OAuth
 
       # ---- Cross-Site Cookies ----
       # Use 'none' when frontend is on *.vercel.app and backend is on *.onrender.com
@@ -75,8 +89,30 @@ services:
         value: info
       - key: KALYA_OBSERVABILITY_LOGGING_FORMAT
         value: json
+      - key: KALYA_OBSERVABILITY_LOGGING_SLOW_QUERY_THRESHOLD
+        value: 500ms
       - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_ENABLED
         value: 'true'
+      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_INTERVAL
+        value: 30s
+      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_TIMEOUT
+        value: 5s
+      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_CHECKS
+        value: 'database,memory'
+
+      # ---- SMTP Configuration ----
+      - key: KALYA_SMTP_HOST
+        value: smtp.resend.com
+      - key: KALYA_SMTP_PORT
+        value: '465'
+      - key: KALYA_SMTP_SECURE
+        value: 'true'
+      - key: KALYA_SMTP_USER
+        value: resend
+      - key: KALYA_SMTP_PASSWORD
+        sync: false # Optional: Set if using direct SMTP
+      - key: KALYA_SMTP_EMAIL
+        value: noreply@kalya.io
 
       # ---- Email Provider (Resend or SMTP) ----
       - key: KALYA_MAIL_PROVIDER
@@ -97,3 +133,13 @@ services:
         sync: false # Set in Render UI if using Cloudinary
       - key: KALYA_STORAGE_CLOUDINARY_FOLDER
         value: kalya
+
+      # ---- Push Notifications (Optional) ----
+      - key: KALYA_PUSH_VAPID_PUBLIC_KEY
+        sync: false
+      - key: KALYA_PUSH_VAPID_PRIVATE_KEY
+        sync: false
+      - key: KALYA_PUSH_VAPID_SUBJECT
+        value: 'mailto:admin@kalya.io'
+      - key: KALYA_PUSH_EXPO_ACCESS_TOKEN
+        sync: false
