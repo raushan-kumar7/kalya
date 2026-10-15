@@ -1,3 +1,4 @@
+import dns from 'node:dns';
 import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { AppConfig, MailProvider, SendMailOptions, SendMailResult } from '@kalya/types';
@@ -45,7 +46,15 @@ export class SmtpMailProvider implements MailProvider {
     // Env vars may arrive as strings; "false" would otherwise be truthy.
     const secure = String(config.secure) === 'true';
 
-    const options: SMTPTransport.Options = {
+    interface SmtpTransportOptionsWithLookup extends SMTPTransport.Options {
+      lookup?: (
+        hostname: string,
+        lookupOptions: unknown,
+        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void
+      ) => void;
+    }
+
+    const options: SmtpTransportOptionsWithLookup = {
       host: config.host,
       port,
       secure, // true for 465 (implicit TLS), false for 587 (STARTTLS)
@@ -53,6 +62,18 @@ export class SmtpMailProvider implements MailProvider {
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 15_000,
+      // Force IPv4 lookup for socket connection.
+      // Cloud container platforms (Render) lack outbound IPv6 routing, causing
+      // 'connect ENETUNREACH' when resolving dual-stack hosts (e.g. smtp.gmail.com).
+      lookup: (
+        hostname: string,
+        lookupOptions: unknown,
+        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void
+      ) => {
+        const opts =
+          typeof lookupOptions === 'object' && lookupOptions !== null ? lookupOptions : {};
+        dns.lookup(hostname, { ...opts, family: 4 }, callback);
+      },
       auth:
         config.user && config.password
           ? {
