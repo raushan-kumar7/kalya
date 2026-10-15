@@ -96,10 +96,17 @@ export const buildApp = (): FastifyInstance => {
         version: env.app.apiVersion,
         environment: env.env,
         message: `${env.app.name} API Server is online`,
-        documentation: '/documentation',
+        ...(!env.isProd || process.env.KALYA_DOCS_ENABLED === 'true'
+          ? { documentation: '/docs' }
+          : {}),
         health: '/health/live',
       });
     },
+  });
+
+  // Favicon handler to silence browser 404 warnings in cloud logs
+  app.get('/favicon.ico', async (_request, reply) => {
+    return reply.status(204).send();
   });
 
   // 8. Application Modules (Auth, Health, and domain features)
