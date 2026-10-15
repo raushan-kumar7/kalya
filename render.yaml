@@ -1,0 +1,99 @@
+# ==============================================================================
+# Kalya Monorepo — Render Blueprint (render.yaml)
+# https://render.com/docs/blueprint-spec
+# MUST be located at the root of the repository
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Fastify API Server (@kalya/api-server)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: kalya-api
+    runtime: docker
+    region: singapore # or frankfurt, ohio, singapore
+    branch: main
+    plan: free # 100% Free Plan: $0/mo (0.1 CPU, 512 MB RAM)
+
+    # Docker Build Settings (Monorepo context is root '.')
+    dockerfilePath: ./apps/api-server/Dockerfile
+    dockerContext: .
+
+    # Health Check (Render verifies this before routing traffic to the new deployment)
+    healthCheckPath: /health/live
+
+    # Environment Variables
+    envVars:
+      # ---- Primary Environment ----
+      - key: KALYA_PRIMARY_ENV
+        value: production
+
+      # ---- App Info ----
+      - key: KALYA_APP_NAME
+        value: Kalya
+      - key: KALYA_APP_API_VERSION
+        value: v1
+      - key: KALYA_APP_CLIENT_URL
+        sync: false # Set in Render UI: https://<your-web-app>.vercel.app
+
+      # ---- Server Network & Port ----
+      - key: KALYA_SERVER_HOST
+        value: 0.0.0.0
+      - key: KALYA_SERVER_PORT
+        value: '3600'
+      - key: KALYA_SERVER_CORS_ALLOWED_ORIGINS
+        sync: false # Set in Render UI: https://<your-web-app>.vercel.app
+
+      # ---- Database (Ephemeral SQLite for Free Tier) ----
+      - key: KALYA_DATABASE_URL
+        value: /app/data/kalya.db
+
+      # ---- Authentication ----
+      - key: KALYA_AUTH_SECRET_KEY
+        generateValue: true # Render auto-generates a secure 32+ character random secret
+      - key: KALYA_AUTH_BASE_URL
+        sync: false # Set in Render UI: https://<your-service-name>.onrender.com
+      - key: KALYA_AUTH_ACCESS_TOKEN_EXPIRES_LIFE
+        value: 15m
+      - key: KALYA_AUTH_REFRESH_TOKEN_EXPIRES_LIFE
+        value: 7d
+
+      # ---- Cross-Site Cookies ----
+      # Use 'none' when frontend is on *.vercel.app and backend is on *.onrender.com
+      # Use 'lax' if using a shared custom domain (e.g. app.kalya.io & api.kalya.io)
+      - key: KALYA_COOKIE_SAME_SITE
+        value: none
+      - key: KALYA_COOKIE_DOMAIN
+        value: ''
+
+      # ---- Observability & Health ----
+      - key: KALYA_OBSERVABILITY_SERVICE_NAME
+        value: kalya-api
+      - key: KALYA_OBSERVABILITY_ENVIRONMENT
+        value: production
+      - key: KALYA_OBSERVABILITY_LOGGING_LEVEL
+        value: info
+      - key: KALYA_OBSERVABILITY_LOGGING_FORMAT
+        value: json
+      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_ENABLED
+        value: 'true'
+
+      # ---- Email Provider (Resend or SMTP) ----
+      - key: KALYA_MAIL_PROVIDER
+        value: resend
+      - key: KALYA_MAIL_FROM
+        value: Kalya <noreply@kalya.io>
+      - key: KALYA_MAIL_RESEND_API_KEY
+        sync: false # Set in Render UI if using Resend
+
+      # ---- File Storage (Cloudinary recommended for cloud deployments) ----
+      - key: KALYA_STORAGE_PROVIDER
+        value: cloudinary
+      - key: KALYA_STORAGE_CLOUDINARY_CLOUD_NAME
+        sync: false # Set in Render UI if using Cloudinary
+      - key: KALYA_STORAGE_CLOUDINARY_API_KEY
+        sync: false # Set in Render UI if using Cloudinary
+      - key: KALYA_STORAGE_CLOUDINARY_API_SECRET
+        sync: false # Set in Render UI if using Cloudinary
+      - key: KALYA_STORAGE_CLOUDINARY_FOLDER
+        value: kalya

@@ -30,7 +30,7 @@ export const Footer = () => {
             कल्य — ready for tomorrow; in sound condition.
           </Text>
 
-          <Text className="m-0 mb-3 font-body text-[12px] text-brand-textSecondary max-w-[420px] mx-auto leading-relaxed">
+          <Text className="m-0 mb-3 font-body text-caption text-brand-textSecondary max-w-105 mx-auto leading-relaxed">
             A free, private app to budget, split bills and track your wealth. Consolidate your
             wealth. Secure your tomorrow.
           </Text>
@@ -45,35 +45,35 @@ export const Footer = () => {
             <Column align="center">
               <Link
                 href={`${baseUrl}/dashboard`}
-                className="font-body text-[12px] text-brand-textMuted no-underline font-medium"
+                className="font-body text-caption text-brand-textMuted no-underline font-medium"
               >
                 Dashboard
               </Link>
               <span className="text-brand-border"> &nbsp;|&nbsp; </span>
               <Link
                 href={`${baseUrl}/about`}
-                className="font-body text-[12px] text-brand-textMuted no-underline font-medium"
+                className="font-body text-caption text-brand-textMuted no-underline font-medium"
               >
                 About
               </Link>
               <span className="text-brand-border"> &nbsp;|&nbsp; </span>
               <Link
                 href={`${baseUrl}/contact`}
-                className="font-body text-[12px] text-brand-textMuted no-underline font-medium"
+                className="font-body text-caption text-brand-textMuted no-underline font-medium"
               >
                 Contact
               </Link>
               <span className="text-brand-border"> &nbsp;|&nbsp; </span>
               <Link
                 href={`${baseUrl}/privacy`}
-                className="font-body text-[12px] text-brand-textMuted no-underline font-medium"
+                className="font-body text-caption text-brand-textMuted no-underline font-medium"
               >
                 Privacy Policy
               </Link>
               <span className="text-brand-border"> &nbsp;|&nbsp; </span>
               <Link
                 href={`${baseUrl}/terms`}
-                className="font-body text-[12px] text-brand-textMuted no-underline font-medium"
+                className="font-body text-caption text-brand-textMuted no-underline font-medium"
               >
                 Terms of Service
               </Link>
@@ -83,7 +83,7 @@ export const Footer = () => {
           <Hr className="border-brand-border my-4" />
 
           {/* Security & Transactional Notice */}
-          <Text className="m-0 mb-1.5 font-body text-[11px] leading-4 text-brand-textMuted max-w-[460px] mx-auto">
+          <Text className="m-0 mb-1.5 font-body text-[11px] leading-4 text-brand-textMuted max-w-115 mx-auto">
             This is an automated transactional notification regarding your Kalya account. For your
             security, Kalya will never ask for your password or credentials via email.
           </Text>
