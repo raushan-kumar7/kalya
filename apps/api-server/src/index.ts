@@ -20,12 +20,6 @@ const app = buildApp();
 let isShuttingDown = false;
 
 /**
- * Keep-alive interval handle for SMTP pool heartbeat.
- * Cleared during graceful shutdown to avoid dangling timers.
- */
-let smtpKeepAlive: NodeJS.Timeout | undefined;
-
-/**
  * Gracefully shuts down the Fastify server and application resources.
  *
  * @description Handles process termination signals (SIGINT, SIGTERM) and fatal errors.
@@ -58,10 +52,6 @@ async function shutdown(signal: string): Promise<void> {
   try {
     await app.close();
 
-    if (smtpKeepAlive) {
-      clearInterval(smtpKeepAlive);
-      smtpKeepAlive = undefined;
-    }
     log.info(`${env.app.name} has been shut down successfully.`);
     process.exit(0);
   } catch (err) {
@@ -100,9 +90,7 @@ async function start(): Promise<void> {
 
     // 3. Warm up the SMTP pool so the first email doesn't pay cold-start cost.
     //    Fire-and-forget: warm-up errors are non-fatal.
-    const mailer = getMailer();
-    mailer.warmUp();
-    smtpKeepAlive = mailer.startKeepAlive();
+    getMailer().warmUp();
   } catch (err) {
     log.error(err, {
       service: env.app.name,
