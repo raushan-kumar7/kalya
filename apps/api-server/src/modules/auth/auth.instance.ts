@@ -1,6 +1,7 @@
 import { DatabaseClient, schema } from '@kalya/db';
 import { env } from '@kalya/env';
 import { AUTH_LIMITS } from '@kalya/types';
+import { parseDuration } from '@kalya/utils';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { username } from 'better-auth/plugins';
@@ -16,12 +17,43 @@ import {
 } from './hooks';
 
 /**
+ * Safely parses a human-readable duration string (e.g. "15m", "7d", "24h") into seconds.
+ *
+ * @param duration - Duration string from environment configuration.
+ * @param fallbackSeconds - Fallback duration in seconds if parsing fails or input is undefined.
+ * @returns Duration in seconds.
+ */
+function getDurationInSeconds(duration?: string, fallbackSeconds = 0): number {
+  if (!duration) return fallbackSeconds;
+  try {
+    return Math.floor(parseDuration(duration) / 1000);
+  } catch {
+    return fallbackSeconds;
+  }
+}
+
+/**
  * Creates and configures the Better-Auth instance using the existing Fastify Drizzle DB client.
  *
  * @param db - The singleton Drizzle database client initialized by `dbPlugin`.
  * @returns Configured Better-Auth instance.
  */
 export const createAuth = (db: DatabaseClient) => {
+  // Session lifespan (refresh token lifecycle): total duration the database session remains valid
+  const sessionExpiresIn = getDurationInSeconds(
+    env.auth.refreshTokenExpiresLife,
+    60 * 60 * 24 * 7 // Fallback: 7 days
+  );
+
+  // Cookie cache lifespan (access token lifecycle): duration cached session is trusted without DB queries
+  const cookieCacheMaxAge = getDurationInSeconds(
+    env.auth.accessTokenExpiresLife,
+    15 * 60 // Fallback: 15 minutes
+  );
+
+  // Update session rolling timestamp in database once every 24 hours (or half session life if shorter)
+  const sessionUpdateAge = Math.min(60 * 60 * 24, Math.floor(sessionExpiresIn / 2));
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -156,11 +188,11 @@ export const createAuth = (db: DatabaseClient) => {
       },
     },
     session: {
-      expiresIn: 60 * 60 * 24 * 30, // 30 days
-      updateAge: 60 * 60 * 24, // 24 hours
+      expiresIn: sessionExpiresIn,
+      updateAge: sessionUpdateAge,
       cookieCache: {
         enabled: true,
-        maxAge: 5 * 60, // 5 minutes
+        maxAge: cookieCacheMaxAge,
       },
     },
     advanced: {
