@@ -1,16 +1,8 @@
-import dns from 'node:dns';
 import { buildApp } from '@/app';
 import { env } from '@kalya/env';
 import { log } from '@/logger';
 import { runMigrations } from '@kalya/db';
 import { getMailer } from '@/libs/mail';
-
-// Force Node.js to prioritize IPv4 in DNS lookups.
-// Cloud container platforms (like Render) lack IPv6 outbound routing, which causes
-// 'connect ENETUNREACH' errors when connecting to dual-stack hostnames (e.g. Gmail SMTP).
-if (typeof dns.setDefaultResultOrder === 'function') {
-  dns.setDefaultResultOrder('ipv4first');
-}
 
 const app = buildApp();
 
