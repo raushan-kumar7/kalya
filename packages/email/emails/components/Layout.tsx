@@ -12,12 +12,6 @@ interface LayoutProps {
 export const Layout = ({ preview, children }: LayoutProps) => {
   return (
     <Html lang="en">
-      <Head>
-        <meta name="color-scheme" content="light" />
-        <meta name="supported-color-schemes" content="light" />
-      </Head>
-      <Preview>{preview}</Preview>
-
       <Tailwind
         config={{
           theme: {
@@ -34,6 +28,11 @@ export const Layout = ({ preview, children }: LayoutProps) => {
           },
         }}
       >
+        <Head>
+          <meta name="color-scheme" content="light" />
+          <meta name="supported-color-schemes" content="light" />
+        </Head>
+        <Preview>{preview}</Preview>
         <Body className="bg-brand-bg m-0 py-6 font-body text-brand-textPrimary">
           <Container className="bg-brand-surface max-w-140 mx-auto rounded-xl overflow-hidden border border-solid border-brand-border">
             <Header />

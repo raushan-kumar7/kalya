@@ -8,5 +8,4 @@ onlyBuiltDependencies:
   - sharp
 
 ignoredBuiltDependencies:
-  - sharp
   - unrs-resolver

@@ -51,6 +51,26 @@ export function loadEnv(): void {
 loadEnv();
 
 /**
+ * Normalizes environment variables by mapping POSIX-compliant underscore equivalents
+ * (e.g. KALYA_APP_NAME) to dot-notation keys (e.g. KALYA_APP.NAME) when the dot key is not set.
+ */
+function normalizeEnv(source: NodeJS.ProcessEnv): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...source };
+  const schemaShape = envSchema.shape;
+
+  for (const schemaKey of Object.keys(schemaShape)) {
+    if (result[schemaKey] === undefined) {
+      const underscoreKey = schemaKey.replace(/\./g, '_');
+      if (source[underscoreKey] !== undefined) {
+        result[schemaKey] = source[underscoreKey];
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Validates process.env variables against the Zod schema from @kalya/validations.
  *
  * @description Parses and validates environment variables against envSchema.
@@ -60,7 +80,8 @@ loadEnv();
  * @returns {RawEnv} The parsed, coerced, and validated environment configuration object.
  */
 export function validateEnv(): RawEnv {
-  const result = envSchema.safeParse(process.env);
+  const normalized = normalizeEnv(process.env);
+  const result = envSchema.safeParse(normalized);
 
   if (!result.success) {
     console.error('\n [Config] Invalid Environment Variables:\n');

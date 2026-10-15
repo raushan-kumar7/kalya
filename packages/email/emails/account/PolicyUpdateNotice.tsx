@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { FileText } from 'lucide-react';
-import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, ListRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface PolicyUpdateNoticeProps {
@@ -20,12 +19,6 @@ export const PolicyUpdateNotice = ({
   return (
     <Layout preview="Important updates to Kalya's Terms of Service and Privacy Policy">
       <Section className="text-center">
-        <IconBadge
-          icon={FileText}
-          background={EMAILS_CONFIG.color.primarySubtle}
-          color={EMAILS_CONFIG.color.primary}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Terms & Privacy Updates
         </Heading>

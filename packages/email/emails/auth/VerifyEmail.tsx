@@ -1,15 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { UserCheck } from 'lucide-react';
-import {
-  Layout,
-  Callout,
-  DetailRow,
-  ListRow,
-  IconBadge,
-  FallbackLinkBox,
-  Button,
-} from '../components';
+import { Layout, Callout, DetailRow, ListRow, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface VerifyEmailProps {
@@ -30,12 +21,6 @@ export const VerifyEmail = ({
   return (
     <Layout preview="Verify your email address to activate your Kalya account">
       <Section className="text-center">
-        <IconBadge
-          icon={UserCheck}
-          background={EMAILS_CONFIG.color.primarySubtle}
-          color={EMAILS_CONFIG.color.primary}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
           Verify your email address
         </Heading>

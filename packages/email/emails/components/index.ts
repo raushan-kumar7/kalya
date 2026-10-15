@@ -1,7 +1,6 @@
 export * from './Header';
 export * from './Footer';
 export * from './Button';
-export * from './IconBadge';
 export * from './FallbackLinkBox';
 export * from './DetailRow';
 export * from './ListRow';

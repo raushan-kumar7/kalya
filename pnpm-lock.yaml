@@ -83,6 +83,9 @@ importers:
       better-auth:
         specifier: ^1.7.6
         version: 1.7.6(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(kysely@0.29.6))(next@16.3.8(@opentelemetry/api@1.9.1)(@types/node@26.6.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      better-sqlite3:
+        specifier: ^13.0.3
+        version: 13.0.3
       cloudinary:
         specifier: ^2.11.0
         version: 2.11.0
@@ -116,6 +119,9 @@ importers:
       slugify:
         specifier: ^1.6.9
         version: 1.6.9
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       ua-parser-js:
         specifier: ^2.0.10
         version: 2.0.10
@@ -147,9 +153,6 @@ importers:
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
-      tsx:
-        specifier: ^4.23.15
-        version: 4.23.15
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -292,6 +295,9 @@ importers:
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
+      drizzle-kit:
+        specifier: ^0.31.11
+        version: 0.31.11
       drizzle-orm:
         specifier: ^0.45.3
         version: 0.45.3(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(kysely@0.29.6)
@@ -305,9 +311,6 @@ importers:
       '@types/better-sqlite3':
         specifier: ^9.6.0
         version: 9.6.0
-      drizzle-kit:
-        specifier: ^0.31.11
-        version: 0.31.11
 
   packages/email:
     dependencies:
@@ -380,10 +383,6 @@ importers:
   packages/prettier-config: {}
 
   packages/types:
-    dependencies:
-      '@kalya/email':
-        specifier: workspace:*
-        version: link:../email
     devDependencies:
       '@kalya/eslint-config':
         specifier: workspace:*

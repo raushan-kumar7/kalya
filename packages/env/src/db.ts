@@ -46,7 +46,13 @@ export function resolveDbUrl(rawUrl: string): string {
  * @returns {DatabaseRawEnv} Validated raw database environment.
  */
 function validateDbEnv(): DatabaseRawEnv {
-  const result = databaseEnvSchema.safeParse(process.env);
+  const envToValidate = {
+    'KALYA_DATABASE.URL':
+      process.env['KALYA_DATABASE.URL'] ||
+      process.env['KALYA_DATABASE_URL'] ||
+      process.env['DATABASE_URL'],
+  };
+  const result = databaseEnvSchema.safeParse(envToValidate);
 
   if (!result.success) {
     console.error('\n [Config:Database] Invalid Database Environment Configuration:\n');

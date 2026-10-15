@@ -1,12 +1,9 @@
 import * as React from 'react';
 import { Section, Text, Row, Column, Img } from 'react-email';
 
-import { BASE_URL, getBaseUrl } from '../constants';
+import { EMAIL_ASSETS } from '../constants';
 
 export const Header = () => {
-  const baseUrl = getBaseUrl() || BASE_URL;
-  const logo = baseUrl ? `${baseUrl}/static/kalya_logo1.png` : '/static/kalya_logo1.png';
-
   return (
     <>
       <Section className="bg-brand-accent h-1 leading-1">
@@ -16,7 +13,7 @@ export const Header = () => {
         <Row>
           <Column align="center">
             <Img
-              src={logo}
+              src={EMAIL_ASSETS.logo}
               alt="Kalya — Ready for tomorrow."
               width="200"
               height="120"

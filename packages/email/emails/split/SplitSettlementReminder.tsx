@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { Clock } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitSettlementReminderProps {
@@ -28,12 +27,6 @@ export const SplitSettlementReminder = ({
       preview={`Reminder: Outstanding split balance of ${outstandingAmount} with ${payerName}`}
     >
       <Section className="text-center">
-        <IconBadge
-          icon={Clock}
-          background={EMAILS_CONFIG.color.warningSubtle}
-          color={EMAILS_CONFIG.color.warning}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Friendly Settlement Reminder
         </Heading>

@@ -56,6 +56,7 @@ export type { InferSelectModel, InferInsertModel, SQL, SQLWrapper } from 'drizzl
 // Drizzle Kit & Driver Re-exports
 export { drizzle, defineConfig, Database };
 export type { Config, BetterSqliteOptions };
+export { runMigrations } from './migrate';
 
 /**
  * Type alias for the strongly-typed Drizzle client instance bound to application schemas.

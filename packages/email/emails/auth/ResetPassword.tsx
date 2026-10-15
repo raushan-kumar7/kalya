@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { KeyRound } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, FallbackLinkBox, Button } from '../components';
+import { Layout, Callout, DetailRow, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface ResetPasswordProps {
@@ -24,12 +23,6 @@ export const ResetPassword = ({
   return (
     <Layout preview="Reset your Kalya account password">
       <Section className="text-center">
-        <IconBadge
-          icon={KeyRound}
-          background={EMAILS_CONFIG.color.warningSubtle}
-          color={EMAILS_CONFIG.color.warning}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[24px] font-semibold text-brand-textPrimary mb-2">
           Password Reset Request
         </Heading>

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { AlertOctagon } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface BudgetOverspentAlertProps {
@@ -30,12 +29,6 @@ export const BudgetOverspentAlert = ({
       preview={`Budget Exceeded: You've gone over your ${bucketName} limit by ${overspentAmount}`}
     >
       <Section className="text-center">
-        <IconBadge
-          icon={AlertOctagon}
-          background={EMAILS_CONFIG.color.dangerSubtle}
-          color={EMAILS_CONFIG.color.danger}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Budget Limit Exceeded
         </Heading>

@@ -16,6 +16,15 @@ export const BASE_URL =
 
 export const getBaseUrl = (): string => BASE_URL;
 
+/**
+ * Hosted Cloudinary assets for email templates to guarantee deliverability
+ * and avoid broken images across external email clients.
+ */
+export const EMAIL_ASSETS = {
+  icon: 'https://res.cloudinary.com/cloud-alpha/image/upload/v1784056074/kalya/kalya_icon_n6webd.png',
+  logo: 'https://res.cloudinary.com/cloud-alpha/image/upload/v1784056067/kalya/kalya_logo_yxp1fz.png',
+} as const;
+
 export const EMAILS_CONFIG = {
   font: {
     display: "'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif",

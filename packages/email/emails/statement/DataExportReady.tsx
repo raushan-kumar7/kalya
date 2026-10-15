@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { Download } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, FallbackLinkBox, Button } from '../components';
+import { Layout, Callout, DetailRow, FallbackLinkBox, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface DataExportReadyProps {
@@ -24,12 +23,6 @@ export const DataExportReady = ({
   return (
     <Layout preview="Your requested financial data export is ready to download">
       <Section className="text-center">
-        <IconBadge
-          icon={Download}
-          background={EMAILS_CONFIG.color.primarySubtle}
-          color={EMAILS_CONFIG.color.primary}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Your Data Export is Ready
         </Heading>

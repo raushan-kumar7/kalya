@@ -1,6 +1,7 @@
 import { buildApp } from '@/app';
 import { env } from '@kalya/env';
 import { log } from '@/logger';
+import { runMigrations } from '@kalya/db';
 
 const app = buildApp();
 
@@ -62,6 +63,10 @@ async function shutdown(signal: string): Promise<void> {
  */
 async function start(): Promise<void> {
   try {
+    // 1. Ensure database schema is up-to-date with latest migrations
+    runMigrations();
+
+    // 2. Start HTTP listener
     const address = await app.listen({
       host: env.server.host,
       port: env.server.port,

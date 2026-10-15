@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading, Row, Column } from 'react-email';
-import { BarChart3 } from 'lucide-react';
-import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, ListRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface MonthlyFinancialStatementProps {
@@ -38,12 +37,6 @@ export const MonthlyFinancialStatement = ({
   return (
     <Layout preview={`Your Kalya Monthly Wealth Digest for ${monthName} ${year}`}>
       <Section className="text-center">
-        <IconBadge
-          icon={BarChart3}
-          background={EMAILS_CONFIG.color.primarySubtle}
-          color={EMAILS_CONFIG.color.primary}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           {monthName} {year} Wealth Digest
         </Heading>

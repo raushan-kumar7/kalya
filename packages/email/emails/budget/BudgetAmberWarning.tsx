@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { AlertTriangle } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface BudgetAmberWarningProps {
@@ -34,12 +33,6 @@ export const BudgetAmberWarning = ({
       preview={`Budget Warning: You've reached ${percentSpent.toFixed(0)}% of your ${bucketName} budget`}
     >
       <Section className="text-center">
-        <IconBadge
-          icon={AlertTriangle}
-          background={EMAILS_CONFIG.color.warningSubtle}
-          color={EMAILS_CONFIG.color.warning}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Approaching Budget Limit
         </Heading>

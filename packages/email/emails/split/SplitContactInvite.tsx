@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { UserPlus } from 'lucide-react';
-import { Layout, Callout, DetailRow, ListRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, ListRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitContactInviteProps {
@@ -20,12 +19,6 @@ export const SplitContactInvite = ({
   return (
     <Layout preview={`${inviterName} invited you to track shared expenses on Kalya`}>
       <Section className="text-center">
-        <IconBadge
-          icon={UserPlus}
-          background={EMAILS_CONFIG.color.primarySubtle}
-          color={EMAILS_CONFIG.color.primary}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Join {inviterName} on Kalya
         </Heading>

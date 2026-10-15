@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
-import { TrendingDown } from 'lucide-react';
-import { Layout, Callout, DetailRow, IconBadge, Button } from '../components';
+import { Layout, Callout, DetailRow, Button } from '../components';
 import { EMAILS_CONFIG } from '../constants';
 
 export interface GoalOffTrackAlertProps {
@@ -30,12 +29,6 @@ export const GoalOffTrackAlert = ({
   return (
     <Layout preview={`Action Required: Your ${goalName} goal is currently behind schedule`}>
       <Section className="text-center">
-        <IconBadge
-          icon={TrendingDown}
-          background={EMAILS_CONFIG.color.warningSubtle}
-          color={EMAILS_CONFIG.color.warning}
-          size={24}
-        />
         <Heading className="m-0 font-display text-[22px] font-semibold text-brand-textPrimary mb-2">
           Goal Schedule Alert
         </Heading>
