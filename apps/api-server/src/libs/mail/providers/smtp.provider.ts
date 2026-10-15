@@ -1,4 +1,3 @@
-import dns from 'node:dns';
 import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { AppConfig, MailProvider, SendMailOptions, SendMailResult } from '@kalya/types';
@@ -14,76 +13,33 @@ import { log } from '@/logger';
 export class SmtpMailProvider implements MailProvider {
   readonly name = 'smtp';
   private readonly transporter: Transporter<SMTPTransport.SentMessageInfo>;
-  private readonly config: AppConfig['smtp'];
 
   /**
    * Initializes the SMTP transporter with host, port, credentials, and TLS settings.
    *
    * @param {AppConfig['smtp']} config - The SMTP configuration settings from AppConfig.
-   * @throws {InternalServerError} If SMTP host/port is missing or credentials are incomplete.
+   * @throws {InternalServerError} If host, port, user, or password configuration is missing.
    */
-  constructor(config: AppConfig['smtp']) {
-    if (!config?.host || !config?.port) {
+  constructor(private readonly config: AppConfig['smtp']) {
+    const { host, port, user, password, secure } = config ?? {};
+
+    if (!host || !port || !user || !password) {
       throw new InternalServerError(
-        'SMTP provider requires KALYA_SMTP.HOST and KALYA_SMTP.PORT configuration',
+        'SMTP config requires host, port, user and password',
         'MAIL_CONFIG_INVALID',
-        { provider: 'smtp', host: config?.host, port: config?.port }
+        { provider: 'smtp', host, port }
       );
     }
 
-    // Fail early instead of silently sending without auth.
-    if (config.user && !config.password) {
-      throw new InternalServerError(
-        'SMTP password is missing while SMTP user is set',
-        'MAIL_CONFIG_INVALID',
-        { provider: 'smtp', host: config.host, port: config.port }
-      );
-    }
+    const isSecure = String(secure) === 'true'; // true -> 465, false -> 587 (STARTTLS)
 
-    this.config = config;
-
-    const port = Number(config.port);
-    // Env vars may arrive as strings; "false" would otherwise be truthy.
-    const secure = String(config.secure) === 'true';
-
-    interface SmtpTransportOptionsWithLookup extends SMTPTransport.Options {
-      lookup?: (
-        hostname: string,
-        lookupOptions: unknown,
-        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void
-      ) => void;
-    }
-
-    const options: SmtpTransportOptionsWithLookup = {
-      host: config.host,
-      port,
-      secure, // true for 465 (implicit TLS), false for 587 (STARTTLS)
-      requireTLS: !secure, // on 587, refuse to send without STARTTLS
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 15_000,
-      // Force IPv4 lookup for socket connection.
-      // Cloud container platforms (Render) lack outbound IPv6 routing, causing
-      // 'connect ENETUNREACH' when resolving dual-stack hosts (e.g. smtp.gmail.com).
-      lookup: (
-        hostname: string,
-        lookupOptions: unknown,
-        callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void
-      ) => {
-        const opts =
-          typeof lookupOptions === 'object' && lookupOptions !== null ? lookupOptions : {};
-        dns.lookup(hostname, { ...opts, family: 4 }, callback);
-      },
-      auth:
-        config.user && config.password
-          ? {
-              user: config.user,
-              pass: config.password,
-            }
-          : undefined,
-    };
-
-    this.transporter = nodemailer.createTransport(options);
+    this.transporter = nodemailer.createTransport({
+      host,
+      port: Number(port),
+      secure: isSecure,
+      requireTLS: !isSecure,
+      auth: { user, pass: password },
+    });
   }
 
   /**
@@ -95,17 +51,10 @@ export class SmtpMailProvider implements MailProvider {
    */
   async send(options: SendMailOptions): Promise<SendMailResult> {
     try {
-      const recipient = Array.isArray(options.to) ? options.to.join(', ') : options.to;
-
-      // Gmail only allows the authenticated account as sender, so fall back to it.
-      const from = options.from || this.config.email || this.config.user;
-      if (!from) {
-        throw new Error('No sender address configured (options.from, smtp.email or smtp.user)');
-      }
-
       const info = await this.transporter.sendMail({
-        from,
-        to: recipient,
+        // Gmail only allows the authenticated account as sender
+        from: options.from || this.config.email || this.config.user,
+        to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
@@ -113,34 +62,14 @@ export class SmtpMailProvider implements MailProvider {
         headers: options.headers,
       });
 
-      log.info('SMTP email dispatched successfully', {
-        messageId: info.messageId,
-        to: recipient,
-        subject: options.subject,
-      });
-
-      return {
-        messageId: info.messageId,
-        success: true,
-      };
+      log.info('SMTP email sent', { messageId: info.messageId, to: options.to });
+      return { messageId: info.messageId, success: true };
     } catch (err) {
-      log.error(err, {
-        action: 'SMTP_SEND_FAILED',
-        to: options.to,
-        subject: options.subject,
-        host: this.config.host,
-        port: this.config.port,
-      });
-
+      log.error(err, { action: 'SMTP_SEND_FAILED', to: options.to, subject: options.subject });
       throw new InternalServerError(
         err instanceof Error ? err.message : 'SMTP email delivery failed',
         'SMTP_SEND_FAILED',
-        {
-          to: options.to,
-          subject: options.subject,
-          host: this.config.host,
-          port: this.config.port,
-        },
+        { to: options.to, subject: options.subject },
         err
       );
     }
@@ -157,14 +86,9 @@ export class SmtpMailProvider implements MailProvider {
       await this.transporter.verify();
       return true;
     } catch (err) {
-      log.error(err, {
-        action: 'SMTP_VERIFY_FAILED',
-        host: this.config.host,
-        port: this.config.port,
-      });
-
+      log.error(err, { action: 'SMTP_VERIFY_FAILED' });
       throw new ServiceUnavailableError(
-        'SMTP server connection or authentication verification failed',
+        'SMTP connection or authentication failed',
         'SMTP_CONNECTION_FAILED',
         { host: this.config.host, port: this.config.port },
         err
