@@ -200,6 +200,9 @@ export const createAuth = (db: DatabaseClient) => {
       crossSubdomainCookies: {
         enabled: false,
       },
+      ipAddress: {
+        ipAddressHeaders: ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip'],
+      },
     },
   });
 };

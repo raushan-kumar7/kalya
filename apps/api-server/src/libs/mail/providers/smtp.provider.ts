@@ -34,6 +34,9 @@ export class SmtpMailProvider implements MailProvider {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
       auth:
         config.user && config.password
           ? {

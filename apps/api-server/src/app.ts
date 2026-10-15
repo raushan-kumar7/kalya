@@ -85,7 +85,24 @@ export const buildApp = (): FastifyInstance => {
   // 6. Metrics & Observability (Prometheus Telemetry)
   app.register(metricsPlugin);
 
-  // 7. Application Modules (Auth, Health, and domain features)
+  // 7. Root Ping & Status Probe (Handles GET / and HEAD / probes from Render & browsers)
+  app.route({
+    method: ['GET', 'HEAD'],
+    url: '/',
+    handler: async (_request, reply) => {
+      return reply.status(200).send({
+        name: env.app.name,
+        status: 'ok',
+        version: env.app.apiVersion,
+        environment: env.env,
+        message: `${env.app.name} API Server is online`,
+        documentation: '/documentation',
+        health: '/health/live',
+      });
+    },
+  });
+
+  // 8. Application Modules (Auth, Health, and domain features)
   app.register(modulesPlugin);
 
   // 8. Request Observability & Latency Logging

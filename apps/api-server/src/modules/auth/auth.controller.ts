@@ -29,10 +29,15 @@ export class AuthController {
 
       const url = new URL(requestUrl, `http://${request.headers.host}`);
 
+      const headers = new Headers(request.headers as HeadersInit);
+      if (!headers.get('x-forwarded-for') && request.ip) {
+        headers.set('x-forwarded-for', request.ip);
+      }
+
       const response = await this.auth.handler(
         new Request(url.toString(), {
           method: request.method,
-          headers: request.headers as HeadersInit,
+          headers,
           body: ['GET', 'HEAD'].includes(request.method) ? undefined : JSON.stringify(request.body),
         })
       );
