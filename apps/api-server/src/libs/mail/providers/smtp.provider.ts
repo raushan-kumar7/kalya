@@ -14,9 +14,8 @@ const POOL_MAX_CONNECTIONS = 3;
 const POOL_MAX_MESSAGES = 50;
 const RETRY_DELAY_MS = 2_000;
 const MAX_SEND_ATTEMPTS = 3;
-const MAX_VERIFY_ADDRESSES = 3;
 
-/** Connection-level failures where trying again (on another IP) can help. Auth errors are NOT here. */
+/** Connection-level failures worth retrying on another IP. Auth errors (EAUTH) are not included. */
 const TRANSIENT_CODES = new Set([
   'ETIMEDOUT',
   'ECONNECTION',
@@ -26,27 +25,17 @@ const TRANSIENT_CODES = new Set([
   'ENETUNREACH',
   'EHOSTUNREACH',
   'EAI_AGAIN',
-  'EDNS',
 ]);
 
-const TRANSIENT_PATTERNS = [
-  'timeout',
-  'econnreset',
-  'econnrefused',
-  'etimedout',
-  'connection closed',
-  'socket closed',
-];
+const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
- * SMTP mail provider (Nodemailer).
+ * SMTP mail provider (Nodemailer, pooled).
  *
- * Resolves the SMTP host to IPv4 addresses itself (platforms like Render have no
- * outbound IPv6) and connects to an IPv4 literal. TLS certificate validation still
- * runs against the real hostname via `tls.servername`.
- *
- * On connection-level failures the transporter is discarded, DNS is re-resolved,
- * and the next IPv4 address is used.
+ * Connects to an IPv4 literal (some platforms have no outbound IPv6) while TLS
+ * validation still runs against the real hostname. On connection-level failures
+ * the transporter is dropped, DNS is re-resolved, and the next IP is used.
  */
 export class SmtpMailProvider implements MailProvider {
   readonly name = 'smtp';
@@ -65,24 +54,25 @@ export class SmtpMailProvider implements MailProvider {
     }
   }
 
-  /** All IPv4 addresses for the SMTP host (fresh lookup each time). */
-  private async resolveAddresses(): Promise<string[]> {
-    const { host } = this.config;
-    const records = await dns.lookup(host, { family: 4, all: true });
-    const addresses = [...new Set(records.map((r) => r.address))];
-
-    if (addresses.length === 0) {
-      throw new Error(`No IPv4 address found for SMTP host "${host}"`);
-    }
-    return addresses;
+  /** Lazily builds the pooled transporter; clears the cache if building fails. */
+  private getTransporter(): Promise<SmtpTransporter> {
+    this.transporterPromise ??= this.buildTransporter().catch((err) => {
+      this.transporterPromise = undefined;
+      throw err;
+    });
+    return this.transporterPromise;
   }
 
-  private createTransport(address: string, pool: boolean): SmtpTransporter {
+  private async buildTransporter(): Promise<SmtpTransporter> {
     const { host, port, user, password, secure } = this.config;
     const isSecure = String(secure) === 'true'; // true -> 465 (implicit TLS), false -> 587 (STARTTLS)
 
+    const records = await dns.lookup(host, { family: 4, all: true });
+    if (records.length === 0) throw new Error(`No IPv4 address found for "${host}"`);
+    const { address } = records[this.addressOffset % records.length];
+
     return nodemailer.createTransport({
-      host: address, // IPv4 literal
+      host: address,
       port: Number(port),
       secure: isSecure,
       requireTLS: !isSecure,
@@ -91,39 +81,29 @@ export class SmtpMailProvider implements MailProvider {
       greetingTimeout: GREETING_TIMEOUT_MS,
       socketTimeout: SOCKET_TIMEOUT_MS,
       tls: { servername: host, rejectUnauthorized: true },
-      ...(pool && {
-        pool: true,
-        maxConnections: POOL_MAX_CONNECTIONS,
-        maxMessages: POOL_MAX_MESSAGES,
-      }),
+      pool: true,
+      maxConnections: POOL_MAX_CONNECTIONS,
+      maxMessages: POOL_MAX_MESSAGES,
     } as SMTPTransport.Options);
   }
 
-  /** Lazily creates the pooled transporter; clears the cache if creation fails. */
-  private getTransporter(): Promise<SmtpTransporter> {
-    this.transporterPromise ??= (async () => {
-      const addresses = await this.resolveAddresses();
-      const address = addresses[this.addressOffset % addresses.length];
-      return this.createTransport(address, true);
-    })().catch((err) => {
-      this.transporterPromise = undefined;
-      throw err;
-    });
-    return this.transporterPromise;
-  }
-
-  /** Drops the pooled transporter and rotates to the next IP on the next build. */
-  private resetTransporter(): void {
-    const previous = this.transporterPromise;
+  /**
+   * Drops the transporter that failed and rotates to the next IP.
+   * No-op if another caller already replaced it, so concurrent failures rotate only once.
+   */
+  private reset(failed: Promise<SmtpTransporter>): void {
+    if (this.transporterPromise !== failed) return;
     this.transporterPromise = undefined;
     this.addressOffset += 1;
-    void previous?.then((t) => t.close()).catch(() => undefined);
+    void failed.then((t) => t.close()).catch(() => undefined);
   }
 
   async send(options: SendMailOptions): Promise<SendMailResult> {
     for (let attempt = 1; ; attempt++) {
+      const pending = this.getTransporter();
+
       try {
-        const transporter = await this.getTransporter();
+        const transporter = await pending;
         const info = await transporter.sendMail({
           // Gmail only allows the authenticated account as sender
           from: options.from || this.config.email || this.config.user,
@@ -138,21 +118,21 @@ export class SmtpMailProvider implements MailProvider {
         log.info('SMTP email sent', { messageId: info.messageId, to: options.to });
         return { messageId: info.messageId, success: true };
       } catch (err) {
-        if (attempt < MAX_SEND_ATTEMPTS && this.isTransientError(err)) {
+        if (attempt < MAX_SEND_ATTEMPTS && this.isTransient(err)) {
           log.warn('Transient SMTP error, retrying on next address', {
             action: 'SMTP_SEND_RETRY',
             to: options.to,
             attempt,
-            error: err instanceof Error ? err.message : String(err),
+            error: errorMessage(err),
           });
-          this.resetTransporter();
-          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          this.reset(pending);
+          await sleep(RETRY_DELAY_MS);
           continue;
         }
 
         log.error(err, { action: 'SMTP_SEND_FAILED', to: options.to, subject: options.subject });
         throw new InternalServerError(
-          err instanceof Error ? err.message : 'SMTP email delivery failed',
+          errorMessage(err),
           'SMTP_SEND_FAILED',
           { to: options.to, subject: options.subject },
           err
@@ -161,39 +141,22 @@ export class SmtpMailProvider implements MailProvider {
     }
   }
 
-  /** Verifies connectivity + auth, trying each resolved IPv4 address until one works. */
+  /** Verifies connectivity and auth through the same pooled transporter used for sending. */
   async verify(): Promise<boolean> {
-    let lastError: unknown;
+    const pending = this.getTransporter();
 
     try {
-      const addresses = (await this.resolveAddresses()).slice(0, MAX_VERIFY_ADDRESSES);
-
-      for (const address of addresses) {
-        const probe = this.createTransport(address, false); // one-off, not pooled
-        try {
-          await probe.verify();
-          return true;
-        } catch (err) {
-          lastError = err;
-          log.warn('SMTP verify failed for address', {
-            action: 'SMTP_VERIFY_ADDRESS_FAILED',
-            address,
-            error: err instanceof Error ? err.message : String(err),
-          });
-        } finally {
-          probe.close();
-        }
-      }
+      await (await pending).verify();
+      return true;
     } catch (err) {
-      lastError = err; // DNS failure
+      if (this.isTransient(err)) this.reset(pending);
+      throw new ServiceUnavailableError(
+        'SMTP connection or authentication failed',
+        'SMTP_CONNECTION_FAILED',
+        { host: this.config.host, port: this.config.port },
+        err
+      );
     }
-
-    throw new ServiceUnavailableError(
-      'SMTP connection or authentication failed',
-      'SMTP_CONNECTION_FAILED',
-      { host: this.config.host, port: this.config.port },
-      lastError
-    );
   }
 
   /** Fire-and-forget startup check. Never throws. */
@@ -203,24 +166,19 @@ export class SmtpMailProvider implements MailProvider {
       .catch((err) =>
         log.warn('SMTP warm-up failed (non-fatal)', {
           action: 'SMTP_WARM_UP_FAILED',
-          error: err instanceof Error ? err.message : String(err),
+          error: errorMessage(err.cause ?? err),
         })
       );
   }
 
   close(): void {
-    const previous = this.transporterPromise;
+    const pending = this.transporterPromise;
     this.transporterPromise = undefined;
-    void previous?.then((t) => t.close()).catch(() => undefined);
+    void pending?.then((t) => t.close()).catch(() => undefined);
   }
 
-  private isTransientError(err: unknown): boolean {
-    if (!(err instanceof Error)) return false;
-
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code && TRANSIENT_CODES.has(code)) return true;
-
-    const msg = err.message.toLowerCase();
-    return TRANSIENT_PATTERNS.some((p) => msg.includes(p));
+  private isTransient(err: unknown): boolean {
+    const code = (err as NodeJS.ErrnoException | undefined)?.code;
+    return code !== undefined && TRANSIENT_CODES.has(code);
   }
 }
