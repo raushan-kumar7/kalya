@@ -3,6 +3,7 @@ import { buildApp } from '@/app';
 import { env } from '@kalya/env';
 import { log } from '@/logger';
 import { runMigrations } from '@kalya/db';
+import { getMailer } from '@/libs/mail';
 
 // Force Node.js to prioritize IPv4 in DNS lookups.
 // Cloud container platforms (like Render) lack IPv6 outbound routing, which causes
@@ -17,6 +18,12 @@ const app = buildApp();
  * Guard flag to ensure shutdown logic is executed only once.
  */
 let isShuttingDown = false;
+
+/**
+ * Keep-alive interval handle for SMTP pool heartbeat.
+ * Cleared during graceful shutdown to avoid dangling timers.
+ */
+let smtpKeepAlive: NodeJS.Timeout | undefined;
 
 /**
  * Gracefully shuts down the Fastify server and application resources.
@@ -50,6 +57,11 @@ async function shutdown(signal: string): Promise<void> {
 
   try {
     await app.close();
+
+    if (smtpKeepAlive) {
+      clearInterval(smtpKeepAlive);
+      smtpKeepAlive = undefined;
+    }
     log.info(`${env.app.name} has been shut down successfully.`);
     process.exit(0);
   } catch (err) {
@@ -85,6 +97,12 @@ async function start(): Promise<void> {
       environment: env.env,
       path: address,
     });
+
+    // 3. Warm up the SMTP pool so the first email doesn't pay cold-start cost.
+    //    Fire-and-forget: warm-up errors are non-fatal.
+    const mailer = getMailer();
+    mailer.warmUp();
+    smtpKeepAlive = mailer.startKeepAlive();
   } catch (err) {
     log.error(err, {
       service: env.app.name,

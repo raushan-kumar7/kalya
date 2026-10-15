@@ -196,7 +196,16 @@ export const createAuth = (db: DatabaseClient) => {
       },
     },
     advanced: {
-      useSecureCookies: env.isProd,
+      useSecureCookies: env.isProd || env.isStaging,
+      // When the API (kalya-api.onrender.com) and frontend (kalya-iota.vercel.app)
+      // are on different domains, browsers block SameSite=Lax/Strict cookies on
+      // cross-origin requests. Setting SameSite=None; Secure allows the browser
+      // to send the session cookie across origins.
+      // In local dev both app and API share localhost so Lax is fine.
+      defaultCookieAttributes:
+        env.isProd || env.isStaging
+          ? ({ sameSite: 'none', secure: true } as Record<string, unknown>)
+          : undefined,
       crossSubdomainCookies: {
         enabled: false,
       },

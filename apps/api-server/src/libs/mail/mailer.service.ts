@@ -122,4 +122,38 @@ export class MailerService {
       (this.provider as { close: () => void }).close();
     }
   }
+
+  /**
+   * Eagerly primes the underlying mail provider's connection so the first
+   * real email does not pay the full TCP + TLS + SMTP handshake cost.
+   *
+   * @description No-op if the provider does not implement `warmUp`.
+   */
+  warmUp(): void {
+    if (
+      'warmUp' in this.provider &&
+      typeof (this.provider as { warmUp?: () => void }).warmUp === 'function'
+    ) {
+      (this.provider as { warmUp: () => void }).warmUp();
+    }
+  }
+
+  /**
+   * Starts a keep-alive heartbeat on the underlying mail provider.
+   *
+   * @description Returns a timeout handle that should be cleared on shutdown.
+   * Returns undefined if the provider does not support keep-alives.
+   *
+   * @returns {NodeJS.Timeout | undefined} Interval handle or undefined.
+   */
+  startKeepAlive(): NodeJS.Timeout | undefined {
+    if (
+      'startKeepAlive' in this.provider &&
+      typeof (this.provider as { startKeepAlive?: () => NodeJS.Timeout }).startKeepAlive ===
+        'function'
+    ) {
+      return (this.provider as { startKeepAlive: () => NodeJS.Timeout }).startKeepAlive();
+    }
+    return undefined;
+  }
 }
