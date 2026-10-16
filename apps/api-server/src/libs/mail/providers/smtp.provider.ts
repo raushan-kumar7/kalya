@@ -49,6 +49,23 @@ export class SmtpMailProvider implements MailProvider {
     }
   }
 
+  private get isBridge(): boolean {
+    const bridgeUrl = process.env.CLOUDFLARE_MAIL_BRIDGE_URL || process.env.KALYA_SMTP_BRIDGE_URL;
+    return (
+      Boolean(bridgeUrl) ||
+      this.config.host.startsWith('http://') ||
+      this.config.host.startsWith('https://')
+    );
+  }
+
+  private get bridgeUrl(): string {
+    return (
+      process.env.CLOUDFLARE_MAIL_BRIDGE_URL ||
+      process.env.KALYA_SMTP_BRIDGE_URL ||
+      this.config.host
+    ).replace(/\/+$/, '');
+  }
+
   /** Lazily builds the pooled transporter; clears the cache if building fails. */
   private getTransporter(): Promise<SmtpTransporter> {
     this.transporterPromise ??= this.buildTransporter().catch((err) => {
@@ -94,6 +111,10 @@ export class SmtpMailProvider implements MailProvider {
   }
 
   async send(options: SendMailOptions): Promise<SendMailResult> {
+    if (this.isBridge) {
+      return this.sendViaBridge(options);
+    }
+
     for (let attempt = 1; ; attempt++) {
       const pending = this.getTransporter();
 
@@ -114,7 +135,7 @@ export class SmtpMailProvider implements MailProvider {
         return { messageId: info.messageId, success: true };
       } catch (err) {
         if (attempt < MAX_SEND_ATTEMPTS && this.isTransient(err)) {
-          log.warn('Transient SMTP error, retrying on next address', {
+          log.warn('Transient SMTP error, retrying with fresh connection', {
             action: 'SMTP_SEND_RETRY',
             to: options.to,
             attempt,
@@ -136,15 +157,100 @@ export class SmtpMailProvider implements MailProvider {
     }
   }
 
-  /** Verifies connectivity and auth through the same pooled transporter used for sending. */
+  private async sendViaBridge(options: SendMailOptions): Promise<SendMailResult> {
+    const url = `${this.bridgeUrl}/send`;
+    const fromAddress = this.config.user;
+    const sender =
+      options.from && options.from.includes(fromAddress) ? options.from : `Kalya <${fromAddress}>`;
+
+    const payload = {
+      smtp: {
+        host: 'smtp.gmail.com',
+        port: 465,
+        user: this.config.user,
+        password: this.config.password.trim().replace(/\s+/g, ''),
+      },
+      message: {
+        from: sender,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+        replyTo: options.replyTo,
+      },
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.CLOUDFLARE_BRIDGE_SECRET || 'kalya-secret-bridge-key'}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        log.error('Cloudflare SMTP bridge returned error', {
+          action: 'SMTP_BRIDGE_ERROR',
+          status: res.status,
+          error: errorText,
+          to: options.to,
+        });
+        throw new InternalServerError(
+          `Cloudflare Gmail bridge rejected: ${errorText}`,
+          'SMTP_BRIDGE_FAILED',
+          { to: options.to, status: res.status }
+        );
+      }
+
+      const data = (await res.json()) as { messageId?: string; success?: boolean };
+      log.info('Email sent via Cloudflare Gmail bridge', {
+        action: 'SMTP_BRIDGE_SENT',
+        messageId: data.messageId,
+        to: options.to,
+      });
+
+      return {
+        messageId: data.messageId || `cf_${Date.now()}`,
+        success: true,
+      };
+    } catch (err) {
+      if (err instanceof InternalServerError) throw err;
+      log.error(err, { action: 'SMTP_BRIDGE_EXCEPTION', to: options.to });
+      throw new InternalServerError(
+        errorMessage(err),
+        'SMTP_BRIDGE_EXCEPTION',
+        { to: options.to, subject: options.subject },
+        err
+      );
+    }
+  }
+
+  /** Verifies connectivity and auth through the active transport or bridge. */
   async verify(): Promise<boolean> {
+    if (this.isBridge) {
+      try {
+        const res = await fetch(`${this.bridgeUrl}/health`, { method: 'GET' });
+        return res.ok;
+      } catch (err) {
+        throw new ServiceUnavailableError(
+          'Cloudflare SMTP bridge is unreachable',
+          'SMTP_BRIDGE_UNAVAILABLE',
+          { bridgeUrl: this.bridgeUrl },
+          err
+        );
+      }
+    }
+
     const pending = this.getTransporter();
 
     try {
       await (await pending).verify();
       return true;
     } catch (err) {
-      if (this.isTransient(err)) this.reset(pending);
+      this.reset(pending);
       throw new ServiceUnavailableError(
         'SMTP connection or authentication failed',
         'SMTP_CONNECTION_FAILED',
@@ -156,6 +262,14 @@ export class SmtpMailProvider implements MailProvider {
 
   /** Fire-and-forget startup check. Never throws. */
   warmUp(): void {
+    if (this.isBridge) {
+      log.info('Cloudflare Gmail bridge configured', {
+        action: 'SMTP_BRIDGE_WARM_UP_OK',
+        bridgeUrl: this.bridgeUrl,
+      });
+      return;
+    }
+
     this.verify()
       .then(() => log.info('SMTP warm-up OK', { action: 'SMTP_WARM_UP_OK' }))
       .catch((err) =>
