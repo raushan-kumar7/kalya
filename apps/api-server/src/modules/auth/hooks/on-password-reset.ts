@@ -30,10 +30,10 @@ export interface PasswordChangedContext {
  * @param payload - Reset password payload from Better-Auth callback.
  * @param request - Optional inbound HTTP request.
  */
-export function handleSendResetPassword(
+export async function handleSendResetPassword(
   payload: SendResetPasswordPayload,
   request?: Request | null
-): void {
+): Promise<void> {
   const { user, url, token } = payload;
   const client = parseClientInfo(
     request?.headers?.get('user-agent'),
@@ -57,8 +57,8 @@ export function handleSendResetPassword(
     resetUrl,
   });
 
-  void getMailer()
-    .sendTemplate({
+  try {
+    await getMailer().sendTemplate({
       template: ResetPassword,
       props: {
         userName,
@@ -70,21 +70,21 @@ export function handleSendResetPassword(
       },
       to: user.email,
       subject: 'Reset your Kalya account password',
-    })
-    .then(() => {
-      log.info('Password reset email sent', {
-        action: 'RESET_PASSWORD_EMAIL_SENT',
-        userId: user.id,
-        to: user.email,
-      });
-    })
-    .catch((err) => {
-      log.error(err, {
-        action: 'RESET_PASSWORD_EMAIL_FAILED',
-        userId: user.id,
-        to: user.email,
-      });
     });
+
+    log.info('Password reset email sent', {
+      action: 'RESET_PASSWORD_EMAIL_SENT',
+      userId: user.id,
+      to: user.email,
+    });
+  } catch (err) {
+    log.error(err, {
+      action: 'RESET_PASSWORD_EMAIL_FAILED',
+      userId: user.id,
+      to: user.email,
+    });
+    throw err;
+  }
 }
 
 /**
@@ -123,27 +123,25 @@ export async function handlePasswordChanged(
         : ipAddress || 'Unknown IP';
     const tz = resolveUserTimezone(user.timezone || client.geo.timezone);
 
-    void getMailer()
-      .sendTemplate({
-        template: PasswordChangedNotice,
-        props: {
-          userName,
-          userEmail: user.email,
-          changedAt: formatDateTime(new Date(), tz),
-          device: clientDevice,
-          ipAddress: clientIp,
-          supportUrl: `${env.app.clientUrl}/security/compromised`,
-        },
-        to: user.email,
-        subject: 'Security Alert: Your Kalya password was changed',
-      })
-      .catch((err) => {
-        log.error(err, {
-          action: 'PASSWORD_CHANGED_EMAIL_FAILED',
-          userId,
-          to: user.email,
-        });
-      });
+    await getMailer().sendTemplate({
+      template: PasswordChangedNotice,
+      props: {
+        userName,
+        userEmail: user.email,
+        changedAt: formatDateTime(new Date(), tz),
+        device: clientDevice,
+        ipAddress: clientIp,
+        supportUrl: `${env.app.clientUrl}/security/compromised`,
+      },
+      to: user.email,
+      subject: 'Security Alert: Your Kalya password was changed',
+    });
+
+    log.info('Password changed security alert email sent', {
+      action: 'PASSWORD_CHANGED_EMAIL_SENT',
+      userId,
+      to: user.email,
+    });
   } catch (err) {
     log.error(err, {
       action: 'PASSWORD_CHANGED_NOTIFICATION_ERROR',

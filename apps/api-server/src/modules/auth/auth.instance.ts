@@ -88,7 +88,7 @@ export const createAuth = (db: DatabaseClient) => {
         data: SendVerificationEmailPayload,
         request?: Request | null
       ) => {
-        handleSendVerificationEmail(data, request);
+        await handleSendVerificationEmail(data, request);
       },
     },
     emailAndPassword: {
@@ -97,7 +97,7 @@ export const createAuth = (db: DatabaseClient) => {
       minPasswordLength: AUTH_LIMITS.MIN_PASSWORD_LENGTH,
       maxPasswordLength: AUTH_LIMITS.MAX_PASSWORD_LENGTH,
       sendResetPassword: async (data: SendResetPasswordPayload, request?: Request | null) => {
-        handleSendResetPassword(data, request);
+        await handleSendResetPassword(data, request);
       },
     },
     databaseHooks: {

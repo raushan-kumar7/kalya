@@ -30,16 +30,17 @@ export interface SendEmailChangePayload {
  * @param payload - Verification email payload from Better-Auth.
  * @param _request - Inbound HTTP request.
  */
-export function handleSendVerificationEmail(
+export async function handleSendVerificationEmail(
   payload: SendVerificationEmailPayload,
   _request?: Request | null
-): void {
+): Promise<void> {
   const { user, url, token } = payload;
   const userName = resolveDisplayName(user);
   const tz = resolveUserTimezone(user.timezone);
 
   const clientBaseUrl = env.app.clientUrl.replace(/\/+$/, '');
-  const apiBaseUrl = (env.auth.baseUrl || 'http://localhost:3600').replace(/\/+$/, '');
+  const apiBaseUrl = (env.auth.baseUrl || env.app.clientUrl).replace(/\/+$/, '');
+
   const callbackURL = `${clientBaseUrl}/auth/verify-email?status=verified&email=${encodeURIComponent(user.email)}`;
   const verificationUrl = `${apiBaseUrl}/api/${env.app.apiVersion}/auth/verify-email?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(callbackURL)}`;
 
@@ -50,8 +51,8 @@ export function handleSendVerificationEmail(
     verificationUrl,
   });
 
-  void getMailer()
-    .sendTemplate({
+  try {
+    await getMailer().sendTemplate({
       template: VerifyEmail,
       props: {
         userName,
@@ -62,21 +63,21 @@ export function handleSendVerificationEmail(
       },
       to: user.email,
       subject: 'Verify your Kalya account',
-    })
-    .then(() => {
-      log.info('Verification email sent', {
-        action: 'VERIFICATION_EMAIL_SENT',
-        userId: user.id,
-        to: user.email,
-      });
-    })
-    .catch((err) => {
-      log.error(err, {
-        action: 'VERIFY_EMAIL_FAILED',
-        userId: user.id,
-        to: user.email,
-      });
     });
+
+    log.info('Verification email sent', {
+      action: 'VERIFICATION_EMAIL_SENT',
+      userId: user.id,
+      to: user.email,
+    });
+  } catch (err) {
+    log.error(err, {
+      action: 'VERIFY_EMAIL_FAILED',
+      userId: user.id,
+      to: user.email,
+    });
+    throw err;
+  }
 }
 
 /**
@@ -89,8 +90,8 @@ export async function handleSendEmailChangeVerification(
 ): Promise<void> {
   const { userName, currentEmail, newEmail, verificationUrl } = payload;
 
-  void getMailer()
-    .sendTemplate({
+  try {
+    await getMailer().sendTemplate({
       template: VerifyEmailChange,
       props: {
         userName,
@@ -101,11 +102,17 @@ export async function handleSendEmailChangeVerification(
       },
       to: newEmail,
       subject: 'Confirm your new email address for Kalya',
-    })
-    .catch((err) => {
-      log.error(err, {
-        action: 'EMAIL_CHANGE_VERIFICATION_FAILED',
-        to: newEmail,
-      });
     });
+
+    log.info('Email change verification sent', {
+      action: 'EMAIL_CHANGE_VERIFICATION_SENT',
+      to: newEmail,
+    });
+  } catch (err) {
+    log.error(err, {
+      action: 'EMAIL_CHANGE_VERIFICATION_FAILED',
+      to: newEmail,
+    });
+    throw err;
+  }
 }

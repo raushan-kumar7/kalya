@@ -1,4 +1,3 @@
-import dns from 'node:dns/promises';
 import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { AppConfig, MailProvider, SendMailOptions, SendMailResult } from '@kalya/types';
@@ -9,13 +8,11 @@ type SmtpTransporter = Transporter<SMTPTransport.SentMessageInfo>;
 
 const CONNECTION_TIMEOUT_MS = 10_000;
 const GREETING_TIMEOUT_MS = 10_000;
-const SOCKET_TIMEOUT_MS = 20_000;
-const POOL_MAX_CONNECTIONS = 3;
-const POOL_MAX_MESSAGES = 50;
-const RETRY_DELAY_MS = 2_000;
-const MAX_SEND_ATTEMPTS = 3;
+const SOCKET_TIMEOUT_MS = 15_000;
+const RETRY_DELAY_MS = 1_500;
+const MAX_SEND_ATTEMPTS = 2;
 
-/** Connection-level failures worth retrying on another IP. Auth errors (EAUTH) are not included. */
+/** Connection-level failures worth retrying. Auth errors (EAUTH) are not included. */
 const TRANSIENT_CODES = new Set([
   'ETIMEDOUT',
   'ECONNECTION',
@@ -31,16 +28,14 @@ const errorMessage = (err: unknown): string => (err instanceof Error ? err.messa
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
- * SMTP mail provider (Nodemailer, pooled).
+ * SMTP mail provider (Nodemailer).
  *
- * Connects to an IPv4 literal (some platforms have no outbound IPv6) while TLS
- * validation still runs against the real hostname. On connection-level failures
- * the transporter is dropped, DNS is re-resolved, and the next IP is used.
+ * Connects directly to the SMTP host FQDN with TLS/STARTTLS support and resilience
+ * against cloud platform socket timeouts and container lifecycle pauses.
  */
 export class SmtpMailProvider implements MailProvider {
   readonly name = 'smtp';
   private transporterPromise?: Promise<SmtpTransporter>;
-  private addressOffset = 0;
 
   constructor(private readonly config: AppConfig['smtp']) {
     const { host, port, user, password } = config ?? {};
@@ -65,25 +60,26 @@ export class SmtpMailProvider implements MailProvider {
 
   private async buildTransporter(): Promise<SmtpTransporter> {
     const { host, port, user, password, secure } = this.config;
-    const isSecure = String(secure) === 'true'; // true -> 465 (implicit TLS), false -> 587 (STARTTLS)
-
-    const records = await dns.lookup(host, { family: 4, all: true });
-    if (records.length === 0) throw new Error(`No IPv4 address found for "${host}"`);
-    const { address } = records[this.addressOffset % records.length];
+    const isPort465 = Number(port) === 465;
+    const isSecure = String(secure) === 'true' || isPort465;
 
     return nodemailer.createTransport({
-      host: address,
+      host: host.trim(),
       port: Number(port),
       secure: isSecure,
       requireTLS: !isSecure,
-      auth: { user, pass: password },
+      auth: {
+        user: user.trim(),
+        pass: password.trim().replace(/\s+/g, ''),
+      },
       connectionTimeout: CONNECTION_TIMEOUT_MS,
       greetingTimeout: GREETING_TIMEOUT_MS,
       socketTimeout: SOCKET_TIMEOUT_MS,
-      tls: { servername: host, rejectUnauthorized: true },
-      pool: true,
-      maxConnections: POOL_MAX_CONNECTIONS,
-      maxMessages: POOL_MAX_MESSAGES,
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2',
+      },
+      pool: false,
     } as SMTPTransport.Options);
   }
 
@@ -94,7 +90,6 @@ export class SmtpMailProvider implements MailProvider {
   private reset(failed: Promise<SmtpTransporter>): void {
     if (this.transporterPromise !== failed) return;
     this.transporterPromise = undefined;
-    this.addressOffset += 1;
     void failed.then((t) => t.close()).catch(() => undefined);
   }
 

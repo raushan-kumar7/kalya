@@ -84,30 +84,28 @@ export async function handleNewDeviceLogin(
     const browserLabel =
       client.browser.name + (client.browser.version ? ` ${client.browser.version}` : '');
 
-    // 5. Dispatch security alert (non-blocking)
-    void getMailer()
-      .sendTemplate({
-        template: NewDeviceLogin,
-        props: {
-          userName,
-          userEmail: user.email,
-          loginTime: formatDateTime(new Date(), tz),
-          device: client.device.label,
-          browser: browserLabel,
-          ipAddress: normalizedCurrentIp,
-          location: client.geo.location,
-          revokeSessionsUrl: `${env.app.clientUrl}/settings/security`,
-        },
-        to: user.email,
-        subject: 'Security Alert: New sign-in detected on your Kalya account',
-      })
-      .catch((err) => {
-        log.error(err, {
-          action: 'NEW_DEVICE_EMAIL_FAILED',
-          userId,
-          to: user.email,
-        });
-      });
+    // 5. Dispatch security alert
+    await getMailer().sendTemplate({
+      template: NewDeviceLogin,
+      props: {
+        userName,
+        userEmail: user.email,
+        loginTime: formatDateTime(new Date(), tz),
+        device: client.device.label,
+        browser: browserLabel,
+        ipAddress: normalizedCurrentIp,
+        location: client.geo.location,
+        revokeSessionsUrl: `${env.app.clientUrl}/settings/security`,
+      },
+      to: user.email,
+      subject: 'Security Alert: New sign-in detected on your Kalya account',
+    });
+
+    log.info('New device login security alert email sent', {
+      action: 'NEW_DEVICE_EMAIL_SENT',
+      userId,
+      to: user.email,
+    });
   } catch (err) {
     log.error(err, {
       action: 'NEW_DEVICE_DETECTION_ERROR',
