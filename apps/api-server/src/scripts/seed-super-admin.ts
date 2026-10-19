@@ -2,6 +2,7 @@ import { createDbClient, eq, or, schema, type DatabaseClient } from '@kalya/db';
 import { dbEnv, env } from '@kalya/env';
 import { generateId } from '@kalya/utils';
 import { hashPassword } from 'better-auth/crypto';
+import { log } from '@/logger';
 
 export interface SeedSuperAdminOptions {
   email?: string;
@@ -44,15 +45,13 @@ export async function seedSuperAdmin(options: SeedSuperAdminOptions = {}): Promi
     .limit(1);
 
   if (existingSuperAdmin) {
-    console.log(
-      `[Seed] Super-Admin user already exists (${existingSuperAdmin.email}). Skipping bootstrap.`
-    );
+    log.info('[Seed] Super-Admin user already exists. Skipping bootstrap.');
     return;
   }
 
   // 2. If password is not provided or shorter than 8 characters, skip automatic seeding
   if (!password || password.length < 8) {
-    console.log(
+    log.info(
       '[Seed] Super-Admin password not configured or shorter than 8 characters (KALYA_SUPER_ADMIN.PASSWORD). Skipping automatic bootstrap.'
     );
     return;
@@ -111,9 +110,7 @@ export async function seedSuperAdmin(options: SeedSuperAdminOptions = {}): Promi
       });
     }
 
-    console.log(
-      `[Seed] Successfully promoted existing user "${existingUser.email}" to SUPER_ADMIN.`
-    );
+    log.info('[Seed] Successfully promoted existing user to SUPER_ADMIN.');
     return;
   }
 
@@ -158,7 +155,7 @@ export async function seedSuperAdmin(options: SeedSuperAdminOptions = {}): Promi
       entityType: 'USER',
       entityId: userId,
       severity: 'WARN',
-      description: `Default Super-Admin account bootstrap completed for ${email}`,
+      description: 'Default Super-Admin account bootstrap completed',
       status: 'SUCCESS',
       metadata: {
         email,
@@ -168,14 +165,10 @@ export async function seedSuperAdmin(options: SeedSuperAdminOptions = {}): Promi
       },
     });
   } catch (err) {
-    console.warn('[Seed] Warning: Could not write seed audit log:', err);
+    log.warn('[Seed] Warning: Could not write seed audit log:', { error: String(err) });
   }
 
-  console.log(`[Seed] ✅ Default Super-Admin user seeded successfully:`);
-  console.log(`       Email:    ${email}`);
-  console.log(`       Username: ${username}`);
-  console.log(`       Name:     ${name}`);
-  console.log(`       Role:     SUPER_ADMIN`);
+  log.info('[Seed] ✅ Default Super-Admin user seeded successfully (Role: SUPER_ADMIN).');
 }
 
 // CLI entrypoint
@@ -183,7 +176,7 @@ if (process.argv[1] && process.argv[1].includes('seed-super-admin')) {
   seedSuperAdmin()
     .then(() => process.exit(0))
     .catch((err) => {
-      console.error('[Seed] Fatal error seeding super-admin:', err);
+      log.error('[Seed] Fatal error seeding super-admin:', { error: String(err) });
       process.exit(1);
     });
 }

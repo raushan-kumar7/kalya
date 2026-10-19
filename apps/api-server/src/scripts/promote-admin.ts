@@ -1,5 +1,6 @@
 import { createDbClient, eq, schema } from '@kalya/db';
 import { dbEnv } from '@kalya/env';
+import { log } from '@/logger';
 
 /**
  * CLI Utility to promote or assign administrative roles to a user account.
@@ -25,17 +26,17 @@ async function main() {
   }
 
   if (!email) {
-    console.error('❌ Error: --email argument is required.');
-    console.log('Usage: pnpm admin:promote --email <email> [--role SUPER_ADMIN|ADMIN|USER]');
+    log.error('Error: --email argument is required.');
+    log.info('Usage: pnpm admin:promote --email <email> [--role SUPER_ADMIN|ADMIN|USER]');
     process.exit(1);
   }
 
   if (!['USER', 'ADMIN', 'SUPER_ADMIN'].includes(role)) {
-    console.error(`❌ Error: Invalid role "${role}". Must be USER, ADMIN, or SUPER_ADMIN.`);
+    log.error(`Error: Invalid role "${role}". Must be USER, ADMIN, or SUPER_ADMIN.`);
     process.exit(1);
   }
 
-  console.log(`Connecting to database at: ${dbEnv.url}`);
+  log.info(`Connecting to database at: ${dbEnv.url}`);
   const db = createDbClient(dbEnv.url);
 
   // Find user by email
@@ -46,19 +47,7 @@ async function main() {
     .limit(1);
 
   if (existingUsers.length === 0) {
-    console.error(`❌ Error: No user found with email "${email}".`);
-    const allUsers = await db
-      .select({ email: schema.user.email, name: schema.user.name, role: schema.user.role })
-      .from(schema.user)
-      .limit(10);
-    if (allUsers.length > 0) {
-      console.log('\nRegistered users found in database:');
-      for (const u of allUsers) {
-        console.log(` - ${u.email} (${u.name}) [Role: ${u.role}]`);
-      }
-    } else {
-      console.log('Database currently has no registered users.');
-    }
+    log.error('Error: No user found matching the provided email.');
     process.exit(1);
   }
 
@@ -86,7 +75,7 @@ async function main() {
       entityType: 'USER',
       entityId: targetUser.id,
       severity: 'WARN',
-      description: `User ${targetUser.email} role updated from ${previousRole} to ${role} via CLI bootstrap script`,
+      description: `User role updated from ${previousRole} to ${role} via CLI bootstrap script`,
       status: 'SUCCESS',
       metadata: {
         previousRole,
@@ -95,16 +84,14 @@ async function main() {
       },
     });
   } catch (err) {
-    console.warn('⚠️ Warning: Could not write audit log entry:', err);
+    log.warn('Warning: Could not write audit log entry', { error: String(err) });
   }
 
-  console.log(
-    `\n🎉 Success! User ${targetUser.name} (${targetUser.email}) is now assigned role: [${role}] (Status: ACTIVE).`
-  );
+  log.info(`🎉 Success! User role successfully updated to: [${role}] (Status: ACTIVE).`);
   process.exit(0);
 }
 
 main().catch((err) => {
-  console.error('Fatal execution error:', err);
+  log.error('Fatal execution error:', { error: String(err) });
   process.exit(1);
 });
