@@ -6,6 +6,7 @@ import {
   GoalMilestoneAchieved,
   MonthlyFinancialStatement,
   SplitExpenseRequest,
+  Welcome,
 } from '@kalya/email';
 import { log } from '@/logger';
 
@@ -18,6 +19,7 @@ export class EmailJobHandler {
 
   async handle(payload: SendEmailJobPayload): Promise<void> {
     const templateRegistry: Record<string, any> = {
+      Welcome,
       SplitExpenseRequest,
       BudgetAmberWarning,
       BudgetOverspentAlert,

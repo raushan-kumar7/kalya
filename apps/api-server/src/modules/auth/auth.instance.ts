@@ -12,6 +12,7 @@ import {
   handlePasswordChanged,
   handleSendResetPassword,
   handleSendVerificationEmail,
+  handleWelcomeEmail,
   type SendResetPasswordPayload,
   type SendVerificationEmailPayload,
 } from './hooks';
@@ -132,6 +133,20 @@ export const createAuth = (db: DatabaseClient) => {
             }
 
             return { data };
+          },
+          after: async (user) => {
+            // OAuth accounts (e.g. Google) have emailVerified=true immediately upon creation
+            if (user.emailVerified) {
+              await handleWelcomeEmail(db, user);
+            }
+          },
+        },
+        update: {
+          after: async (user) => {
+            // Email/password accounts transition emailVerified=true when user clicks verification link
+            if (user.emailVerified) {
+              await handleWelcomeEmail(db, user);
+            }
           },
         },
       },
