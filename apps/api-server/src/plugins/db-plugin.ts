@@ -55,10 +55,31 @@ const dbPluginCallback: FastifyPluginAsync = async (fastify) => {
     fastify.addHook('onClose', async (instance) => {
       log.info('Closing database connection...');
       try {
-        const client = (instance.db as unknown as { $client?: { close?: () => void } }).$client;
+        const client = (
+          instance.db as unknown as {
+            $client?: {
+              close?: () => void;
+              pragma?: (cmd: string) => unknown;
+            };
+          }
+        ).$client;
 
-        if (client && typeof client.close === 'function') {
-          client.close();
+        if (client) {
+          // Flush and checkpoint WAL frames into the main database file before closing
+          if (typeof client.pragma === 'function') {
+            try {
+              client.pragma('wal_checkpoint(TRUNCATE)');
+              log.info('SQLite WAL checkpoint (TRUNCATE) executed successfully.');
+            } catch (walError) {
+              log.warn('Failed to checkpoint SQLite WAL during shutdown', {
+                error: walError instanceof Error ? walError.message : String(walError),
+              });
+            }
+          }
+
+          if (typeof client.close === 'function') {
+            client.close();
+          }
         }
         log.info('Database connection closed gracefully.');
       } catch (closeError) {

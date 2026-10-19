@@ -2,6 +2,7 @@
   "name": "@kalya/web",
   "version": "0.0.0",
   "private": true,
+  "description": "Next.js web client for the Kalya personal finance and budgeting platform",
   "type": "module",
   "scripts": {
     "dev": "next dev",

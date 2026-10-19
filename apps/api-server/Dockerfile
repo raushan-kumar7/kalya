@@ -61,14 +61,16 @@ ENV NODE_ENV=production
 ENV KALYA_SERVER_HOST="0.0.0.0"
 ENV PORT=3600
 
-# Runtime SQLite library
-RUN apk add --no-cache sqlite-libs libc6-compat
+# Runtime SQLite library and CLI tool
+RUN apk add --no-cache sqlite sqlite-libs libc6-compat
 
 # Application + installed node_modules (pnpm symlinks are preserved)
 COPY --from=builder /app /app
 
-# Persistent storage directories
-RUN mkdir -p /app/data /app/uploads /app/logs
+# Persistent storage directories with explicit permissions
+RUN mkdir -p /app/data /app/uploads /app/logs \
+    && chown -R node:node /app/data /app/uploads /app/logs \
+    && chmod -R 775 /app/data /app/uploads /app/logs
 
 EXPOSE 3600
 

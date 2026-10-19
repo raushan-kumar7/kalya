@@ -79,21 +79,31 @@ export class SmtpMailProvider implements MailProvider {
     const { host, port, user, password, secure } = this.config;
     const isPort465 = Number(port) === 465;
     const isSecure = String(secure) === 'true' || isPort465;
+    const trimmedHost = host.trim();
+    const isLocalDevSmtp =
+      trimmedHost === 'maildev' ||
+      trimmedHost === 'localhost' ||
+      trimmedHost === '127.0.0.1' ||
+      Number(port) === 1025;
 
     return nodemailer.createTransport({
-      host: host.trim(),
+      host: trimmedHost,
       port: Number(port),
       secure: isSecure,
-      requireTLS: !isSecure,
-      auth: {
-        user: user.trim(),
-        pass: password.trim().replace(/\s+/g, ''),
-      },
+      ignoreTLS: isLocalDevSmtp,
+      requireTLS: !isSecure && !isLocalDevSmtp,
+      auth:
+        user && password
+          ? {
+              user: user.trim(),
+              pass: password.trim().replace(/\s+/g, ''),
+            }
+          : undefined,
       connectionTimeout: CONNECTION_TIMEOUT_MS,
       greetingTimeout: GREETING_TIMEOUT_MS,
       socketTimeout: SOCKET_TIMEOUT_MS,
       tls: {
-        rejectUnauthorized: true,
+        rejectUnauthorized: !isLocalDevSmtp,
         minVersion: 'TLSv1.2',
       },
       pool: false,
