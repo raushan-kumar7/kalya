@@ -240,8 +240,8 @@ export function AccountMenu({
                 </div>
 
                 <div className="border-border flex flex-col gap-0.5 border-t pt-1">
-                  {/* Super-Admin Console link */}
-                  {user?.role === 'SUPER_ADMIN' && (
+                  {/* Admin Console link */}
+                  {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') && (
                     <button
                       type="button"
                       role="menuitem"
@@ -251,7 +251,7 @@ export function AccountMenu({
                       <ShieldAlert size={16} className="shrink-0 text-rose-500" />
                       <span className="flex-1 truncate">Admin Console</span>
                       <span className="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-bold text-rose-400 uppercase">
-                        Super
+                        {user?.role === 'SUPER_ADMIN' ? 'Super' : 'Admin'}
                       </span>
                     </button>
                   )}

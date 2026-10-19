@@ -97,3 +97,31 @@ export type AdminAuditLogsQueryInput = {
   endDate?: string;
   search?: string;
 };
+
+/**
+ * Validation schema for querying table records in Database Studio.
+ */
+export const adminDbRecordsQuerySchema = PaginationQuerySchema.extend({
+  search: z.string().trim().max(100).optional(),
+  sortBy: z.string().trim().max(64).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+export type AdminDbRecordsQueryInput = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+};
+
+/**
+ * Validation schema for restoring a database from an existing backup snapshot.
+ */
+export const restoreBackupSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+});
+
+export type RestoreBackupInput = {
+  filename: string;
+};

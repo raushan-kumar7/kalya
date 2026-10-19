@@ -2,7 +2,9 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { env } from '@kalya/env';
 import {
   adminAuditLogsQuerySchema,
+  adminDbRecordsQuerySchema,
   adminUsersQuerySchema,
+  restoreBackupSchema,
   updateUserRoleSchema,
   updateUserStatusSchema,
   UUIDSchema,
@@ -23,7 +25,8 @@ import { AdminController } from './admin.controller';
 export const createAdminRoutes = (controller: AdminController): FastifyPluginAsyncZod => {
   return async (fastify) => {
     const basePrefix = `/api/${env.app.apiVersion}/admin`;
-    const adminGuards = [fastify.authenticate, fastify.requireSuperAdmin];
+    const adminGuards = [fastify.authenticate, fastify.requireAdmin];
+    const superAdminGuards = [fastify.authenticate, fastify.requireSuperAdmin];
 
     // 1. Platform Overview KPIs & Summary
     fastify.get(`${basePrefix}/overview`, {
@@ -61,7 +64,7 @@ export const createAdminRoutes = (controller: AdminController): FastifyPluginAsy
 
     // 4. User Governance: Update Role
     fastify.patch(`${basePrefix}/users/:id/role`, {
-      preHandler: adminGuards,
+      preHandler: superAdminGuards,
       schema: {
         tags: ['Super Admin'],
         summary: 'Promote or demote a user account privilege role',
@@ -106,6 +109,110 @@ export const createAdminRoutes = (controller: AdminController): FastifyPluginAsy
         summary: 'Retrieve comprehensive real-time diagnostics for all platform subsystems',
       },
       handler: controller.getDiagnostics,
+    });
+
+    // 8. Database Studio: List All Tables
+    fastify.get(`${basePrefix}/database/tables`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Database'],
+        summary: 'List all database tables with live row counts and column totals',
+      },
+      handler: controller.getDbTables,
+    });
+
+    // 9. Database Studio: Table Schema Definitions
+    fastify.get(`${basePrefix}/database/tables/:table/schema`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Database'],
+        summary: 'Inspect column schemas and data types for a specific database table',
+        params: z.object({
+          table: z.string().min(1).max(64),
+        }),
+      },
+      handler: controller.getDbTableSchema,
+    });
+
+    // 10. Database Studio: Paginated Records View
+    fastify.get(`${basePrefix}/database/tables/:table/records`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Database'],
+        summary: 'Fetch paginated, searchable, and sortable records for any database table',
+        params: z.object({
+          table: z.string().min(1).max(64),
+        }),
+        querystring: adminDbRecordsQuerySchema,
+      },
+      handler: controller.getDbTableRecords,
+    });
+
+    // 11. Disaster Recovery: List Backups
+    fastify.get(`${basePrefix}/database/backups`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'List all local database backup snapshots available on disk',
+      },
+      handler: controller.getBackups,
+    });
+
+    // 12. Disaster Recovery: Create Instant Hot Backup
+    fastify.post(`${basePrefix}/database/backups`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'Create an online hot backup snapshot of the active SQLite database',
+      },
+      handler: controller.createBackup,
+    });
+
+    // 13. Disaster Recovery: Download Backup File
+    fastify.get(`${basePrefix}/database/backups/:filename/download`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'Download a specific SQLite database backup snapshot archive',
+        params: z.object({
+          filename: z.string().min(1).max(255),
+        }),
+      },
+      handler: controller.downloadBackup,
+    });
+
+    // 14. Disaster Recovery: Restore Database Snapshot
+    fastify.post(`${basePrefix}/database/backups/restore`, {
+      preHandler: superAdminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'Restore the active database from a selected backup snapshot',
+        body: restoreBackupSchema,
+      },
+      handler: controller.restoreBackup,
+    });
+
+    // 15. Disaster Recovery: Upload External Backup File
+    fastify.post(`${basePrefix}/database/backups/upload`, {
+      preHandler: superAdminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'Upload an external SQLite database backup (.sqlite / .db) to the server',
+      },
+      handler: controller.uploadBackup,
+    });
+
+    // 16. Disaster Recovery: Delete Backup Snapshot
+    fastify.delete(`${basePrefix}/database/backups/:filename`, {
+      preHandler: superAdminGuards,
+      schema: {
+        tags: ['Super Admin Backups'],
+        summary: 'Delete a backup snapshot file from disk',
+        params: z.object({
+          filename: z.string().min(1).max(255),
+        }),
+      },
+      handler: controller.deleteBackup,
     });
   };
 };

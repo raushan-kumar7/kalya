@@ -81,16 +81,42 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
-  ({ className, action, children, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex items-start justify-between gap-4 p-5 pb-3', className)}
-      {...props}
-    >
-      <div className="flex flex-1 flex-col space-y-1">{children}</div>
-      {action && <div className="shrink-0">{action}</div>}
-    </div>
-  )
+  ({ className, action, children, ...props }, ref) => {
+    if (action !== undefined) {
+      return (
+        <div
+          ref={ref}
+          className={cn('flex items-center justify-between gap-4 p-5 pb-3', className)}
+          {...props}
+        >
+          <div className="flex flex-1 flex-col space-y-1 min-w-0">{children}</div>
+          <div className="shrink-0 flex items-center">{action}</div>
+        </div>
+      );
+    }
+
+    const isExplicitRow =
+      typeof className === 'string' &&
+      (className.includes('flex-row') || className.includes('justify-between'));
+
+    if (isExplicitRow) {
+      return (
+        <div
+          ref={ref}
+          className={cn('flex items-center justify-between gap-4 p-5 pb-3', className)}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    return (
+      <div ref={ref} className={cn('flex flex-col space-y-1.5 p-5 pb-3', className)} {...props}>
+        {children}
+      </div>
+    );
+  }
 );
 CardHeader.displayName = 'CardHeader';
 

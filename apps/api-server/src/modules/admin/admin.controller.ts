@@ -1,10 +1,15 @@
+import { createReadStream, createWriteStream, existsSync } from 'node:fs';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ApiResponse } from '@/responses';
-import { UnauthorizedError } from '@/errors';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '@/errors';
 import type { User } from '@kalya/types';
 import type {
   AdminAuditLogsQueryInput,
+  AdminDbRecordsQueryInput,
   AdminUsersQueryInput,
+  RestoreBackupInput,
   UpdateUserRoleInput,
   UpdateUserStatusInput,
 } from '@kalya/validations';
@@ -150,5 +155,159 @@ export class AdminController {
     this.assertAdminUser(request);
     const diagnostics = await this.adminService.getSubsystemDiagnostics();
     return ApiResponse.ok(reply, diagnostics, 'Subsystem diagnostics retrieved successfully');
+  };
+
+  /**
+   * Retrieves summary list of all database tables with row and column counts.
+   */
+  getDbTables = async (request: FastifyRequest, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+    const tables = await this.adminService.getDbTables();
+    return ApiResponse.ok(reply, tables, 'Database tables retrieved successfully');
+  };
+
+  /**
+   * Retrieves schema column definitions for a specific database table.
+   */
+  getDbTableSchema = async (
+    request: FastifyRequest<{ Params: { table: string } }>,
+    reply: FastifyReply
+  ) => {
+    this.assertAdminUser(request);
+    const { table } = request.params;
+    const columns = await this.adminService.getDbTableSchema(table);
+    return ApiResponse.ok(reply, columns, `Schema for table "${table}" retrieved successfully`);
+  };
+
+  /**
+   * Retrieves paginated, searchable, and sortable records for a database table.
+   */
+  getDbTableRecords = async (
+    request: FastifyRequest<{ Params: { table: string }; Querystring: AdminDbRecordsQueryInput }>,
+    reply: FastifyReply
+  ) => {
+    this.assertAdminUser(request);
+    const { table } = request.params;
+    const query = request.query ?? {};
+    const result = await this.adminService.getDbTableRecords(table, query);
+
+    return ApiResponse.paginated(
+      reply,
+      result.records,
+      {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+      },
+      `Records for table "${table}" retrieved successfully`
+    );
+  };
+
+  /**
+   * Lists all existing database backup files.
+   */
+  getBackups = async (request: FastifyRequest, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+    const backups = await this.adminService.listBackups();
+    return ApiResponse.ok(reply, backups, 'Database backups retrieved successfully');
+  };
+
+  /**
+   * Creates an immediate online hot backup snapshot of the database.
+   */
+  createBackup = async (request: FastifyRequest, reply: FastifyReply) => {
+    const adminUser = this.assertAdminUser(request);
+    const clientContext = this.getClientContext(request);
+    const backup = await this.adminService.createBackup(adminUser, clientContext);
+    return ApiResponse.created(reply, backup, 'Database backup created successfully');
+  };
+
+  /**
+   * Downloads a specific database backup archive file.
+   */
+  downloadBackup = async (
+    request: FastifyRequest<{ Params: { filename: string } }>,
+    reply: FastifyReply
+  ) => {
+    this.assertAdminUser(request);
+    const { filename } = request.params;
+
+    if (path.basename(filename) !== filename) {
+      throw new BadRequestError('Invalid backup filename');
+    }
+
+    const backupsDir = this.adminService.getBackupsDir();
+    const filePath = path.join(backupsDir, filename);
+
+    if (!existsSync(filePath)) {
+      throw new NotFoundError(`Backup file "${filename}" does not exist`);
+    }
+
+    reply.header('Content-Type', 'application/octet-stream');
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    const stream = createReadStream(filePath);
+    return reply.send(stream);
+  };
+
+  /**
+   * Restores the database from an existing backup snapshot.
+   */
+  restoreBackup = async (
+    request: FastifyRequest<{ Body: RestoreBackupInput }>,
+    reply: FastifyReply
+  ) => {
+    const adminUser = this.assertAdminUser(request);
+    const clientContext = this.getClientContext(request);
+    const { filename } = request.body;
+
+    const result = await this.adminService.restoreBackup(filename, adminUser, clientContext);
+    return ApiResponse.ok(reply, result, result.message);
+  };
+
+  /**
+   * Uploads an external backup file (.sqlite / .db) to the server.
+   */
+  uploadBackup = async (request: FastifyRequest, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+
+    const file = await request.file();
+    if (!file) {
+      throw new BadRequestError('No file provided in multipart request');
+    }
+
+    const ext = path.extname(file.filename).toLowerCase();
+    if (ext !== '.sqlite' && ext !== '.db') {
+      throw new BadRequestError('Uploaded file must be a SQLite database (.sqlite or .db)');
+    }
+
+    const safeFilename = `uploaded_${Date.now()}_${path.basename(file.filename)}`;
+    const backupsDir = this.adminService.getBackupsDir();
+    const targetPath = path.join(backupsDir, safeFilename);
+
+    await pipeline(file.file, createWriteStream(targetPath));
+
+    const backups = await this.adminService.listBackups();
+    const uploaded = backups.find((b) => b.filename === safeFilename);
+
+    return ApiResponse.created(
+      reply,
+      uploaded,
+      `Backup file "${safeFilename}" uploaded successfully`
+    );
+  };
+
+  /**
+   * Deletes an existing database backup snapshot from disk.
+   */
+  deleteBackup = async (
+    request: FastifyRequest<{ Params: { filename: string } }>,
+    reply: FastifyReply
+  ) => {
+    const adminUser = this.assertAdminUser(request);
+    const clientContext = this.getClientContext(request);
+    const { filename } = request.params;
+
+    const result = await this.adminService.deleteBackup(filename, adminUser, clientContext);
+    return ApiResponse.ok(reply, result, `Backup "${filename}" deleted successfully`);
   };
 }

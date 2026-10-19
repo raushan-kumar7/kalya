@@ -67,9 +67,14 @@ export interface InputProps
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {
   /** Icon on the left side of the field */
+  /** Leading icon slot */
   leadingIcon?: React.ReactNode;
+  /** Alias for leadingIcon */
+  leftIcon?: React.ReactNode;
   /** Icon on the right side. Hidden if reveal/clear/loading is active */
   trailingIcon?: React.ReactNode;
+  /** Alias for trailingIcon */
+  rightIcon?: React.ReactNode;
   /** Text prefix displayed inside the input container (e.g. '$', 'https://') */
   prefixText?: string;
   /** Text suffix displayed inside the input container (e.g. 'USD', '%') */
@@ -129,8 +134,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       type = 'text',
       variant,
       size = 'default',
-      leadingIcon,
-      trailingIcon,
+      leadingIcon: leadingIconProp,
+      leftIcon,
+      trailingIcon: trailingIconProp,
+      rightIcon,
       prefixText,
       suffixText,
       loading = false,
@@ -160,6 +167,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const leadingIcon = leadingIconProp ?? leftIcon;
+    const trailingIcon = trailingIconProp ?? rightIcon;
     const [showPassword, setShowPassword] = React.useState(false);
     const [internalValue, setInternalValue] = React.useState(
       value !== undefined ? String(value) : defaultValue !== undefined ? String(defaultValue) : ''

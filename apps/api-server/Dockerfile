@@ -61,6 +61,14 @@ ENV NODE_ENV=production
 ENV KALYA_SERVER_HOST="0.0.0.0"
 ENV PORT=3600
 
+# Default Super-Admin configuration (can be configured via container environment)
+ENV KALYA_SUPER_ADMIN_FIRST_NAME="Admin" \
+    KALYA_SUPER_ADMIN_MIDDLE_NAME="" \
+    KALYA_SUPER_ADMIN_LAST_NAME="User" \
+    KALYA_SUPER_ADMIN_USERNAME="admin" \
+    KALYA_SUPER_ADMIN_EMAIL="admin@example.com" \
+    KALYA_SUPER_ADMIN_PASSWORD=""
+
 # Runtime SQLite library and CLI tool
 RUN apk add --no-cache sqlite sqlite-libs libc6-compat
 
@@ -74,5 +82,5 @@ RUN mkdir -p /app/data /app/uploads /app/logs \
 
 EXPOSE 3600
 
-# Starts `tsx src/index.ts` (migrations run automatically on server boot)
+# Starts `tsx src/index.ts` (migrations & super-admin seed run automatically on server boot)
 CMD ["pnpm", "--filter", "@kalya/api-server", "start"]

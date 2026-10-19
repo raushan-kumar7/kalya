@@ -159,4 +159,14 @@ export interface AppConfig {
     vapidSubject: string;
     expoAccessToken: string;
   };
+
+  /** Default Super-Admin account configuration for automated initial seeding */
+  superAdmin: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+  };
 }

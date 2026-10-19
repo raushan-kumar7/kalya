@@ -148,11 +148,28 @@ export const SignIn = ({
   const onSubmit = async (payload: SignInInput) => {
     setServerError(null);
     try {
-      const destination = redirectTo || searchParams?.get('callbackUrl') || '/dashboard';
       const result = await signIn(payload);
 
       if (result.success && result.data) {
         onSuccess?.(result.data);
+
+        const role = result.data.user?.role;
+        const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+
+        let destination = redirectTo || searchParams?.get('callbackUrl');
+
+        if (isAdmin) {
+          // Administrative roles are routed directly to the admin command center
+          if (!destination || destination === '/dashboard' || destination === '/') {
+            destination = '/admin';
+          }
+        } else {
+          // Standard users are routed to their personal finance dashboard
+          if (!destination || destination.startsWith('/admin')) {
+            destination = '/dashboard';
+          }
+        }
+
         router.replace(destination);
       } else if (result.errorMessage) {
         setServerError(result.errorMessage);

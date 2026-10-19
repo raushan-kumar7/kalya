@@ -158,3 +158,46 @@ export interface SubsystemDiagnostics extends SystemHealthReport {
     pid: number;
   };
 }
+
+/**
+ * Summary metadata for an application database table.
+ */
+export interface DbTableSummary {
+  name: string;
+  rowCount: number;
+  columnCount: number;
+}
+
+/**
+ * SQLite table column definition from PRAGMA table_info.
+ */
+export interface DbColumnDefinition {
+  cid: number;
+  name: string;
+  type: string;
+  notnull: number;
+  dflt_value: string | null;
+  pk: number;
+}
+
+/**
+ * Result payload containing paginated raw table records and schema columns.
+ */
+export interface DbTableRecordsResult {
+  table: string;
+  columns: DbColumnDefinition[];
+  records: Record<string, unknown>[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Information on an existing database backup snapshot.
+ */
+export interface DbBackupInfo {
+  filename: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  createdAt: ISOTimestamp;
+}

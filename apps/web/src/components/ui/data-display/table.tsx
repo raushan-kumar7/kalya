@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/states/skeleton';
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-card">
+    <div className="relative w-full overflow-x-auto rounded-md border border-border bg-surface shadow-card">
       <table
         ref={ref}
         className={cn(

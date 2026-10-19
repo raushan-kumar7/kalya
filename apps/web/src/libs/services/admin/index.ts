@@ -119,4 +119,111 @@ export class AdminService {
   static async getDiagnostics(): Promise<SubsystemDiagnostics> {
     return http.get<SubsystemDiagnostics>(ENDPOINTS.ADMIN.SERVICES);
   }
+
+  /**
+   * Retrieves all database tables with live row counts and column totals.
+   */
+  static async getDbTables(): Promise<import('@kalya/types').DbTableSummary[]> {
+    return http.get<import('@kalya/types').DbTableSummary[]>(ENDPOINTS.ADMIN.DATABASE_TABLES);
+  }
+
+  /**
+   * Retrieves schema column definitions for a specific database table.
+   */
+  static async getDbTableSchema(
+    table: string
+  ): Promise<import('@kalya/types').DbColumnDefinition[]> {
+    return http.get<import('@kalya/types').DbColumnDefinition[]>(
+      ENDPOINTS.ADMIN.DATABASE_SCHEMA(table)
+    );
+  }
+
+  /**
+   * Fetches paginated, searchable, and sortable records for a database table.
+   */
+  static async getDbTableRecords(
+    table: string,
+    query?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ): Promise<{
+    records: Record<string, unknown>[];
+    meta?: PaginationMeta;
+  }> {
+    const searchParams = new URLSearchParams();
+    if (query?.page) searchParams.set('page', String(query.page));
+    if (query?.limit) searchParams.set('limit', String(query.limit));
+    if (query?.search) searchParams.set('search', query.search);
+    if (query?.sortBy) searchParams.set('sortBy', query.sortBy);
+    if (query?.sortOrder) searchParams.set('sortOrder', query.sortOrder);
+
+    const qs = searchParams.toString();
+    const url = qs
+      ? `${ENDPOINTS.ADMIN.DATABASE_RECORDS(table)}?${qs}`
+      : ENDPOINTS.ADMIN.DATABASE_RECORDS(table);
+
+    const res = await http.get<Record<string, unknown>[] & { meta?: PaginationMeta }>(url);
+    return {
+      records: Array.isArray(res) ? res : [],
+      meta: (res as unknown as { meta?: PaginationMeta })?.meta,
+    };
+  }
+
+  /**
+   * Lists all existing backup files on disk with timestamps and sizes.
+   */
+  static async getBackups(): Promise<import('@kalya/types').DbBackupInfo[]> {
+    return http.get<import('@kalya/types').DbBackupInfo[]>(ENDPOINTS.ADMIN.BACKUPS);
+  }
+
+  /**
+   * Creates an online hot backup snapshot of the active SQLite database.
+   */
+  static async createBackup(): Promise<import('@kalya/types').DbBackupInfo> {
+    return http.post<import('@kalya/types').DbBackupInfo>(ENDPOINTS.ADMIN.BACKUPS, {});
+  }
+
+  /**
+   * Restores the database from an existing backup snapshot file.
+   */
+  static async restoreBackup(
+    filename: string
+  ): Promise<{ success: boolean; message: string; preRestoreBackup: string }> {
+    return http.post<{ success: boolean; message: string; preRestoreBackup: string }>(
+      ENDPOINTS.ADMIN.BACKUP_RESTORE,
+      { filename }
+    );
+  }
+
+  /**
+   * Uploads an external backup file (.sqlite / .db) to the server.
+   */
+  static async uploadBackup(file: File): Promise<import('@kalya/types').DbBackupInfo> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return http.post<import('@kalya/types').DbBackupInfo>(ENDPOINTS.ADMIN.BACKUP_UPLOAD, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  /**
+   * Deletes a backup snapshot file from disk.
+   */
+  static async deleteBackup(filename: string): Promise<{ success: boolean }> {
+    return http.delete<{ success: boolean }>(ENDPOINTS.ADMIN.BACKUP_DELETE(filename));
+  }
+
+  /**
+   * Generates the API download URL for a backup snapshot.
+   */
+  static getBackupDownloadUrl(filename: string): string {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    return `${baseUrl}${ENDPOINTS.ADMIN.BACKUP_DOWNLOAD(filename)}`;
+  }
 }

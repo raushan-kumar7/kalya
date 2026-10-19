@@ -1,7 +1,11 @@
+import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, unlinkSync } from 'node:fs';
+import path from 'node:path';
+import { env, findRoot } from '@kalya/env';
 import {
   and,
   asc,
   count,
+  Database,
   DatabaseClient,
   desc,
   eq,
@@ -18,12 +22,17 @@ import type {
   AdminOverviewStats,
   AdminUserDetail,
   AuditLog,
+  DbBackupInfo,
+  DbColumnDefinition,
+  DbTableRecordsResult,
+  DbTableSummary,
   HealthCheckRegistry,
   SubsystemDiagnostics,
   User,
 } from '@kalya/types';
 import type {
   AdminAuditLogsQueryInput,
+  AdminDbRecordsQueryInput,
   AdminUsersQueryInput,
   UpdateUserRoleInput,
   UpdateUserStatusInput,
@@ -550,5 +559,355 @@ export class AdminService {
         pid: process.pid,
       },
     };
+  }
+
+  /**
+   * Resolves or creates the local backup archive directory.
+   */
+  getBackupsDir(): string {
+    const root = findRoot();
+    const dir = process.env.BACKUP_DIR || path.join(root, 'backups');
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+    return dir;
+  }
+
+  /**
+   * Retrieves summary list of all database tables with live row counts and column totals.
+   */
+  async getDbTables(): Promise<DbTableSummary[]> {
+    const client = (this.db as unknown as { $client: Database.Database }).$client;
+    if (!client) {
+      throw new Error('Underlying SQLite database driver not accessible');
+    }
+
+    const rows = client
+      .prepare(
+        `SELECT name FROM sqlite_master 
+         WHERE type = 'table' 
+           AND name NOT LIKE 'sqlite_%' 
+           AND name NOT LIKE 'drizzle_%' 
+           AND name NOT LIKE '_litestream%' 
+         ORDER BY name ASC`
+      )
+      .all() as { name: string }[];
+
+    const summaries: DbTableSummary[] = [];
+    for (const { name } of rows) {
+      try {
+        const countRes = client.prepare(`SELECT count(*) as count FROM "${name}"`).get() as {
+          count: number;
+        };
+        const cols = client.prepare(`PRAGMA table_info("${name}")`).all() as unknown[];
+        summaries.push({
+          name,
+          rowCount: countRes?.count ?? 0,
+          columnCount: cols.length,
+        });
+      } catch {
+        // Skip unreadable internal tables
+      }
+    }
+
+    return summaries;
+  }
+
+  /**
+   * Retrieves column definitions and metadata for a specific database table.
+   */
+  async getDbTableSchema(tableName: string): Promise<DbColumnDefinition[]> {
+    const client = (this.db as unknown as { $client: Database.Database }).$client;
+    if (!client) throw new Error('Underlying SQLite database driver not accessible');
+
+    const tableExists = client
+      .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
+      .get(tableName);
+
+    if (!tableExists) {
+      throw new NotFoundError(`Database table "${tableName}" does not exist`);
+    }
+
+    const columns = client
+      .prepare(`PRAGMA table_info("${tableName}")`)
+      .all() as DbColumnDefinition[];
+    return columns;
+  }
+
+  /**
+   * Fetches paginated, searchable, and sortable records for any database table in the Studio.
+   */
+  async getDbTableRecords(
+    tableName: string,
+    query: AdminDbRecordsQueryInput
+  ): Promise<DbTableRecordsResult> {
+    const client = (this.db as unknown as { $client: Database.Database }).$client;
+    if (!client) throw new Error('Underlying SQLite database driver not accessible');
+
+    const tableExists = client
+      .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
+      .get(tableName);
+
+    if (!tableExists) {
+      throw new NotFoundError(`Database table "${tableName}" does not exist`);
+    }
+
+    const columns = client
+      .prepare(`PRAGMA table_info("${tableName}")`)
+      .all() as DbColumnDefinition[];
+    const columnNames = columns.map((c) => c.name);
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const offset = (page - 1) * limit;
+
+    const whereClauses: string[] = [];
+    const params: unknown[] = [];
+
+    if (query.search) {
+      const searchClauses = columnNames.map((col) => `"${col}" LIKE ?`);
+      whereClauses.push(`(${searchClauses.join(' OR ')})`);
+      const searchParam = `%${query.search}%`;
+      for (let i = 0; i < columnNames.length; i++) {
+        params.push(searchParam);
+      }
+    }
+
+    const whereStr = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const countQuery = `SELECT count(*) as total FROM "${tableName}" ${whereStr}`;
+    const countRes = client.prepare(countQuery).get(...params) as { total: number };
+    const total = countRes?.total ?? 0;
+
+    let orderByStr = '';
+    if (query.sortBy && columnNames.includes(query.sortBy)) {
+      const order = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
+      orderByStr = `ORDER BY "${query.sortBy}" ${order}`;
+    } else {
+      const pkCol = columns.find((c) => c.pk === 1) || columns[0];
+      if (pkCol) {
+        orderByStr = `ORDER BY "${pkCol.name}" DESC`;
+      }
+    }
+
+    const recordsQuery = `SELECT * FROM "${tableName}" ${whereStr} ${orderByStr} LIMIT ? OFFSET ?`;
+    const records = client.prepare(recordsQuery).all(...params, limit, offset) as Record<
+      string,
+      unknown
+    >[];
+
+    return {
+      table: tableName,
+      columns,
+      records,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Lists all existing backup files on disk with timestamps and sizes.
+   */
+  async listBackups(): Promise<DbBackupInfo[]> {
+    const backupsDir = this.getBackupsDir();
+    const files = readdirSync(backupsDir);
+    const backups: DbBackupInfo[] = [];
+
+    for (const file of files) {
+      if (file.endsWith('.sqlite') || file.endsWith('.db') || file.endsWith('.tar.gz')) {
+        const fullPath = path.join(backupsDir, file);
+        const stats = statSync(fullPath);
+        backups.push({
+          filename: file,
+          sizeBytes: stats.size,
+          sizeFormatted: this.formatBytes(stats.size),
+          createdAt: stats.mtime.toISOString(),
+        });
+      }
+    }
+
+    return backups.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+
+  /**
+   * Creates an online hot backup copy of the active database with WAL checkpointing.
+   */
+  async createBackup(actor: User, clientContext?: ClientAuditContext): Promise<DbBackupInfo> {
+    const client = (this.db as unknown as { $client: Database.Database }).$client;
+    if (!client) throw new Error('Underlying SQLite database driver not accessible');
+
+    const backupsDir = this.getBackupsDir();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `kalya_backup_${timestamp}.sqlite`;
+    const destPath = path.join(backupsDir, filename);
+
+    // Flush and checkpoint WAL frames
+    try {
+      client.pragma('wal_checkpoint(TRUNCATE)');
+    } catch {
+      // Non-fatal
+    }
+
+    // Execute SQLite hot backup
+    await client.backup(destPath);
+
+    const stats = statSync(destPath);
+    const backupInfo: DbBackupInfo = {
+      filename,
+      sizeBytes: stats.size,
+      sizeFormatted: this.formatBytes(stats.size),
+      createdAt: stats.mtime.toISOString(),
+    };
+
+    // Record audit log
+    await this.auditLogService.record({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      actorRole: actor.role,
+      action: 'DATABASE_BACKUP_CREATED',
+      entityType: 'DATABASE',
+      entityId: filename,
+      severity: 'INFO',
+      description: `Manual database backup created: ${filename} (${backupInfo.sizeFormatted})`,
+      metadata: {
+        filename,
+        sizeBytes: stats.size,
+        destination: destPath,
+      },
+      ipAddress: clientContext?.ip,
+      userAgent: clientContext?.userAgent,
+      status: 'SUCCESS',
+    });
+
+    return backupInfo;
+  }
+
+  /**
+   * Restores the database from an existing backup snapshot file.
+   * Automatically takes a pre-restore checkpoint to guarantee rollback safety.
+   */
+  async restoreBackup(
+    filename: string,
+    actor: User,
+    clientContext?: ClientAuditContext
+  ): Promise<{ success: boolean; message: string; preRestoreBackup: string }> {
+    if (path.basename(filename) !== filename) {
+      throw new BadRequestError('Invalid backup filename', 'INVALID_FILENAME');
+    }
+
+    const backupsDir = this.getBackupsDir();
+    const sourcePath = path.join(backupsDir, filename);
+
+    if (!existsSync(sourcePath)) {
+      throw new NotFoundError(`Backup file "${filename}" does not exist in backups directory`);
+    }
+
+    const client = (this.db as unknown as { $client: Database.Database }).$client;
+    if (!client) throw new Error('Underlying SQLite database driver not accessible');
+
+    // 1. Create emergency pre-restore snapshot
+    const preRestoreFilename = `pre_restore_safety_${new Date().toISOString().replace(/[:.]/g, '-')}.sqlite`;
+    const preRestorePath = path.join(backupsDir, preRestoreFilename);
+
+    try {
+      client.pragma('wal_checkpoint(TRUNCATE)');
+    } catch {
+      // Non-fatal
+    }
+
+    await client.backup(preRestorePath);
+
+    // 2. Validate source database integrity before restoration
+    const sourceDb = new Database(sourcePath, { readonly: true });
+    try {
+      sourceDb.prepare('SELECT 1').get();
+      sourceDb.close();
+
+      const liveDbPath = env.database.url;
+      copyFileSync(sourcePath, liveDbPath);
+
+      try {
+        client.pragma('wal_checkpoint(TRUNCATE)');
+      } catch {
+        // Non-fatal
+      }
+    } catch (err) {
+      throw new Error(
+        `Failed to restore database from "${filename}": ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+
+    // 3. Record audit trail
+    await this.auditLogService.record({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      actorRole: actor.role,
+      action: 'DATABASE_RESTORED',
+      entityType: 'DATABASE',
+      entityId: filename,
+      severity: 'WARN',
+      description: `Emergency database restore executed from backup: ${filename}. Pre-restore snapshot created at: ${preRestoreFilename}`,
+      metadata: {
+        restoredFrom: filename,
+        preRestoreSafetySnapshot: preRestoreFilename,
+      },
+      ipAddress: clientContext?.ip,
+      userAgent: clientContext?.userAgent,
+      status: 'SUCCESS',
+    });
+
+    return {
+      success: true,
+      message: `Database successfully restored from ${filename}`,
+      preRestoreBackup: preRestoreFilename,
+    };
+  }
+
+  /**
+   * Deletes a backup snapshot file from disk.
+   */
+  async deleteBackup(
+    filename: string,
+    actor: User,
+    clientContext?: ClientAuditContext
+  ): Promise<{ success: boolean }> {
+    if (path.basename(filename) !== filename) {
+      throw new BadRequestError('Invalid backup filename', 'INVALID_FILENAME');
+    }
+
+    const backupsDir = this.getBackupsDir();
+    const targetPath = path.join(backupsDir, filename);
+
+    if (!existsSync(targetPath)) {
+      throw new NotFoundError(`Backup file "${filename}" not found`);
+    }
+
+    unlinkSync(targetPath);
+
+    await this.auditLogService.record({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      actorRole: actor.role,
+      action: 'DATABASE_BACKUP_DELETED',
+      entityType: 'DATABASE',
+      entityId: filename,
+      severity: 'INFO',
+      description: `Backup archive deleted: ${filename}`,
+      metadata: { filename },
+      ipAddress: clientContext?.ip,
+      userAgent: clientContext?.userAgent,
+      status: 'SUCCESS',
+    });
+
+    return { success: true };
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
 }

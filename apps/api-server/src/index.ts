@@ -3,6 +3,7 @@ import { env } from '@kalya/env';
 import { log } from '@/logger';
 import { runMigrations } from '@kalya/db';
 import { getMailer } from '@/libs/mail';
+import { seedSuperAdmin } from './scripts/seed-super-admin';
 
 const app = buildApp();
 
@@ -68,7 +69,10 @@ async function start(): Promise<void> {
     // 1. Ensure database schema is up-to-date with latest migrations
     runMigrations();
 
-    // 2. Start HTTP listener
+    // 2. Ensure default Super-Admin user is seeded
+    await seedSuperAdmin();
+
+    // 3. Start HTTP listener
     const address = await app.listen({
       host: env.server.host,
       port: env.server.port,

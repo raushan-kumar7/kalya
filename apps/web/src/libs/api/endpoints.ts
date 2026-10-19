@@ -257,6 +257,14 @@ export const ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `${ROOT}/admin/users/${id}/status`,
     ACTIVITIES: `${ROOT}/admin/activities`,
     SERVICES: `${ROOT}/admin/services`,
+    DATABASE_TABLES: `${ROOT}/admin/database/tables`,
+    DATABASE_SCHEMA: (table: string) => `${ROOT}/admin/database/tables/${table}/schema`,
+    DATABASE_RECORDS: (table: string) => `${ROOT}/admin/database/tables/${table}/records`,
+    BACKUPS: `${ROOT}/admin/database/backups`,
+    BACKUP_DOWNLOAD: (filename: string) => `${ROOT}/admin/database/backups/${filename}/download`,
+    BACKUP_RESTORE: `${ROOT}/admin/database/backups/restore`,
+    BACKUP_UPLOAD: `${ROOT}/admin/database/backups/upload`,
+    BACKUP_DELETE: (filename: string) => `${ROOT}/admin/database/backups/${filename}`,
   },
 
   // System Health & Monitoring (mounted at server root, not under /api/v1)

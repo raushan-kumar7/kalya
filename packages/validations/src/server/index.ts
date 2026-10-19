@@ -102,6 +102,41 @@ export const envSchema = databaseEnvSchema.extend({
   'KALYA_PUSH.VAPID_PRIVATE_KEY': z.string().optional().default(''),
   'KALYA_PUSH.VAPID_SUBJECT': z.string().optional().default('mailto:admin@kalya.io'),
   'KALYA_PUSH.EXPO_ACCESS_TOKEN': z.string().optional().default(''),
+
+  // ---- Seed Super Admin Account ----
+  'KALYA_SUPER_ADMIN.FIRST_NAME': z
+    .string()
+    .optional()
+    .default('Admin')
+    .transform((val) => (val && val.trim().length > 0 ? val.trim() : 'Admin')),
+  'KALYA_SUPER_ADMIN.MIDDLE_NAME': z
+    .string()
+    .optional()
+    .default('')
+    .transform((val) => (val ? val.trim() : '')),
+  'KALYA_SUPER_ADMIN.LAST_NAME': z
+    .string()
+    .optional()
+    .default('User')
+    .transform((val) => (val && val.trim().length > 0 ? val.trim() : 'User')),
+  'KALYA_SUPER_ADMIN.USERNAME': z
+    .string()
+    .optional()
+    .default('admin')
+    .transform((val) => (val && val.trim().length >= 3 ? val.trim().toLowerCase() : 'admin')),
+  'KALYA_SUPER_ADMIN.EMAIL': z
+    .string()
+    .optional()
+    .default('admin@example.com')
+    .transform((val) => {
+      const trimmed = val?.trim().toLowerCase();
+      return trimmed && trimmed.includes('@') ? trimmed : 'admin@example.com';
+    }),
+  'KALYA_SUPER_ADMIN.PASSWORD': z
+    .string()
+    .optional()
+    .default('')
+    .transform((val) => (val ? val.trim() : '')),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;

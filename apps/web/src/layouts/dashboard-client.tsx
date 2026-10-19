@@ -12,11 +12,16 @@ export function DashboardLayoutClient({ children }: Readonly<{ children: ReactNo
   const { user, signOut, isAuthenticated, isInitialized, isLoading } = useAuth();
 
   useEffect(() => {
-    // Only redirect if auth verification has completed and user is definitely unauthenticated
-    if (isInitialized && !isAuthenticated && !isLoading) {
-      router.replace('/auth/sign-in');
+    // Only redirect if auth verification has completed
+    if (isInitialized && !isLoading) {
+      if (!isAuthenticated) {
+        router.replace('/auth/sign-in');
+      } else if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
+        // Administrative roles are directed to the admin command center
+        router.replace('/admin');
+      }
     }
-  }, [isInitialized, isAuthenticated, isLoading, router]);
+  }, [isInitialized, isAuthenticated, isLoading, user?.role, router]);
 
   // While auth store is initializing, show a graceful loader to prevent flash/premature redirect
   if (!isInitialized || isLoading) {
@@ -30,8 +35,8 @@ export function DashboardLayoutClient({ children }: Readonly<{ children: ReactNo
     );
   }
 
-  // If initialized and not authenticated, do not render dashboard while redirecting
-  if (!isAuthenticated) {
+  // Dashboard is strictly for normal users; unauthenticated or admin accounts do not render
+  if (!isAuthenticated || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
     return null;
   }
 

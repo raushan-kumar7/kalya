@@ -108,6 +108,15 @@ function createConfig(): AppConfig {
       vapidSubject: rawEnv['KALYA_PUSH.VAPID_SUBJECT'],
       expoAccessToken: rawEnv['KALYA_PUSH.EXPO_ACCESS_TOKEN'],
     },
+
+    superAdmin: {
+      firstName: rawEnv['KALYA_SUPER_ADMIN.FIRST_NAME'],
+      middleName: rawEnv['KALYA_SUPER_ADMIN.MIDDLE_NAME'] || undefined,
+      lastName: rawEnv['KALYA_SUPER_ADMIN.LAST_NAME'],
+      username: rawEnv['KALYA_SUPER_ADMIN.USERNAME'],
+      email: rawEnv['KALYA_SUPER_ADMIN.EMAIL'],
+      password: rawEnv['KALYA_SUPER_ADMIN.PASSWORD'],
+    },
   };
 
   return Object.freeze(config);

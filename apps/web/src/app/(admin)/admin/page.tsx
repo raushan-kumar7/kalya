@@ -13,10 +13,15 @@ import {
   Mail,
   RefreshCw,
   Server,
+  ShieldCheck,
   UserCheck,
   Users,
   UserX,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/data-display/badge';
+import { Button } from '@/components/ui/forms/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/data-display/card';
 
 export default function AdminOverviewPage() {
   const {
@@ -27,7 +32,7 @@ export default function AdminOverviewPage() {
   } = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: () => AdminService.getOverview(),
-    refetchInterval: 15000, // Refresh every 15s
+    refetchInterval: 15000,
   });
 
   const { data: diagnostics, isLoading: isDiagnosticsLoading } = useQuery({
@@ -49,350 +54,411 @@ export default function AdminOverviewPage() {
       {/* Header with Title and Refresh Trigger */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+          <h1 className="text-display-md font-display font-bold tracking-tight text-text-primary flex items-center gap-3">
             Command Center
-            <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+            <Badge
+              variant="subtle"
+              size="sm"
+              dot
+              dotColor="primary"
+              className="font-semibold uppercase tracking-wider text-[11px]"
+            >
               Live
-            </span>
+            </Badge>
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-body-sm text-text-secondary">
             Platform governance, user metrics, real-time subsystem telemetry, and security events.
           </p>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => refetchOverview()}
           disabled={isRefetching}
-          className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 hover:text-white disabled:opacity-50"
+          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
           {isRefetching ? 'Refreshing…' : 'Refresh Metrics'}
-        </button>
+        </Button>
       </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Users */}
-        <div className="rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Users</span>
-            <div className="rounded-lg bg-blue-500/10 p-2 text-blue-400">
-              <Users className="h-4 w-4" />
+        <Card variant="default">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-caption font-medium text-text-secondary">Total Users</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                <Users className="h-4 w-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {isLoading ? '—' : overview?.totalUsers.toLocaleString()}
-            </span>
-            <span className="text-xs text-emerald-400 font-medium">
-              +{overview?.newUsersThisWeek ?? 0} this week
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500">Registered platform profiles</p>
-        </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-display-md font-display font-extrabold text-text-primary tracking-tight font-numeric">
+                {isLoading ? '—' : overview?.totalUsers.toLocaleString()}
+              </span>
+              <span className="text-caption text-success font-medium">
+                +{overview?.newUsersThisWeek ?? 0} this week
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-text-muted">Registered platform profiles</p>
+          </CardContent>
+        </Card>
 
         {/* Active Users Today */}
-        <div className="rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Active (24h)</span>
-            <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-400">
-              <UserCheck className="h-4 w-4" />
+        <Card variant="default">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-caption font-medium text-text-secondary">Active (24h)</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success-subtle text-success">
+                <UserCheck className="h-4 w-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {isLoading ? '—' : overview?.activeUsersToday.toLocaleString()}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500">Authenticated requests in last 24h</p>
-        </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-display-md font-display font-extrabold text-text-primary tracking-tight font-numeric">
+                {isLoading ? '—' : overview?.activeUsersToday.toLocaleString()}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-text-muted">Authenticated requests in last 24h</p>
+          </CardContent>
+        </Card>
 
         {/* Suspended Users */}
-        <div className="rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Suspended / Banned</span>
-            <div className="rounded-lg bg-amber-500/10 p-2 text-amber-400">
-              <UserX className="h-4 w-4" />
+        <Card variant="default">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-caption font-medium text-text-secondary">
+                Suspended / Banned
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning-subtle text-warning">
+                <UserX className="h-4 w-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {isLoading ? '—' : overview?.suspendedUsers.toLocaleString()}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500">Accounts restricted by admin</p>
-        </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-display-md font-display font-extrabold text-text-primary tracking-tight font-numeric">
+                {isLoading ? '—' : overview?.suspendedUsers.toLocaleString()}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-text-muted">Accounts restricted by admin</p>
+          </CardContent>
+        </Card>
 
         {/* Platform Status */}
-        <div className="rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Platform State</span>
-            <div
-              className={`rounded-lg p-2 ${
-                overview?.systemStatus === 'operational'
-                  ? 'bg-emerald-500/10 text-emerald-400'
-                  : 'bg-rose-500/10 text-rose-400'
-              }`}
-            >
-              <Server className="h-4 w-4" />
+        <Card variant="default">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-caption font-medium text-text-secondary">Platform State</span>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                  overview?.systemStatus === 'operational'
+                    ? 'bg-success-subtle text-success'
+                    : 'bg-danger-subtle text-danger'
+                }`}
+              >
+                <Server className="h-4 w-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span
-              className={`text-xl font-bold tracking-tight uppercase ${
-                overview?.systemStatus === 'operational' ? 'text-emerald-400' : 'text-rose-400'
-              }`}
-            >
-              {isLoading ? '—' : overview?.systemStatus}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500">
-            {diagnostics?.uptimeSeconds
-              ? `Uptime: ${Math.floor(diagnostics.uptimeSeconds / 3600)}h ${Math.floor(
-                  (diagnostics.uptimeSeconds % 3600) / 60
-                )}m`
-              : 'Diagnostics active'}
-          </p>
-        </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <Badge
+                variant={overview?.systemStatus === 'operational' ? 'success' : 'danger'}
+                size="md"
+                dot
+                dotColor={overview?.systemStatus === 'operational' ? 'success' : 'danger'}
+                className="uppercase font-semibold tracking-wider font-numeric"
+              >
+                {isLoading ? 'Checking' : overview?.systemStatus}
+              </Badge>
+            </div>
+            <p className="mt-1 text-[11px] text-text-muted">
+              {diagnostics?.uptimeSeconds
+                ? `Uptime: ${Math.floor(diagnostics.uptimeSeconds / 3600)}h ${Math.floor(
+                    (diagnostics.uptimeSeconds % 3600) / 60
+                  )}m`
+                : 'Diagnostics active'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Subsystem Health Status Matrix */}
-      <div className="rounded-2xl border border-white/[0.08] bg-slate-900/40 p-6 backdrop-blur-xl">
-        <div className="flex items-center justify-between mb-6">
+      <Card variant="raised">
+        <CardHeader
+          className="pb-4 border-b border-border"
+          action={
+            <Button variant="ghost" size="sm" asChild>
+              <Link
+                href="/admin/services"
+                className="gap-1.5 text-primary text-caption font-semibold"
+              >
+                Deep Diagnostics <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          }
+        >
           <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Cpu className="h-4 w-4 text-rose-400" />
+            <CardTitle className="text-body-md font-display flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-primary" />
               Subsystem Live Health Matrix
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            </CardTitle>
+            <p className="text-caption text-text-secondary mt-0.5">
               Continuously monitored dependency states and connection latencies.
             </p>
           </div>
-          <Link
-            href="/admin/services"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 transition"
-          >
-            Deep Diagnostics <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        </CardHeader>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Database */}
-          <div className="rounded-xl border border-white/[0.06] bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                <Database className="h-4 w-4 text-blue-400" /> Database (SQLite)
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                  diagnostics?.checks.database?.status === 'healthy'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                }`}
-              >
-                {diagnostics?.checks.database?.status ?? 'Checking'}
-              </span>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Database */}
+            <div className="rounded-xl border border-border bg-surface-raised p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-caption font-medium text-text-primary">
+                  <Database className="h-4 w-4 text-primary" /> Database (SQLite)
+                </span>
+                <Badge
+                  variant={
+                    diagnostics?.checks.database?.status === 'healthy' ? 'success' : 'danger'
+                  }
+                  size="sm"
+                >
+                  {diagnostics?.checks.database?.status ?? 'Checking'}
+                </Badge>
+              </div>
+              <div className="mt-3 flex justify-between text-caption text-text-secondary">
+                <span>Mode: WAL</span>
+                <span className="font-numeric font-semibold text-text-primary">
+                  {diagnostics?.checks.database?.latencyMs !== undefined
+                    ? `${diagnostics.checks.database.latencyMs} ms`
+                    : '—'}
+                </span>
+              </div>
             </div>
-            <div className="mt-3 flex justify-between text-xs text-slate-400">
-              <span>Mode: WAL</span>
-              <span className="font-mono text-slate-200">
-                {diagnostics?.checks.database?.latencyMs !== undefined
-                  ? `${diagnostics.checks.database.latencyMs} ms`
-                  : '—'}
-              </span>
+
+            {/* File Storage */}
+            <div className="rounded-xl border border-border bg-surface-raised p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-caption font-medium text-text-primary">
+                  <HardDrive className="h-4 w-4 text-accent" /> Local Storage
+                </span>
+                <Badge
+                  variant={diagnostics?.checks.storage?.status === 'healthy' ? 'success' : 'danger'}
+                  size="sm"
+                >
+                  {diagnostics?.checks.storage?.status ?? 'Checking'}
+                </Badge>
+              </div>
+              <div className="mt-3 flex justify-between text-caption text-text-secondary">
+                <span>Uploads: Writable</span>
+                <span className="font-numeric font-semibold text-text-primary">
+                  {diagnostics?.checks.storage?.latencyMs !== undefined
+                    ? `${diagnostics.checks.storage.latencyMs} ms`
+                    : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Mailer */}
+            <div className="rounded-xl border border-border bg-surface-raised p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-caption font-medium text-text-primary">
+                  <Mail className="h-4 w-4 text-accent-strong" /> Mail Server
+                </span>
+                <Badge
+                  variant={diagnostics?.checks.mail?.status === 'healthy' ? 'success' : 'warning'}
+                  size="sm"
+                >
+                  {diagnostics?.checks.mail?.status ?? 'Checking'}
+                </Badge>
+              </div>
+              <div className="mt-3 flex justify-between text-caption text-text-secondary">
+                <span>Provider: SMTP</span>
+                <span className="font-numeric font-semibold text-text-primary">
+                  {diagnostics?.checks.mail?.latencyMs !== undefined
+                    ? `${diagnostics.checks.mail.latencyMs} ms`
+                    : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Job Worker */}
+            <div className="rounded-xl border border-border bg-surface-raised p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-caption font-medium text-text-primary">
+                  <Clock className="h-4 w-4 text-primary" /> Job Workers
+                </span>
+                <Badge variant="subtle" size="sm" className="font-numeric">
+                  Active ({diagnostics?.jobQueue?.activeWorkers ?? 1})
+                </Badge>
+              </div>
+              <div className="mt-3 flex justify-between text-caption text-text-secondary font-numeric">
+                <span>Pending: {diagnostics?.jobQueue?.queueDepths.pending ?? 0}</span>
+                <span className="text-text-primary font-medium">
+                  Failed: {diagnostics?.jobQueue?.queueDepths.failed ?? 0}
+                </span>
+              </div>
             </div>
           </div>
-
-          {/* File Storage */}
-          <div className="rounded-xl border border-white/[0.06] bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                <HardDrive className="h-4 w-4 text-purple-400" /> Local Storage
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                  diagnostics?.checks.storage?.status === 'healthy'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                }`}
-              >
-                {diagnostics?.checks.storage?.status ?? 'Checking'}
-              </span>
-            </div>
-            <div className="mt-3 flex justify-between text-xs text-slate-400">
-              <span>Uploads: Writable</span>
-              <span className="font-mono text-slate-200">
-                {diagnostics?.checks.storage?.latencyMs !== undefined
-                  ? `${diagnostics.checks.storage.latencyMs} ms`
-                  : '—'}
-              </span>
-            </div>
-          </div>
-
-          {/* Mailer */}
-          <div className="rounded-xl border border-white/[0.06] bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                <Mail className="h-4 w-4 text-amber-400" /> Mail Server (SMTP)
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                  diagnostics?.checks.mail?.status === 'healthy'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                }`}
-              >
-                {diagnostics?.checks.mail?.status ?? 'Checking'}
-              </span>
-            </div>
-            <div className="mt-3 flex justify-between text-xs text-slate-400">
-              <span>Provider: SMTP</span>
-              <span className="font-mono text-slate-200">
-                {diagnostics?.checks.mail?.latencyMs !== undefined
-                  ? `${diagnostics.checks.mail.latencyMs} ms`
-                  : '—'}
-              </span>
-            </div>
-          </div>
-
-          {/* Job Worker */}
-          <div className="rounded-xl border border-white/[0.06] bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                <Clock className="h-4 w-4 text-emerald-400" /> Job Workers
-              </span>
-              <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                Active ({diagnostics?.jobQueue?.activeWorkers ?? 1})
-              </span>
-            </div>
-            <div className="mt-3 flex justify-between text-xs text-slate-400">
-              <span>Pending: {diagnostics?.jobQueue?.queueDepths.pending ?? 0}</span>
-              <span className="text-slate-300 font-medium">
-                Failed: {diagnostics?.jobQueue?.queueDepths.failed ?? 0}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Two Column Section: Quick Actions & Recent Platform Activities */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left Column: Quick Actions & Navigation Cards */}
         <div className="space-y-4">
-          <h2 className="text-base font-bold text-white">Administrative Actions</h2>
+          <h2 className="text-body-md font-display font-bold text-text-primary">
+            Administrative Actions
+          </h2>
+
+          <Link
+            href="/admin/database"
+            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-primary/40 hover:bg-surface-raised group shadow-card"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-subtle text-primary group-hover:scale-105 transition-transform">
+                <Database className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-caption font-bold text-text-primary group-hover:text-primary transition-colors">
+                  Database Studio & Disaster Recovery
+                </h3>
+                <p className="text-[11px] text-text-secondary">
+                  Live SQLite tables, schemas, hot snapshots
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary group-hover:translate-x-0.5 transition" />
+          </Link>
 
           <Link
             href="/admin/users"
-            className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 transition hover:border-rose-500/40 hover:bg-slate-900/90 group"
+            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-primary/40 hover:bg-surface-raised group shadow-card"
           >
             <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 group-hover:scale-105 transition-transform">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-subtle text-accent-strong group-hover:scale-105 transition-transform">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white group-hover:text-rose-300 transition-colors">
+                <h3 className="text-caption font-bold text-text-primary group-hover:text-accent-strong transition-colors">
                   Manage Users & Roles
                 </h3>
-                <p className="text-xs text-slate-400">Promote roles, suspend, and view accounts</p>
+                <p className="text-[11px] text-text-secondary">
+                  Promote roles, suspend, and view accounts
+                </p>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-rose-400 group-hover:translate-x-0.5 transition" />
+            <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-accent-strong group-hover:translate-x-0.5 transition" />
           </Link>
 
           <Link
             href="/admin/activity"
-            className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 transition hover:border-rose-500/40 hover:bg-slate-900/90 group"
+            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-primary/40 hover:bg-surface-raised group shadow-card"
           >
             <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-105 transition-transform">
-                <Activity className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-subtle text-primary group-hover:scale-105 transition-transform">
+                <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white group-hover:text-amber-300 transition-colors">
+                <h3 className="text-caption font-bold text-text-primary group-hover:text-primary transition-colors">
                   Platform Audit Trail
                 </h3>
-                <p className="text-xs text-slate-400">Security events and user actions</p>
+                <p className="text-[11px] text-text-secondary">Security events and user actions</p>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition" />
+            <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary group-hover:translate-x-0.5 transition" />
           </Link>
 
           <Link
             href="/admin/services"
-            className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-slate-900/60 p-5 transition hover:border-rose-500/40 hover:bg-slate-900/90 group"
+            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-primary/40 hover:bg-surface-raised group shadow-card"
           >
             <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-raised text-text-secondary group-hover:scale-105 transition-transform border border-border">
                 <Cpu className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors">
+                <h3 className="text-caption font-bold text-text-primary group-hover:text-primary transition-colors">
                   Subsystem Diagnostics
                 </h3>
-                <p className="text-xs text-slate-400">SQLite metrics, memory, queues</p>
+                <p className="text-[11px] text-text-secondary">
+                  Memory stats, SQLite WAL status, queues
+                </p>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition" />
+            <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary group-hover:translate-x-0.5 transition" />
           </Link>
         </div>
 
         {/* Right Column: Recent Activities Stream */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/[0.08] bg-slate-900/40 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-5">
+        <Card variant="default" className="lg:col-span-2">
+          <CardHeader
+            className="pb-4 border-b border-border"
+            action={
+              <Button variant="ghost" size="sm" asChild>
+                <Link
+                  href="/admin/activity"
+                  className="gap-1.5 text-primary text-caption font-semibold"
+                >
+                  View All <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            }
+          >
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Activity className="h-4 w-4 text-rose-400" /> Recent Platform Activity
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <CardTitle className="text-body-md font-display flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" /> Recent Platform Activity
+              </CardTitle>
+              <p className="text-caption text-text-secondary mt-0.5">
                 Latest recorded security and system events.
               </p>
             </div>
-            <Link
-              href="/admin/activity"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 transition"
-            >
-              View All <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+          </CardHeader>
 
-          <div className="divide-y divide-white/[0.06]">
-            {!activitiesData?.logs || activitiesData.logs.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500">
-                No activity events recorded yet.
-              </div>
-            ) : (
-              activitiesData.logs.map((log) => (
-                <div key={log.id} className="py-3.5 flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          log.severity === 'ERROR' || log.severity === 'CRITICAL'
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                            : log.severity === 'WARN'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        {log.severity}
-                      </span>
-                      <span className="font-mono text-xs font-semibold text-slate-200">
-                        {log.action}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400">{log.description}</p>
-                    {log.actorEmail && (
-                      <span className="text-[11px] text-slate-500">Actor: {log.actorEmail}</span>
-                    )}
-                  </div>
-                  <span className="text-[11px] font-mono text-slate-500 whitespace-nowrap">
-                    {new Date(log.createdAt).toLocaleTimeString()}
-                  </span>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border/60">
+              {!activitiesData?.logs || activitiesData.logs.length === 0 ? (
+                <div className="py-8 text-center text-caption text-text-muted">
+                  No activity events recorded yet.
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              ) : (
+                activitiesData.logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-4 flex items-start justify-between gap-4 hover:bg-surface-raised/40 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            log.severity === 'ERROR' || log.severity === 'CRITICAL'
+                              ? 'danger'
+                              : log.severity === 'WARN'
+                                ? 'warning'
+                                : 'secondary'
+                          }
+                          size="sm"
+                          className="font-numeric uppercase tracking-wider text-[10px]"
+                        >
+                          {log.severity}
+                        </Badge>
+                        <span className="font-numeric text-caption font-semibold text-text-primary">
+                          {log.action}
+                        </span>
+                      </div>
+                      <p className="text-caption text-text-secondary">{log.description}</p>
+                      {log.actorEmail && (
+                        <span className="text-[11px] font-numeric text-text-muted">
+                          Actor: {log.actorEmail}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-numeric text-text-muted whitespace-nowrap">
+                      {new Date(log.createdAt).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
