@@ -2,18 +2,7 @@
 
 import React, { useState } from 'react';
 import { formatInr, roundMoney } from '@kalya/utils';
-import {
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle2,
-  DollarSign,
-  IndianRupee,
-  Scale,
-  Sparkles,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import {
   Button,
   Field,

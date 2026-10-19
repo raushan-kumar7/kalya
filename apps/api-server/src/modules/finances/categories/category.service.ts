@@ -1,4 +1,4 @@
-import { DatabaseClient, and, eq, category, bucket } from '@kalya/db';
+import { and, eq, category, bucket } from '@kalya/db';
 import { CreateCategoryDto, UpdateCategoryDto } from '@kalya/types';
 import { BaseFinanceService } from '../common/base-finance.service';
 import { ConflictError } from '@/errors';

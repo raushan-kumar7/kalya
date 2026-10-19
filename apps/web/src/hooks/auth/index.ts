@@ -16,7 +16,6 @@ import type {
   AvailabilityResponse,
   AvailabilityStatus,
   ChangePasswordDto,
-  CheckAvailabilityDto,
   ForgotPasswordDto,
   ResetPasswordDto,
   Session,

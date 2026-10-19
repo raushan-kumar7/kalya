@@ -2,16 +2,7 @@
 
 import React from 'react';
 import type { Bucket } from '@kalya/types';
-import {
-  ArrowDownUp,
-  ArrowUpDown,
-  Filter,
-  Grid3X3,
-  LayoutGrid,
-  LayoutList,
-  Search,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { ArrowUpDown, LayoutGrid, LayoutList, Search } from 'lucide-react';
 import { Input } from '@/components/ui/forms/input';
 import { Button } from '@/components/ui/forms/button';
 import {
@@ -22,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/forms/select';
 import { cn } from '@/libs/utils';
-import type { GoalFiltersState, GoalSortField, GoalStatusFilter, GoalViewMode } from './types';
+import type { GoalFiltersState, GoalSortField, GoalStatusFilter } from './types';
 
 export interface GoalsFiltersProps {
   filters: GoalFiltersState;
@@ -36,8 +27,8 @@ export function GoalsFilters({
   filters,
   onFiltersChange,
   buckets,
-  totalGoalsCount,
-  filteredCount,
+  totalGoalsCount: _totalGoalsCount,
+  filteredCount: _filteredCount,
 }: GoalsFiltersProps) {
   const statusOptions: { value: GoalStatusFilter; label: string; shortLabel: string }[] = [
     { value: 'all', label: 'All Goals', shortLabel: 'All' },

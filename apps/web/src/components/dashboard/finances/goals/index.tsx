@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, Plus, RotateCw, Sparkles, Target, X } from 'lucide-react';
+import { AlertTriangle, Plus, RotateCw, Target } from 'lucide-react';
 import {
   Button,
   Modal,

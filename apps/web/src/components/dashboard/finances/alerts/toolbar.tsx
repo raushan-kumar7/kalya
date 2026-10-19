@@ -4,15 +4,11 @@ import React from 'react';
 import {
   Bell,
   CheckCheck,
-  Filter,
   Search,
   Settings,
-  SlidersHorizontal,
   ArrowUpDown,
   Calendar,
-  Sparkles,
   Activity,
-  Layers,
   X,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';

@@ -6,7 +6,6 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   ArrowRight,
   TrendingUp,
-  CreditCard,
   PiggyBank,
   Receipt,
   Coins,
@@ -15,7 +14,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   QrCode,
-  Calendar,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
 

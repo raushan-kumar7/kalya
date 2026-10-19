@@ -2,16 +2,7 @@
 
 import React, { Suspense, useCallback, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import {
-  FileText,
-  Landmark,
-  Layers,
-  PieChart,
-  Receipt,
-  Target,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
+import { Landmark, Layers, PieChart, Receipt, Target, TrendingUp, Wallet } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import { ReportsToolbar } from './toolbar';
 import { ReportInsightsStrip, ReportKpiDeck } from './cards';
@@ -34,7 +25,7 @@ import {
   GoalsTableView,
   IncomeTableView,
 } from './tables';
-import { GenerateStatementModal, ViewStatementModal } from './statement-modal';
+import { ViewStatementModal } from './statement-modal';
 import { StatementViewerModal } from '../statement';
 import { downloadCsv, triggerPrintReport } from './export-utils';
 import { useInsightsData } from './use-insights-data';
@@ -124,8 +115,6 @@ function FinancialInsightsContent() {
     incomeExpenseTrend,
     bucketTrend,
     insights,
-    generateSummary,
-    isGenerating,
     isLoading,
     refetch,
   } = useInsightsData();

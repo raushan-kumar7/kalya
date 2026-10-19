@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { AUTH_LIMITS, GENDER_OPTIONS, SYNC_STATUS_OPTIONS } from '@kalya/types';
+import {
+  AUTH_LIMITS,
+  GENDER_OPTIONS,
+  SYNC_STATUS_OPTIONS,
+  USER_ROLE_OPTIONS,
+  USER_STATUS_OPTIONS,
+} from '@kalya/types';
 
 /**
  * Standard email validation rule with trimming and lowercasing.
@@ -147,3 +153,13 @@ export const TimezoneSchema = z
   .string()
   .trim()
   .max(50, 'Timezone identifier cannot exceed 50 characters');
+
+/**
+ * Valid user role schema.
+ */
+export const UserRoleSchema = z.enum(USER_ROLE_OPTIONS);
+
+/**
+ * Valid user account status schema.
+ */
+export const UserStatusSchema = z.enum(USER_STATUS_OPTIONS);

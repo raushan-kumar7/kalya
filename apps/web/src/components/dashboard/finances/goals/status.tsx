@@ -158,7 +158,7 @@ export function OnTrackIndicator({
 }
 
 export function DeadlineCountdownBadge({
-  targetDate,
+  targetDate: _targetDate,
   pace,
   className,
 }: {

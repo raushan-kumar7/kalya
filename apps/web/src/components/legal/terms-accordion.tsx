@@ -6,14 +6,8 @@ import {
   Scale,
   CheckCircle2,
   AlertTriangle,
-  Receipt,
-  Coins,
-  Shield,
-  Lock,
   ArrowRight,
   HelpCircle,
-  FileText,
-  Mail,
   ChevronsUpDown,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';

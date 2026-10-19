@@ -5,17 +5,13 @@ import Link from 'next/link';
 import {
   AlertTriangle,
   ArrowUpRight,
-  Calendar,
   CheckCircle2,
   Clock,
   Edit2,
   PieChart,
   ShieldAlert,
-  Sparkles,
   Tag,
   Trash2,
-  TrendingDown,
-  TrendingUp,
   Wallet,
 } from 'lucide-react';
 import {

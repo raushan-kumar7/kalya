@@ -19,10 +19,12 @@
     "start:email": "pnpm --filter @kalya/email start",
     "export:email": "pnpm --filter @kalya/email export",
     "create:file": "tsx scripts/create-file.ts",
+    "admin:promote": "pnpm --filter @kalya/api-server admin:promote",
     "format": "prettier --write --cache .",
     "format:check": "prettier --check --cache .",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:redeploy": "docker compose up -d --build --no-deps api",
@@ -65,6 +67,11 @@
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "turbo": "^2.11.4",
-    "typescript": "^7.0.2"
+    "typescript": "~6.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "6.0.3"
+    }
   }
 }

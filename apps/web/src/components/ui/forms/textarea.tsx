@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/libs/utils';
 import { Label } from './label';
-import { FOCUS_RING, INTERACTION_STATES, TRANSITIONS_CSS } from '@/components/ui/constants';
+import { FOCUS_RING, INTERACTION_STATES } from '@/components/ui/constants';
 
 const textareaVariants = cva(
   cn(

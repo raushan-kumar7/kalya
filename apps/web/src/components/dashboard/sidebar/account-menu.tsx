@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronsUpDown, UserCircle } from 'lucide-react';
+import { ChevronsUpDown, ShieldAlert, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { cn } from '@/libs/utils';
@@ -240,6 +240,22 @@ export function AccountMenu({
                 </div>
 
                 <div className="border-border flex flex-col gap-0.5 border-t pt-1">
+                  {/* Super-Admin Console link */}
+                  {user?.role === 'SUPER_ADMIN' && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleNavigate('/admin')}
+                      className="text-body-sm flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors duration-150"
+                    >
+                      <ShieldAlert size={16} className="shrink-0 text-rose-500" />
+                      <span className="flex-1 truncate">Admin Console</span>
+                      <span className="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-bold text-rose-400 uppercase">
+                        Super
+                      </span>
+                    </button>
+                  )}
+
                   {/* Direct Profile Link if not already present in items */}
                   {!items.some((i) => i.href === PROFILE_HREF) && (
                     <button

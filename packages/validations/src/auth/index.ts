@@ -30,6 +30,8 @@ import {
   SyncStatusSchema,
   TimezoneSchema,
   UsernameSchema,
+  UserRoleSchema,
+  UserStatusSchema,
 } from './helper';
 import { ISOTimestampSchema } from '../core';
 
@@ -156,6 +158,11 @@ export const UserSchema: z.ZodType<User> = z.object({
   timezone: z.string().nullable().optional(),
   currency: z.string().nullable().optional(),
   sync_status: SyncStatusSchema,
+  role: UserRoleSchema,
+  status: UserStatusSchema,
+  bannedAt: z.string().nullable().optional(),
+  banReason: z.string().nullable().optional(),
+  lastActiveAt: z.string().nullable().optional(),
   createdAt: ISOTimestampSchema,
   updatedAt: ISOTimestampSchema,
 });

@@ -17,7 +17,6 @@ export async function exportStatementToExcel(
 
   const brandColorPrimary = '0D3E26'; // Leaf Green
   const brandColorSubtle = 'E4EEE8'; // Mint Subtle
-  const brandColorAccent = 'B8912E'; // Satin Gold
   const brandBgSurface = 'FCFBFA';
 
   // ==========================================================
@@ -258,7 +257,6 @@ export async function exportStatementToExcel(
   });
 
   // Summary row at bottom of expenses
-  const expLastRowNum = statement.expenses.length + 1;
   const expTotalRow = expensesSheet.addRow({
     date: 'TOTAL',
     description: `Total Outlays (${statement.expenses.length} transactions)`,

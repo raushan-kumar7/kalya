@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Expense, PaymentMethod, SplitType } from '@kalya/types';
+import type { Expense, SplitType } from '@kalya/types';
 import {
   CreateExpenseSchema,
   UpdateExpenseSchema,
@@ -13,24 +13,15 @@ import {
 import {
   autoBalanceSplitValues,
   calculateDetailedSplitBreakdown,
-  formatCardDate,
   formatTimeAgo,
-  fromISO,
   getDefaultSplitInputValues,
   roundMoney,
-  toISO,
 } from '@kalya/utils';
 import { FinanceFormModal } from '../modal';
 import { useBucketsQuery, useCategoriesQuery, useSplitContactsQuery } from '@/hooks/finances';
 import { AlertCircle, ArrowRight, Clock, Receipt, Split } from 'lucide-react';
-import { cn } from '@/libs/utils';
 import { ExpenseFormFields } from './expense-form-fields';
-import {
-  type ExpenseFormMode,
-  PAYMENT_OPTIONS,
-  getExpenseInitialValues,
-  groupCategoriesByBucket,
-} from './helper';
+import { type ExpenseFormMode, getExpenseInitialValues, groupCategoriesByBucket } from './helper';
 import { ExpenseSplitSection } from './expense-split-section';
 
 export interface ExpenseFormProps {

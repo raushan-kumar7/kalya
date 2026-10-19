@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Coins, Plus, Sparkles, TrendingUp, Wallet } from 'lucide-react';
+import { Coins, Plus, TrendingUp, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { cn } from '@/libs/utils';
 

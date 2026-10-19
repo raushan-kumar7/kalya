@@ -5,18 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlay
 import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/forms/input';
 import { Checkbox } from '@/components/ui/forms/checkbox';
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Check,
-  ChevronDown,
-  Filter,
-  IndianRupee,
-  RotateCcw,
-  Search,
-  X,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronDown, Filter, RotateCcw, Search } from 'lucide-react';
 import type { Category, PaymentMethod } from '@kalya/types';
 import type {
   DateRangePreset,
@@ -147,9 +136,6 @@ export function ExcelColumnFilter({
   // Category multi-select helper
   const selectedCategoryIds =
     filters.categoryIds ?? (filters.categoryId ? [filters.categoryId] : []);
-  const allCategoryIds = React.useMemo(() => categories.map((c) => c.id), [categories]);
-  const isAllCategoriesSelected =
-    selectedCategoryIds.length === 0 || selectedCategoryIds.length === categories.length;
 
   const handleToggleCategory = (catId: string) => {
     let next: string[];

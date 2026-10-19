@@ -10,7 +10,6 @@ import {
   ChevronUp,
   Flame,
   Info,
-  Minus,
   Percent,
   PiggyBank,
   Receipt,
@@ -22,7 +21,6 @@ import {
 import { cn } from '@/libs/utils';
 import { Card } from '@/components/ui/data-display/card';
 import { Badge } from '@/components/ui/data-display/badge';
-import { Button } from '@/components/ui/forms/button';
 import { Skeleton } from '@/components/ui/states/skeleton';
 import type { MetricWithChange, ReportInsight, ReportKpis, ReportTab } from './types';
 

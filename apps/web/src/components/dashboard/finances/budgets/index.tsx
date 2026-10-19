@@ -30,8 +30,6 @@ export function Budgets() {
     budgets,
     incomes,
     buckets,
-    monthIncome,
-    view,
     totals,
     rows,
     alerts,

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Bell, RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useAlertsData } from './use-alerts-data';
 import { AlertCards } from './cards';
 import { AlertsToolbar } from './toolbar';

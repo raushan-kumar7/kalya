@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { BarChart2, Calendar, Search, Table2, X } from 'lucide-react';
+import { BarChart2, Search, Table2 } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { Button } from '@/components/ui/forms/button';
 import { Input } from '@/components/ui/forms/input';
 import type { Granularity, ReportTab, ViewMode } from './types';
 

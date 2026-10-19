@@ -2,27 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Bell,
-  Mail,
-  Smartphone,
-  Check,
-  Clock,
-  Sparkles,
-  Info,
-  Calendar,
-  Save,
-} from 'lucide-react';
-import type {
-  NotificationCategory,
-  NotificationChannel,
-  NotificationFrequency,
-  NotificationPreference,
-} from '@kalya/types';
+import { X, Bell, Mail, Smartphone, Clock, Save } from 'lucide-react';
+import type { NotificationCategory, NotificationFrequency } from '@kalya/types';
 import { useNotificationPreferencesQuery, useAlertActions } from '@/hooks/finances';
 import { Button } from '@/components/ui/forms/button';
-import { cn } from '@/libs/utils';
 
 interface PreferencesModalProps {
   isOpen: boolean;
@@ -81,7 +64,7 @@ const DEFAULT_ROWS: RowState[] = [
 ];
 
 export function NotificationPreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
-  const { data: serverPrefs, isLoading } = useNotificationPreferencesQuery();
+  const { data: serverPrefs } = useNotificationPreferencesQuery();
   const { upsertPreference } = useAlertActions();
   const [rows, setRows] = useState<RowState[]>(DEFAULT_ROWS);
   const [isSaving, setIsSaving] = useState(false);

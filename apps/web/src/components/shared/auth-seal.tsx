@@ -4,7 +4,7 @@ import * as React from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { Check, type LucideIcon } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { TRANSITIONS, EASINGS, popIn, scaleIn } from '@/libs/animations';
+import { EASINGS, popIn, scaleIn } from '@/libs/animations';
 
 export type AuthSealVariant = 'primary' | 'accent' | 'success' | 'danger';
 export type AuthSealSize = 'sm' | 'md' | 'lg' | 'xl';

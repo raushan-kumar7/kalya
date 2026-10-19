@@ -1,9 +1,6 @@
 import type {
   TransactionKind,
-  TransactionTab,
   TransactionDateRange,
-  SplitStatusFilter,
-  PaymentMethodFilter,
   TransactionSortBy,
 } from '@/hooks/finances/transactions/types';
 

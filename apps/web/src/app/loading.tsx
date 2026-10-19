@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Icon } from '@/components/shared/logo';
-import { EASINGS, TRANSITIONS } from '@/libs/animations';
+import { EASINGS } from '@/libs/animations';
 
 export default function Loading() {
   const reduceMotion = useReducedMotion();

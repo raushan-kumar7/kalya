@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle2,
-  Copy,
   ExternalLink,
   Eye,
   Loader2,

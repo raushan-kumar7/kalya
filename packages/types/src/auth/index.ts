@@ -1,4 +1,13 @@
-import { Gender, Identifiable, ISODate, ISOTimestamp, SyncStatus, UUID } from '../core';
+import {
+  Gender,
+  Identifiable,
+  ISODate,
+  ISOTimestamp,
+  SyncStatus,
+  UUID,
+  UserRole,
+  UserStatus,
+} from '../core';
 
 /**
  * Standard camelCase timestamps matching Better-Auth and Drizzle schema conventions.
@@ -48,6 +57,18 @@ export interface User extends Identifiable, AuthTimestamps {
   currency?: string | null;
   /** Offline synchronization status */
   sync_status: SyncStatus;
+
+  // ---- Kalya Super-Admin & Governance Fields ----
+  /** Assigned platform privilege role */
+  role: UserRole;
+  /** Current account lifecycle state */
+  status: UserStatus;
+  /** Timestamp when account was banned/suspended if applicable */
+  bannedAt?: ISODate | null;
+  /** Reason provided by administrator for account ban */
+  banReason?: string | null;
+  /** Timestamp when user last initiated an authenticated request */
+  lastActiveAt?: ISODate | null;
 }
 
 /**

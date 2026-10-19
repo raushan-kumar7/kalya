@@ -11,20 +11,8 @@ import {
   UpdateGoalSchema,
 } from '@kalya/validations';
 import { formatInr, roundMoney } from '@kalya/utils';
+import { Calculator, Coins, IndianRupee, Target, TrendingUp } from 'lucide-react';
 import {
-  Calculator,
-  Calendar,
-  CheckCircle2,
-  Coins,
-  IndianRupee,
-  Layers,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
-import {
-  Button,
   Field,
   Input,
   Progress,

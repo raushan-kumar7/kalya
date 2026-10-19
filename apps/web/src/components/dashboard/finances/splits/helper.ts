@@ -1,4 +1,4 @@
-import type { Expense, SettlementMethod, SplitContactMember, SplitExpense } from '@kalya/types';
+import type { SplitContactMember } from '@kalya/types';
 import type { PendingSplitShare } from '@/hooks/finances';
 import { roundMoney, formatCardDate } from '@kalya/utils';
 

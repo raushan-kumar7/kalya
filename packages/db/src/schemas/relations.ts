@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { account, session, user } from './auth';
+import { auditLogs } from './admin';
 import {
   alert,
   bucket,
@@ -40,6 +41,7 @@ export const userRelations = relations(user, ({ many }) => ({
   alerts: many(alert),
   notificationPreferences: many(notificationPreference),
   pushSubscriptions: many(pushSubscription),
+  auditLogs: many(auditLogs),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -194,6 +196,13 @@ export const notificationPreferenceRelations = relations(notificationPreference,
 export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) => ({
   owner: one(user, {
     fields: [pushSubscription.userId],
+    references: [user.id],
+  }),
+}));
+
+export const auditLogRelations = relations(auditLogs, ({ one }) => ({
+  actor: one(user, {
+    fields: [auditLogs.actorId],
     references: [user.id],
   }),
 }));

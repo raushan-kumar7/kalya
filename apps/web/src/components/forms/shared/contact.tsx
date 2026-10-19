@@ -8,11 +8,9 @@ import { z } from '@kalya/validations';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send,
-  CheckCircle2,
   AlertCircle,
   Mail,
   User,
-  MessageSquare,
   HelpCircle,
   Lightbulb,
   Bug,
@@ -161,7 +159,6 @@ export function ContactForm({
   });
 
   const selectedTopic = watch('topic');
-  const messageValue = watch('message') || '';
 
   // Handle focus on success heading when message is sent
   React.useEffect(() => {

@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   AtSign,
-  Calendar,
   Camera,
   CheckCircle2,
   Clock3,
@@ -18,7 +17,6 @@ import {
   Sparkles,
   Trash2,
   User as UserIcon,
-  VenetianMask,
   XCircle,
 } from 'lucide-react';
 import type { Gender, User } from '@kalya/types';

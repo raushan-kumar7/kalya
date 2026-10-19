@@ -11,13 +11,7 @@ import type {
   PasswordRuleResult,
   PasswordStrengthReport,
 } from '@kalya/types';
-import {
-  TRANSITIONS,
-  EASINGS,
-  createStaggerContainer,
-  staggerItem,
-  popIn,
-} from '@/libs/animations';
+import { TRANSITIONS, createStaggerContainer, staggerItem, popIn } from '@/libs/animations';
 
 interface LevelDefinition {
   level: PasswordStrengthLevel;

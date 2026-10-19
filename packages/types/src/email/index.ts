@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ComponentType<P = any> = (props: P) => any;
 
 export interface SendMailOptions {

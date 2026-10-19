@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layers, PiggyBank, Plus, Receipt, Sparkles, TrendingUp } from 'lucide-react';
+import { Layers, PiggyBank, Receipt, Sparkles, TrendingUp } from 'lucide-react';
 import { formatInr } from '@kalya/utils';
 import type { CreateEquityAssetDto, UpdateEquityAssetDto } from '@kalya/types';
 import { Button } from '@/components/ui/forms/button';

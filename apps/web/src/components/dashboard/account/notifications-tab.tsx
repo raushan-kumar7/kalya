@@ -18,7 +18,7 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react';
-import type { User, UpsertNotificationPreferenceDto } from '@kalya/types';
+import type { User } from '@kalya/types';
 import {
   formatDateTime,
   formatRelativeTime,
@@ -181,7 +181,6 @@ export function NotificationsTab({ user }: NotificationsTabProps) {
   const { data: serverPrefs } = useNotificationPreferencesQuery();
   const upsertMutation = useUpsertNotificationPreferenceMutation();
   const {
-    isSupported,
     permission,
     isSubscribed,
     isLoading: isPushLoading,

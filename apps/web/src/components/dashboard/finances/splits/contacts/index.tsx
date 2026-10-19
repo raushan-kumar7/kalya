@@ -37,20 +37,12 @@ type FilterTab = 'all' | 'linked' | 'external';
 
 export function SplitContacts() {
   // Queries
-  const { data: contacts = [], isLoading, error, refetch } = useSplitContactsQuery();
+  const { data: contacts = [], isLoading, error } = useSplitContactsQuery();
   const { data: suggestions = [] } = useSplitContactSuggestionsQuery();
 
   // Actions
-  const {
-    createContact,
-    updateContact,
-    linkContact,
-    deleteContact,
-    isCreating,
-    isUpdating,
-    isLinking,
-    isDeleting,
-  } = useSplitContactActions();
+  const { createContact, updateContact, linkContact, deleteContact, isLinking, isDeleting } =
+    useSplitContactActions();
   // Modal
   const { activeModal, openModal, closeModal, activeContactId, setActiveContactId } =
     useFinanceModal();

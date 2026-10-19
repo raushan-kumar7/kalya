@@ -57,7 +57,7 @@ export function parseClientInfo(
   const chBitness = getHeader(headers, 'sec-ch-ua-bitness')?.replace(/"/g, '');
 
   // 4. Resolve OS & Windows 11 (NT 10.0 + platform-version >= 13 = Windows 11)
-  let osName = os.name || chPlatform || 'Unknown OS';
+  const osName = os.name || chPlatform || 'Unknown OS';
   let osVersion = os.version || '';
   if (osName === 'Windows' && chPlatformVer) {
     const majorVer = parseInt(chPlatformVer.split('.')[0] ?? '0', 10);

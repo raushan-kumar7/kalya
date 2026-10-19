@@ -8,8 +8,6 @@ import {
   Clock,
   Lightbulb,
   Sparkles,
-  TrendingDown,
-  Wallet,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import { formatInr } from '@kalya/utils';

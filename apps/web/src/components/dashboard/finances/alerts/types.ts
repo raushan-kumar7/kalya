@@ -1,9 +1,7 @@
 import type {
   Alert,
   AlertReferenceType,
-  AlertType,
   NotificationCategory,
-  NotificationChannel,
   NotificationFrequency,
 } from '@kalya/types';
 

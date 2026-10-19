@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
-  Layers,
   ChevronDown,
   ArrowRight,
   TrendingUp,
@@ -12,7 +11,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { Alert } from '@kalya/types';
 import { cn } from '@/libs/utils';
 import { formatInr } from '@kalya/utils';
 import { Button } from '@/components/ui/forms/button';

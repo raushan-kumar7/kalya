@@ -247,6 +247,18 @@ export const ENDPOINTS = {
     },
   },
 
+  // Super-Admin Command Center (/api/v1/admin/*)
+  ADMIN: {
+    ROOT: `${ROOT}/admin`,
+    OVERVIEW: `${ROOT}/admin/overview`,
+    USERS: `${ROOT}/admin/users`,
+    USER_DETAIL: (id: string) => `${ROOT}/admin/users/${id}`,
+    UPDATE_ROLE: (id: string) => `${ROOT}/admin/users/${id}/role`,
+    UPDATE_STATUS: (id: string) => `${ROOT}/admin/users/${id}/status`,
+    ACTIVITIES: `${ROOT}/admin/activities`,
+    SERVICES: `${ROOT}/admin/services`,
+  },
+
   // System Health & Monitoring (mounted at server root, not under /api/v1)
   HEALTH: {
     ROOT: '/health',

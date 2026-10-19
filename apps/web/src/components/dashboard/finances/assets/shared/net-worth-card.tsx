@@ -2,11 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Coins, HelpCircle, Layers, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowUpRight, Coins, TrendingUp, Wallet } from 'lucide-react';
 import { formatCompactInr, formatInr } from '@kalya/utils';
 import { DonutChart } from '@/components/ui/charts/donut-chart';
-import { ChartCard } from '@/components/ui/charts/chart-card';
-import { Button } from '@/components/ui/forms/button';
 import { cn } from '@/libs/utils';
 
 export interface WealthNetWorthCardProps {

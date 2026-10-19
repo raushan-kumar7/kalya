@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Layout, Callout, DetailRow, ListRow, Button } from '../components';
-import { EMAILS_CONFIG } from '../constants';
 
 export interface PolicyUpdateNoticeProps {
   userName?: string;
@@ -14,7 +13,7 @@ export const PolicyUpdateNotice = ({
   userName = 'Arjun',
   effectiveDate = '15 October 2026',
   termsUrl = 'https://kalya.app/terms',
-  privacyUrl = 'https://kalya.app/privacy',
+  privacyUrl: _privacyUrl = 'https://kalya.app/privacy',
 }: PolicyUpdateNoticeProps) => {
   return (
     <Layout preview="Important updates to Kalya's Terms of Service and Privacy Policy">

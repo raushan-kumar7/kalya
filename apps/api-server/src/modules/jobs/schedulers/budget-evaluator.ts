@@ -39,7 +39,6 @@ export class BudgetEvaluatorCron {
           0
         );
         const percent = Math.round((totalSpent / b.amount) * 100);
-        const amber = b.amberThreshold ?? 80;
         const red = b.redThreshold ?? 100;
 
         if (percent >= red) {

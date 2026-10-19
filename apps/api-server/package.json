@@ -10,7 +10,8 @@
     "build": "tsc --noEmit",
     "start": "tsx src/index.ts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "admin:promote": "tsx src/scripts/promote-admin.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",
@@ -52,6 +53,6 @@
     "@types/node": "^26.6.3",
     "@types/ua-parser-js": "^0.7.39",
     "@types/web-push": "^3.6.4",
-    "typescript": "^7.0.2"
+    "typescript": "~6.0.3"
   }
 }

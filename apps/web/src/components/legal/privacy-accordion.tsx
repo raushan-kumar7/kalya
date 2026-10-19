@@ -3,23 +3,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
-  ShieldCheck,
   Lock,
   CheckCircle2,
-  AlertCircle,
-  Mail,
-  UserCheck,
-  Ban,
   Database,
-  Calendar,
   Scale,
-  Users,
-  Server,
-  KeyRound,
-  FileText,
   Clock,
   ArrowRight,
-  ChevronDown,
   ChevronsUpDown,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';

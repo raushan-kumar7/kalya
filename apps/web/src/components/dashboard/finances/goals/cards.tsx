@@ -5,16 +5,13 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
-  Clock,
   Coins,
   EllipsisVertical,
-  Layers,
   Pause,
   Pencil,
   PiggyBank,
   Play,
   Plus,
-  Receipt,
   Sparkles,
   Target,
   Trash2,
@@ -22,7 +19,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatInr, roundMoney } from '@kalya/utils';
+import { formatInr } from '@kalya/utils';
 import { cn } from '@/libs/utils';
 import { Card } from '@/components/ui/data-display/card';
 import { Badge } from '@/components/ui/data-display/badge';
@@ -427,9 +424,9 @@ export function GoalCompactRow({
   goal: g,
   onClick,
   onAddMoney,
-  onEdit,
-  onTogglePause,
-  onDelete,
+  onEdit: _onEdit,
+  onTogglePause: _onTogglePause,
+  onDelete: _onDelete,
 }: {
   goal: GoalRow;
   onClick?: (goal: GoalRow) => void;

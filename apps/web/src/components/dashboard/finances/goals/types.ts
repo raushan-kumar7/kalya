@@ -1,4 +1,4 @@
-import type { Goal, GoalStatus, Bucket } from '@kalya/types';
+import type { GoalStatus } from '@kalya/types';
 
 export interface GoalContribution {
   id: string;

@@ -282,3 +282,28 @@ export const NOTIFICATION_LIMITS = {
   MIN_MESSAGE_LENGTH: 1,
   MAX_MESSAGE_LENGTH: 2000,
 } as const;
+
+/**
+ * Valid user role selections available within Kalya RBAC.
+ */
+export const USER_ROLE_OPTIONS = ['USER', 'ADMIN', 'SUPER_ADMIN'] as const;
+
+/**
+ * User account status classifications.
+ */
+export const USER_STATUS_OPTIONS = [
+  'ACTIVE',
+  'SUSPENDED',
+  'BANNED',
+  'PENDING_VERIFICATION',
+] as const;
+
+/**
+ * Audit log event severity levels.
+ */
+export const AUDIT_SEVERITY_OPTIONS = ['INFO', 'WARN', 'ERROR', 'CRITICAL'] as const;
+
+/**
+ * Audit log event outcome statuses.
+ */
+export const AUDIT_STATUS_OPTIONS = ['SUCCESS', 'FAILURE', 'ATTEMPT'] as const;

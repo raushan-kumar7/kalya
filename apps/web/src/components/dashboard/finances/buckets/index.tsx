@@ -32,7 +32,6 @@ export function Buckets() {
     data: buckets = [],
     isLoading: isBucketsLoading,
     error: bucketsError,
-    refetch: refetchBuckets,
   } = useBucketsQuery();
 
   // Actions

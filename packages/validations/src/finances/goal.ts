@@ -6,7 +6,7 @@ import {
   GoalFilterQueryDto,
   UpdateGoalDto,
 } from '@kalya/types';
-import { DecimalSchema, ISODateSchema, ISOTimestampSchema, UUIDSchema } from '../core';
+import { ISODateSchema, ISOTimestampSchema, UUIDSchema } from '../core';
 import { PositiveMoneySchema } from './income';
 
 /**

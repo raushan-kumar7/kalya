@@ -18,7 +18,6 @@ import { cn } from '@/libs/utils';
 import { Checkbox } from '@/components/ui/forms/checkbox';
 import { Button } from '@/components/ui/forms/button';
 import { Skeleton } from '@/components/ui/states/skeleton';
-import { EmptyState } from '@/components/ui/states/empty-state';
 
 // ------------------------------------------------------------
 // 1. Semantic Table Atoms

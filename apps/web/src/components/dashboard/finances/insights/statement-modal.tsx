@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, FileText, Sparkles, X } from 'lucide-react';
+import { Download, FileText, Sparkles } from 'lucide-react';
 import {
   Modal,
   ModalContent,
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/forms/button';
 import { Badge } from '@/components/ui/data-display/badge';
 import { DatePicker } from '@/components/ui/forms/date-picker';
-import { formatCardDate, formatInr, formatMonthLabel, getCurrentMonthString } from '@kalya/utils';
+import { formatInr, formatMonthLabel, getCurrentMonthString } from '@kalya/utils';
 import type { StatementSummaryRecord } from './types';
 
 // ============================================================
@@ -133,7 +133,6 @@ export function ViewStatementModal({
   if (!statement) return null;
 
   const bucketKeys = Object.keys(statement.bucketTotals || {});
-  const categoryKeys = Object.keys(statement.categoryTotals || {});
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>

@@ -35,6 +35,16 @@ export const authPlugin: FastifyPluginAsync = fp(
 
       request.user = sessionResult.user as unknown as User;
       request.session = sessionResult.session as unknown as Session;
+
+      // Check if user account is suspended or banned
+      if (request.user.status === 'BANNED' || request.user.status === 'SUSPENDED') {
+        throw new ForbiddenError(
+          request.user.banReason
+            ? `Account is ${request.user.status.toLowerCase()}: ${request.user.banReason}`
+            : `Your account has been ${request.user.status.toLowerCase()}. Please contact support.`,
+          'ACCOUNT_DEACTIVATED'
+        );
+      }
     });
 
     // 5. Decorate PreHandler Guard for Verified Email Required Routes
@@ -54,7 +64,29 @@ export const authPlugin: FastifyPluginAsync = fp(
       }
     );
 
-    // 6. Register Routes
+    // 6. Decorate PreHandler Guard for Minimum Admin Role Required Routes
+    fastify.decorate('requireAdmin', async (request: FastifyRequest, _reply: FastifyReply) => {
+      if (!request.user) {
+        throw new UnauthorizedError('Authentication required to access this resource');
+      }
+
+      if (request.user.role !== 'ADMIN' && request.user.role !== 'SUPER_ADMIN') {
+        throw new ForbiddenError('Administrative privileges required', 'INSUFFICIENT_PERMISSIONS');
+      }
+    });
+
+    // 7. Decorate PreHandler Guard for Super-Admin Only Routes
+    fastify.decorate('requireSuperAdmin', async (request: FastifyRequest, _reply: FastifyReply) => {
+      if (!request.user) {
+        throw new UnauthorizedError('Authentication required to access this resource');
+      }
+
+      if (request.user.role !== 'SUPER_ADMIN') {
+        throw new ForbiddenError('Super-Admin privileges required', 'INSUFFICIENT_PERMISSIONS');
+      }
+    });
+
+    // 8. Register Routes
     await fastify.register(createAuthRoutes(authController));
   },
   {

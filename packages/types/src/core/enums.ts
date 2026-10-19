@@ -17,6 +17,10 @@ import {
   JOB_TYPE_OPTIONS,
   SETTLEMENT_METHOD_OPTIONS,
   SPLIT_TYPE_OPTIONS,
+  USER_ROLE_OPTIONS,
+  USER_STATUS_OPTIONS,
+  AUDIT_SEVERITY_OPTIONS,
+  AUDIT_STATUS_OPTIONS,
 } from './constants';
 import { Extensible } from './primitives';
 
@@ -139,3 +143,23 @@ export type JobStatus = Extensible<BaseJobStatus>;
 export type BaseJobType = (typeof JOB_TYPE_OPTIONS)[number];
 /** Table: job_queue | Column: job_type */
 export type JobType = Extensible<BaseJobType>;
+
+/** Strict literal union for UserRole */
+export type BaseUserRole = (typeof USER_ROLE_OPTIONS)[number];
+/** Table: user | Column: role */
+export type UserRole = Extensible<BaseUserRole>;
+
+/** Strict literal union for UserStatus */
+export type BaseUserStatus = (typeof USER_STATUS_OPTIONS)[number];
+/** Table: user | Column: status */
+export type UserStatus = Extensible<BaseUserStatus>;
+
+/** Strict literal union for AuditSeverity */
+export type BaseAuditSeverity = (typeof AUDIT_SEVERITY_OPTIONS)[number];
+/** Table: audit_logs | Column: severity */
+export type AuditSeverity = Extensible<BaseAuditSeverity>;
+
+/** Strict literal union for AuditStatus */
+export type BaseAuditStatus = (typeof AUDIT_STATUS_OPTIONS)[number];
+/** Table: audit_logs | Column: status */
+export type AuditStatus = Extensible<BaseAuditStatus>;

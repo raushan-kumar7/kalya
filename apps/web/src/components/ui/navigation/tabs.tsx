@@ -2,10 +2,9 @@
 
 import * as React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { motion } from 'framer-motion';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/libs/utils';
-import { FOCUS_RING, TRANSITIONS_CSS } from '@/components/ui/constants';
+import { FOCUS_RING } from '@/components/ui/constants';
 
 const Tabs = TabsPrimitive.Root;
 

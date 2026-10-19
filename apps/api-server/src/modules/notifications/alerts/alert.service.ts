@@ -9,8 +9,6 @@ import {
   budget,
   bucket,
   goal,
-  splitExpense,
-  splitContactMember,
   expense,
   monthlySummary,
 } from '@kalya/db';

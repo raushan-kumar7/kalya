@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { User } from '@kalya/types';
 import { useAuth } from '@/hooks/auth';
 import { useProfileQuery } from '@/hooks/users';
@@ -71,7 +71,7 @@ export function AccountSettings() {
   const searchParams = useSearchParams();
 
   const { user: authUser } = useAuth();
-  const { data: profileUser, isLoading: isProfileLoading } = useProfileQuery();
+  const { data: profileUser } = useProfileQuery();
 
   const user: User | null = (profileUser ?? authUser) as User | null;
 

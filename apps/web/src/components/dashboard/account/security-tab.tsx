@@ -4,14 +4,12 @@ import * as React from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
-  Clock,
   KeyRound,
   Laptop,
   LogOut,
   Monitor,
   RotateCcw,
   ShieldAlert,
-  ShieldCheck,
   Smartphone,
   XCircle,
 } from 'lucide-react';

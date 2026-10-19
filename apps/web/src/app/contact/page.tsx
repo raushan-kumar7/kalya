@@ -1,19 +1,10 @@
 import * as React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import {
-  Mail,
-  MessageSquare,
-  Clock,
-  MapPin,
-  ShieldCheck,
-  HelpCircle,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react';
+import { Mail, MessageSquare, ShieldCheck, HelpCircle, ArrowRight } from 'lucide-react';
 import { LandingHeader, LandingFooter } from '@/components/landing';
 import { ContactForm } from '@/components/forms/shared';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Badge } from '@/components/ui';
+import { Card, CardContent, Badge } from '@/components/ui';
 
 export const metadata: Metadata = {
   title: 'Talk to Us | Contact Kalya',

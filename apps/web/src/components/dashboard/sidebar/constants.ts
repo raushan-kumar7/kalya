@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Bell,
   Coins,
   Contact,
   FolderKanban,
@@ -9,14 +8,12 @@ import {
   LucideIcon,
   PiggyBank,
   Receipt,
-  Repeat,
   SlidersHorizontal,
   Tags,
   Target,
   TrendingUp,
   UserCircle,
   Users2,
-  Wallet,
 } from 'lucide-react';
 
 /**

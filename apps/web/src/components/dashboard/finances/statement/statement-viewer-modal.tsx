@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  FileSpreadsheet,
-  FileText,
-  Printer,
-  Sparkles,
-  Calendar,
-  X,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { FileSpreadsheet, FileText, Printer, Sparkles, Calendar, X } from 'lucide-react';
 import {
   Modal,
   ModalContent,

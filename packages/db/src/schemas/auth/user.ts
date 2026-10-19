@@ -23,6 +23,19 @@ export const user = sqliteTable('user', {
   sync_status: text('sync_status', {
     enum: ['PENDING', 'SYNCED', 'CONFLICT', 'FAILED'],
   }).default('SYNCED'),
+  role: text('role', {
+    enum: ['USER', 'ADMIN', 'SUPER_ADMIN'],
+  })
+    .notNull()
+    .default('USER'),
+  status: text('status', {
+    enum: ['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING_VERIFICATION'],
+  })
+    .notNull()
+    .default('ACTIVE'),
+  bannedAt: isoDate('banned_at'),
+  banReason: text('ban_reason'),
+  lastActiveAt: isoDate('last_active_at'),
   ...timestamps(),
 });
 

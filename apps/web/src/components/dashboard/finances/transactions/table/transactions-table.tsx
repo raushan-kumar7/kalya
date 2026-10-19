@@ -13,14 +13,7 @@ import {
 import { Checkbox } from '@/components/ui/forms/checkbox';
 import { Badge } from '@/components/ui/data-display/badge';
 import { Button } from '@/components/ui/forms/button';
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Trash2,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from 'lucide-react';
 import type {
   SplitBillFeedItem,
   TransactionFilterState,
@@ -33,7 +26,7 @@ import { ExcelColumnFilter } from './excel-column-filter';
 import { RowActionsMenu } from './actions';
 import { TransactionStatusBadge } from './status-badge';
 import { DateDisplay } from '@/components/ui/data-display';
-import { formatCardDate, formatDateTime, fromISO, isSameDay, Temporal } from '@kalya/utils';
+import { formatCardDate, fromISO, isSameDay, Temporal } from '@kalya/utils';
 import { PAYMENT_OPTIONS } from '@/components/forms/finances/transactions/helper';
 import { cn } from '@/libs/utils';
 import {
@@ -92,11 +85,11 @@ export function TransactionsTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  sortBy,
+  sortBy: _sortBy,
   onSortChange,
   columnVisibility,
-  onToggleColumnVisibility,
-  onResetColumnVisibility,
+  onToggleColumnVisibility: _onToggleColumnVisibility,
+  onResetColumnVisibility: _onResetColumnVisibility,
   selectedIds,
   onSelectRow,
   onSelectAllPage,
@@ -123,15 +116,6 @@ export function TransactionsTable({
   const isAllPageSelected = items.length > 0 && pageItemIds.every((id) => selectedIds.includes(id));
   const isSomePageSelected =
     pageItemIds.some((id) => selectedIds.includes(id)) && !isAllPageSelected;
-
-  // Sorting helper
-  const handleColumnSort = (colKey: 'date' | 'amount') => {
-    if (colKey === 'date') {
-      onSortChange(sortBy === 'date-desc' ? 'date-asc' : 'date-desc');
-    } else if (colKey === 'amount') {
-      onSortChange(sortBy === 'amount-desc' ? 'amount-asc' : 'amount-desc');
-    }
-  };
 
   // Proxy onFilterChange to also reset sort via onSortChange when sortBy changes
   const handleFilterChange = (partial: Partial<typeof filters>) => {

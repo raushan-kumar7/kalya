@@ -1,16 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Compass,
-  Laptop,
-  Palmtree,
-  PiggyBank,
-  Plus,
-  ShieldCheck,
-  Sparkles,
-  Target,
-} from 'lucide-react';
+import { Laptop, Palmtree, PiggyBank, Plus, ShieldCheck, Sparkles, Target } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { Card } from '@/components/ui/data-display/card';
 import { formatInr } from '@kalya/utils';

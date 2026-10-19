@@ -34,7 +34,7 @@ export async function handleSendVerificationEmail(
   payload: SendVerificationEmailPayload,
   _request?: Request | null
 ): Promise<void> {
-  const { user, url, token } = payload;
+  const { user, token } = payload;
   const userName = resolveDisplayName(user);
   const tz = resolveUserTimezone(user.timezone);
 

@@ -5,12 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Eye, EyeOff, X, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import { Label } from './label';
-import {
-  FOCUS_RING,
-  INTERACTION_STATES,
-  TRANSITIONS_CSS,
-  ICON_SIZES,
-} from '@/components/ui/constants';
+import { FOCUS_RING, INTERACTION_STATES, ICON_SIZES } from '@/components/ui/constants';
 
 const inputVariants = cva(
   cn(

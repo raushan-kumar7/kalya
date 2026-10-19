@@ -26,7 +26,6 @@ import {
   Receipt,
   RotateCw,
   Search,
-  Sparkles,
   User,
   UserCheck,
   Users,
@@ -48,8 +47,6 @@ import {
   type FilterTab,
   type SortOption,
   type SettleState,
-  formatInr,
-  formatSplitDate,
   getOwed,
   getSettled,
   getRemaining,
@@ -92,12 +89,7 @@ export function BalancesAndSettlements() {
   } = useSplitInvitationsQuery();
 
   // Actions
-  const {
-    settleShare,
-    respondInvitation,
-    isSettling: isSettlingSplit,
-    isResponding: isRespondingInvitation,
-  } = useSplitShareActions();
+  const { settleShare, respondInvitation, isSettling: isSettlingSplit } = useSplitShareActions();
 
   // Pending split invitations sent to this user
   const pendingInvitations = useMemo(

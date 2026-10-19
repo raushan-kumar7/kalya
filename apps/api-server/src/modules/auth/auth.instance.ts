@@ -7,6 +7,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { username } from 'better-auth/plugins';
 import { generateUniqueUsername } from '../helpers';
 
+import { AuditLogService } from '../admin';
 import {
   handleNewDeviceLogin,
   handlePasswordChanged,
@@ -55,6 +56,8 @@ export const createAuth = (db: DatabaseClient) => {
   // Update session rolling timestamp in database once every 24 hours (or half session life if shorter)
   const sessionUpdateAge = Math.min(60 * 60 * 24, Math.floor(sessionExpiresIn / 2));
 
+  const auditLogService = new AuditLogService(db);
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -99,6 +102,16 @@ export const createAuth = (db: DatabaseClient) => {
       maxPasswordLength: AUTH_LIMITS.MAX_PASSWORD_LENGTH,
       sendResetPassword: async (data: SendResetPasswordPayload, request?: Request | null) => {
         await handleSendResetPassword(data, request);
+        await auditLogService.record({
+          actorId: data.user.id,
+          actorEmail: data.user.email,
+          action: 'USER_PASSWORD_RESET_REQUESTED',
+          entityType: 'USER',
+          entityId: data.user.id,
+          severity: 'INFO',
+          status: 'SUCCESS',
+          description: `Password reset link requested for ${data.user.email}`,
+        });
       },
     },
     databaseHooks: {
@@ -139,6 +152,18 @@ export const createAuth = (db: DatabaseClient) => {
             if (user.emailVerified) {
               await handleWelcomeEmail(db, user);
             }
+
+            await auditLogService.record({
+              actorId: user.id,
+              actorEmail: user.email,
+              action: 'USER_REGISTERED',
+              entityType: 'USER',
+              entityId: user.id,
+              severity: 'INFO',
+              status: 'SUCCESS',
+              description: `New user registered: ${user.email}`,
+              metadata: { name: user.name },
+            });
           },
         },
         update: {
@@ -163,6 +188,18 @@ export const createAuth = (db: DatabaseClient) => {
               ipAddress,
               userAgent,
             });
+
+            await auditLogService.record({
+              actorId: session.userId,
+              action: 'USER_LOGIN',
+              entityType: 'SESSION',
+              entityId: session.id,
+              severity: 'INFO',
+              status: 'SUCCESS',
+              description: 'User successfully signed in',
+              ipAddress,
+              userAgent,
+            });
           },
         },
       },
@@ -171,10 +208,25 @@ export const createAuth = (db: DatabaseClient) => {
           after: async (account, context) => {
             if (account.password) {
               const req = context?.request;
+              const ipAddress = req?.headers?.get('x-forwarded-for') || null;
+              const userAgent = req?.headers?.get('user-agent') || null;
+
               await handlePasswordChanged(db, {
                 userId: account.userId,
-                ipAddress: req?.headers?.get('x-forwarded-for') || null,
-                userAgent: req?.headers?.get('user-agent') || null,
+                ipAddress,
+                userAgent,
+              });
+
+              await auditLogService.record({
+                actorId: account.userId,
+                action: 'USER_PASSWORD_CHANGED',
+                entityType: 'USER',
+                entityId: account.userId,
+                severity: 'WARN',
+                status: 'SUCCESS',
+                description: 'User updated account password',
+                ipAddress,
+                userAgent,
               });
             }
           },
@@ -200,6 +252,11 @@ export const createAuth = (db: DatabaseClient) => {
         timezone: { type: 'string', required: false, input: true },
         currency: { type: 'string', required: false, input: true },
         sync_status: { type: 'string', required: false, defaultValue: 'SYNCED' },
+        role: { type: 'string', required: false, defaultValue: 'USER', input: false },
+        status: { type: 'string', required: false, defaultValue: 'ACTIVE', input: false },
+        bannedAt: { type: 'string', required: false, input: false },
+        banReason: { type: 'string', required: false, input: false },
+        lastActiveAt: { type: 'string', required: false, input: false },
       },
     },
     session: {

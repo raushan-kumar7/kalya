@@ -86,7 +86,7 @@ export function useStatementData({
 
   const statementData: StatementData = useMemo(() => {
     const { startDate, endDate, label } = period;
-    const { items, categories: allCategories, buckets: allBuckets } = feed;
+    const { items, buckets: allBuckets } = feed;
 
     // Filter items within the date window (inclusive)
     const periodItems = items.filter((item) => item.date >= startDate && item.date <= endDate);

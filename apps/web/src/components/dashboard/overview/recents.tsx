@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { formatCardDate, formatInr } from '@kalya/utils';
 import { ChartCard } from '@/components/ui/charts';
 import { cn } from '@/libs/utils';
-import { ArrowDownLeft, ArrowUpRight, Receipt, Users, ChevronRight } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Users, ChevronRight } from 'lucide-react';
 import type { RecentRow } from './helper';
 
 export interface RecentTransactionsProps {

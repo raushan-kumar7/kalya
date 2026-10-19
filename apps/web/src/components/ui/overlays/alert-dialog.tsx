@@ -5,7 +5,6 @@ import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/libs/utils';
 import { buttonVariants, type ButtonProps } from '@/components/ui/forms/button';
-import { FOCUS_RING } from '@/components/ui/constants';
 
 const AlertDialog = AlertDialogPrimitive.Root;
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;

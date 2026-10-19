@@ -9,7 +9,6 @@ import {
   BellRing,
   Check,
   CheckCheck,
-  Coins,
   Flame,
   Receipt,
   Settings2,
@@ -220,7 +219,7 @@ export const NotificationPanel = React.forwardRef<HTMLDivElement, NotificationPa
       }
     };
 
-    const handleItemClick = (item: NotificationItem, e: React.MouseEvent) => {
+    const handleItemClick = (item: NotificationItem, _e: React.MouseEvent) => {
       if (!item.is_read) {
         if (onMarkAsRead) {
           onMarkAsRead(item.id);

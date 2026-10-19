@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  CreateBucketDto,
-  FINANCE_LIMITS,
-  ORIGIN_OPTIONS,
-  Timestamps,
-  UpdateBucketDto,
-} from '@kalya/types';
+import { CreateBucketDto, FINANCE_LIMITS, ORIGIN_OPTIONS, UpdateBucketDto } from '@kalya/types';
 import { DecimalSchema, ISOTimestampSchema, UUIDSchema } from '../core';
 
 /**

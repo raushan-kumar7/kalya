@@ -7,7 +7,7 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { ApiError, type ApiErrorDetail, type StandardResponse } from './types';
+import { ApiError, type ApiErrorDetail } from './types';
 import { useAuthStore } from '@/stores/auth';
 import { toSnake } from '@kalya/utils';
 
@@ -84,6 +84,18 @@ axiosInstance.interceptors.response.use(
     // Unbox standardResponseSchema envelope if present
     const data = response.data;
     if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+      if (data.meta !== undefined) {
+        if (Array.isArray(data.data)) {
+          Object.defineProperty(data.data, 'meta', {
+            value: data.meta,
+            writable: true,
+            enumerable: false,
+            configurable: true,
+          });
+        } else if (typeof data.data === 'object' && data.data !== null) {
+          (data.data as Record<string, unknown>).meta = data.meta;
+        }
+      }
       // Retain the unboxed data directly
       response.data = data.data;
     }

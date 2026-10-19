@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RotateCw, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import {
   Tooltip,

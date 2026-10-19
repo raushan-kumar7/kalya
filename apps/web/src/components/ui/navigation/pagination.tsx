@@ -10,8 +10,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { FOCUS_RING, TRANSITIONS_CSS } from '@/components/ui/constants';
-import { Button, type ButtonProps } from '@/components/ui/forms/button';
+import { FOCUS_RING } from '@/components/ui/constants';
+import { Button } from '@/components/ui/forms/button';
 
 /* ------------------------------------------------------------------ */
 /* 1. Root & Container Components                                      */

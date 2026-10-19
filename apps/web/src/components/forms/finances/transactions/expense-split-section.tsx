@@ -12,11 +12,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  CreditCard,
-  IndianRupee,
   RotateCcw,
   Scale,
-  Split,
   User,
   UserCheck,
 } from 'lucide-react';

@@ -37,7 +37,10 @@ export const AlertReferenceTypeSchema = z.enum(ALERT_REFERENCE_TYPE_OPTIONS, {
 /**
  * Arbitrary JSON value validator for alert metadata.
  */
-export const JSONValueSchema: z.ZodType<any> = z.lazy(() =>
+export type JSONValue =
+  string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+
+export const JSONValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
   z.union([
     z.string(),
     z.number(),

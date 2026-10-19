@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Coins, IndianRupee, Plus, Sparkles, TrendingUp } from 'lucide-react';
+import { Coins, IndianRupee, Plus } from 'lucide-react';
 import {
   Modal,
   ModalBody,

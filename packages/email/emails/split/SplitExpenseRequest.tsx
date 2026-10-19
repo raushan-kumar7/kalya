@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Layout, Callout, DetailRow, Button } from '../components';
-import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitExpenseRequestProps {
   payerName?: string;
@@ -26,7 +25,8 @@ export const SplitExpenseRequest = ({
   splitMethod = 'Split Equally (4 people)',
   paymentMethod = 'UPI (Google Pay)',
   settleUrl = 'https://kalya.app/split/settle?id=exp_split_88219',
-  upiPaymentLink = 'upi://pay?pa=priya@okhdfcbank&pn=Priya%20Patel&am=1200.00&cu=INR',
+  upiPaymentLink:
+    _upiPaymentLink = 'upi://pay?pa=priya@okhdfcbank&pn=Priya%20Patel&am=1200.00&cu=INR',
 }: SplitExpenseRequestProps) => {
   return (
     <Layout preview={`${payerName} split a ${totalBillAmount} bill with you on Kalya`}>

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { Progress, Button } from '@/components/ui';
+import { Progress } from '@/components/ui';
 import {
   CartesianChart,
   ChartCard,
@@ -16,7 +16,7 @@ import { ChartTooltip } from '@/components/ui/charts/chart-tooltip';
 import { chartColor } from '@/components/ui/charts/theme';
 import type { BucketSpend } from '@/hooks/finances/overview/types';
 import { formatInr, formatMonthLabel } from '@kalya/utils';
-import { ArrowUpRight, ChevronRight, Target, Wallet } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/libs/utils';
 
 /** Budget colour rule: green < 75%, amber < 100%, red >= 100%. */
@@ -631,7 +631,7 @@ export function BudgetHealth({
 
 export function SavingsRateGauge({
   rate,
-  income = 0,
+  income: _income = 0,
   spent = 0,
   netSavings = 0,
   isLoading,
@@ -764,7 +764,6 @@ export function GoalsProgress({
     >
       <div className="space-y-4 pt-1">
         {goals.slice(0, 4).map((g) => {
-          const pct = g.target > 0 ? Math.round((g.saved / g.target) * 100) : 0;
           return (
             <div key={g.id} className="space-y-1.5">
               <Progress

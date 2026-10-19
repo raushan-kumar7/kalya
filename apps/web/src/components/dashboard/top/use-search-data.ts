@@ -21,7 +21,6 @@ import {
   TrendingUp,
   UserCircle,
   Users2,
-  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { formatInr } from '@kalya/utils';
@@ -70,7 +69,7 @@ export interface UseSearchDataReturn {
   totalCount: number;
 }
 
-export function useSearchData(onClose?: () => void): UseSearchDataReturn {
+export function useSearchData(_onClose?: () => void): UseSearchDataReturn {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { openModal } = useFinanceModal();

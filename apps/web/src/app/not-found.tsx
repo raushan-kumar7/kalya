@@ -6,13 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Home, Compass, ShieldAlert } from 'lucide-react';
 import { Icon } from '@/components/shared/logo';
-import {
-  buttonHoverProps,
-  fadeInUp,
-  staggerContainer,
-  staggerItem,
-  TRANSITIONS,
-} from '@/libs/animations';
+import { staggerContainer, staggerItem } from '@/libs/animations';
 
 export default function NotFound() {
   const router = useRouter();

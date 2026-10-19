@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Coins, PiggyBank, Plus, Receipt, Sparkles } from 'lucide-react';
+import { Coins, PiggyBank, Receipt, Sparkles } from 'lucide-react';
 import { formatInr } from '@kalya/utils';
 import type { CreateDigitalAssetDto, UpdateDigitalAssetDto } from '@kalya/types';
 import { Button } from '@/components/ui/forms/button';

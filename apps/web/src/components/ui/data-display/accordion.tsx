@@ -4,7 +4,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import { FOCUS_RING, TRANSITIONS_CSS } from '@/components/ui/constants';
+import { FOCUS_RING } from '@/components/ui/constants';
 
 interface AccordionContextValue {
   expandedItems: string[];

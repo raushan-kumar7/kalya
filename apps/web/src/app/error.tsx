@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, RotateCcw, Home, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Icon } from '@/components/shared/logo';
-import { staggerContainer, staggerItem, TRANSITIONS } from '@/libs/animations';
+import { staggerContainer, staggerItem } from '@/libs/animations';
 
 interface ErrorProps {
   error: Error & { digest?: string };

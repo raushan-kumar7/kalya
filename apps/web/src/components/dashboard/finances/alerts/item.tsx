@@ -8,14 +8,12 @@ import {
   Trophy,
   Sparkles,
   Check,
-  CheckCheck,
   Clock,
   Trash2,
   ExternalLink,
   MoreVertical,
   BellOff,
   Flame,
-  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

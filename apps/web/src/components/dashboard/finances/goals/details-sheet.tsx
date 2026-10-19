@@ -2,24 +2,17 @@
 
 import React, { useState } from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
-  Calendar,
   Check,
-  CheckCircle2,
   Clock,
   Coins,
-  HelpCircle,
   History,
   IndianRupee,
   Pencil,
   Plus,
-  RotateCcw,
   Sparkles,
   Target,
   Trash2,
   TrendingUp,
-  Wallet,
   Zap,
 } from 'lucide-react';
 import {
@@ -36,10 +29,10 @@ import { Badge } from '@/components/ui/data-display/badge';
 import { Input } from '@/components/ui/forms/input';
 import { RadialChart } from '@/components/ui/charts/radial-chart';
 import { CartesianChart, SEMANTIC } from '@/components/ui/charts';
-import { formatCompactInr, formatInr, roundMoney } from '@kalya/utils';
+import { formatInr, roundMoney } from '@kalya/utils';
 import { cn } from '@/libs/utils';
 import { DeadlineCountdownBadge, GoalStatusBadge, OnTrackIndicator } from './status';
-import type { GoalContribution, GoalRow } from './types';
+import type { GoalRow } from './types';
 import { calculateWhatIf, generateProjectionTimeline } from './helper';
 
 export interface GoalDetailsSheetProps {
@@ -63,7 +56,7 @@ export function GoalDetailsSheet({
 }: GoalDetailsSheetProps) {
   // "What-if" calculator state
   const [whatIfMonthly, setWhatIfMonthly] = useState<string>('');
-  const [whatIfMode, setWhatIfMode] = useState<'amount' | 'date'>('amount');
+  const [whatIfMode, _setWhatIfMode] = useState<'amount' | 'date'>('amount');
 
   if (!g) return null;
 

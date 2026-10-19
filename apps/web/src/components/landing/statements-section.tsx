@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
-import { FileText, Check, Download, FileSpreadsheet, Printer } from 'lucide-react';
+import { FileText, Check, FileSpreadsheet, Printer } from 'lucide-react';
 
 export function StatementsSection() {
   const containerRef = React.useRef<HTMLElement>(null);

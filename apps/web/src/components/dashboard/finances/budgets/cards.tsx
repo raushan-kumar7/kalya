@@ -16,7 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/overlays/tooltip';
-import { CreateEntityCard, EntityCard, FooterRow, KpiCard, KpiGrid } from '@/components/shared';
+import { CreateEntityCard, EntityCard, KpiCard, KpiGrid } from '@/components/shared';
 import { UsageBadge, usagePct, usageStatus } from './status';
 import { cn } from '@/libs/utils';
 import { formatInr } from '@kalya/utils';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, BellRing, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { CheckCircle2, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 
 interface AlertsEmptyStateProps {

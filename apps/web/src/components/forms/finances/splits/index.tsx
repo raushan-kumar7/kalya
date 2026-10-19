@@ -41,15 +41,6 @@ export interface SplitContactFormProps {
   onSave: (payload: CreateSplitContactMemberInput | UpdateSplitContactMemberInput) => Promise<void>;
 }
 
-const emptyValues: CreateSplitContactMemberInput = {
-  name: '',
-  email: '',
-  phone: '',
-  image: '',
-  is_linked: false,
-  linked_user_id: null,
-};
-
 const SplitContactFormValidationSchema = z.object({
   name: z
     .string({ error: 'Name is required' })
@@ -76,7 +67,6 @@ export function SplitContactForm({
   splitContact,
   onSave,
 }: SplitContactFormProps) {
-  const isEdit = Boolean(splitContact);
   const [query, setQuery] = useState('');
 
   const form = useForm<CreateSplitContactMemberInput>({

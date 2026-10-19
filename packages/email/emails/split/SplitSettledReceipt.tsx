@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Layout, Callout, DetailRow, Button } from '../components';
-import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitSettledReceiptProps {
   payerName?: string;

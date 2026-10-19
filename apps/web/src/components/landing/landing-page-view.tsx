@@ -9,26 +9,18 @@ import {
   Shield,
   ArrowRight,
   Sparkles,
-  PieChart,
-  Zap,
   Lock,
-  Layers,
   CheckCircle2,
   ChevronDown,
-  BarChart3,
   Wallet,
   ArrowUpRight,
   Clock,
   ShieldCheck,
   RefreshCw,
   Sliders,
-  DollarSign,
-  Percent,
-  Calendar as CalendarIcon,
   Check,
   Star,
   Users,
-  Building2,
   Menu,
   X,
   Receipt,
@@ -39,17 +31,9 @@ import {
   FileSpreadsheet,
   QrCode,
   AlertTriangle,
-  CreditCard,
-  Smartphone,
-  Eye,
-  SlidersHorizontal,
-  ChevronRight,
-  HelpCircle,
-  Activity,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import { ThemeToggle } from '@/components/ui/utilities/theme-toggle';
-import { useTheme } from 'next-themes';
 
 // ============================================================
 // ANIMATION VARIANTS
@@ -80,8 +64,6 @@ const staggerContainer: Variants = {
 // ============================================================
 
 export function Home() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   // ------------------------------------------------------------
@@ -89,9 +71,6 @@ export function Home() {
   // ------------------------------------------------------------
   const [heroSplitSettled, setHeroSplitSettled] = React.useState(false);
   const [heroFriendsOwe, setHeroFriendsOwe] = React.useState(8400);
-  const [activeAssetTab, setActiveAssetTab] = React.useState<'allocation' | 'breakdown'>(
-    'allocation'
-  );
 
   const handleSimulateSettle = () => {
     if (heroSplitSettled) {
@@ -166,10 +145,6 @@ export function Home() {
   // Email CTA State
   const [emailInput, setEmailInput] = React.useState('');
   const [emailSubmitted, setEmailSubmitted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const formatINR = (val: number) => {
     return new Intl.NumberFormat('en-IN', {

@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronUp,
   LineChart as LineChartIcon,
-  PieChart as PieChartIcon,
   TrendingUp,
 } from 'lucide-react';
 import {

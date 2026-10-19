@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Text, Section, Heading } from 'react-email';
 import { Layout, Callout, DetailRow, Button } from '../components';
-import { EMAILS_CONFIG } from '../constants';
 
 export interface SplitSettlementReminderProps {
   payerName?: string;
@@ -20,7 +19,8 @@ export const SplitSettlementReminder = ({
   outstandingAmount = '₹1,200.00',
   daysPending = 5,
   settleUrl = 'https://kalya.app/split/settle?id=exp_split_88219',
-  upiPaymentLink = 'upi://pay?pa=priya@okhdfcbank&pn=Priya%20Patel&am=1200.00&cu=INR',
+  upiPaymentLink:
+    _upiPaymentLink = 'upi://pay?pa=priya@okhdfcbank&pn=Priya%20Patel&am=1200.00&cu=INR',
 }: SplitSettlementReminderProps) => {
   return (
     <Layout

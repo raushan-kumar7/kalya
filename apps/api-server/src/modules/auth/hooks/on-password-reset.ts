@@ -34,7 +34,7 @@ export async function handleSendResetPassword(
   payload: SendResetPasswordPayload,
   request?: Request | null
 ): Promise<void> {
-  const { user, url, token } = payload;
+  const { user, token } = payload;
   const client = parseClientInfo(
     request?.headers?.get('user-agent'),
     request?.headers?.get('x-forwarded-for'),

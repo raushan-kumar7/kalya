@@ -5,8 +5,6 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import {
   Calendar as CalendarIcon,
   ChevronDown,
-  Download,
-  FileSpreadsheet,
   FileText,
   Printer,
   RotateCw,
@@ -15,7 +13,6 @@ import {
 import { cn } from '@/libs/utils';
 import { Button } from '@/components/ui/forms/button';
 import { Switch } from '@/components/ui/forms/switch';
-import { Badge } from '@/components/ui/data-display/badge';
 import { DatePicker } from '@/components/ui/forms/date-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlays/popover';
 import {
@@ -53,7 +50,7 @@ export function ReportsToolbar({
   onCustomEndChange,
   compareWithPrevious,
   onCompareToggle,
-  currentPeriod,
+  currentPeriod: _currentPeriod,
   onExportCsv,
   onExportPdf,
   onGenerateStatementClick,

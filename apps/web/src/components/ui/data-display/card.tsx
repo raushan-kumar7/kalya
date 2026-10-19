@@ -5,12 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/libs/utils';
-import {
-  TRANSITIONS_CSS,
-  cardHoverProps,
-  FOCUS_RING,
-  INTERACTION_STATES,
-} from '@/components/ui/constants';
+import { cardHoverProps, FOCUS_RING, INTERACTION_STATES } from '@/components/ui/constants';
 
 const cardVariants = cva(
   'rounded-xl text-text-primary transition-all duration-200 overflow-hidden',

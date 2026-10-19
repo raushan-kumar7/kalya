@@ -1,6 +1,6 @@
 import type { DonutDatum } from '@/components/ui/charts';
 import type { Budget, Bucket, Goal } from '@kalya/types';
-import { roundMoney, formatInr } from '@kalya/utils';
+import { roundMoney } from '@kalya/utils';
 import type {
   OverviewKpis,
   BucketSpend,

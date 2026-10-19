@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface ComparisonRow {
   need: string;

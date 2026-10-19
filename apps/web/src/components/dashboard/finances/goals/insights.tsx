@@ -1,16 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle2,
-  PartyPopper,
-  Sparkles,
-  TrendingUp,
-  X,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowRight, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/forms/button';
 import { cn } from '@/libs/utils';
 import type { GoalInsight } from './types';

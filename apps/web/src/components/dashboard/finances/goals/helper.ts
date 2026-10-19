@@ -1,4 +1,4 @@
-import type { Bucket, Goal, GoalStatus } from '@kalya/types';
+import type { Bucket, GoalStatus } from '@kalya/types';
 import { roundMoney, formatInr } from '@kalya/utils';
 import type {
   GoalContribution,

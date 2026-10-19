@@ -1,7 +1,6 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { BucketController } from './bucket.controller';
 import { CreateBucketSchema, UpdateBucketSchema, z } from '@kalya/validations';
-import { standardResponseSchema } from '@/responses';
 
 export const createBucketRoutes = (controller: BucketController): FastifyPluginAsyncZod => {
   return async (fastify) => {
