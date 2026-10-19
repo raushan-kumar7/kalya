@@ -81,6 +81,14 @@ axiosInstance.interceptors.request.use(
 // ------------------------------------------------------------
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
+    // If response is a binary blob, return it untouched
+    if (
+      response.config?.responseType === 'blob' ||
+      (typeof Blob !== 'undefined' && response.data instanceof Blob)
+    ) {
+      return response;
+    }
+
     // Unbox standardResponseSchema envelope if present
     const data = response.data;
     if (data && typeof data === 'object' && 'success' in data && 'data' in data) {

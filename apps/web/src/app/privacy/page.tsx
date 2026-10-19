@@ -5,13 +5,13 @@ import { LandingHeader, LandingFooter } from '@/components/landing';
 import { PrivacyAccordion } from '@/components/legal/privacy-accordion';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Kalya',
+  title: 'Privacy Policy | Kalya Personal Finance App',
   description:
-    'Last updated: October 2026. Plain language privacy policy written to fit India’s Digital Personal Data Protection Act, 2023. Zero ads, zero selling.',
+    'Last updated: October 2026. Plain language privacy policy for Kalya Personal Finance App, compliant with India’s Digital Personal Data Protection Act, 2023. Zero ads, zero selling.',
   openGraph: {
-    title: 'Privacy Policy | Kalya',
+    title: 'Privacy Policy | Kalya Personal Finance App',
     description:
-      'Last updated: October 2026. Plain language privacy policy written to fit India’s Digital Personal Data Protection Act, 2023. Zero ads, zero selling.',
+      'Last updated: October 2026. Plain language privacy policy for Kalya Personal Finance App, compliant with India’s Digital Personal Data Protection Act, 2023. Zero ads, zero selling.',
   },
 };
 
@@ -39,8 +39,8 @@ export default function PrivacyPage() {
 
             <p className="mt-4 text-body-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
               Last updated:{' '}
-              <span className="font-semibold text-text-primary font-numeric">October 2026</span>. We
-              have kept this short and plain.
+              <span className="font-semibold text-text-primary font-numeric">October 2026</span>.
+              Plain-language privacy commitments for Kalya Personal Finance App.
             </p>
           </div>
         </section>

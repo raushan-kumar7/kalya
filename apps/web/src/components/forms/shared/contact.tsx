@@ -80,13 +80,13 @@ export const TOPIC_METAS: readonly TopicMeta[] = [
     id: 'Privacy request',
     label: 'Privacy request',
     icon: ShieldAlert,
-    hint: 'Sent directly to our privacy team at privacy@kalya.app for prompt resolution.',
+    hint: 'Sent directly to our privacy team at kaalbyte@gmail.com for prompt resolution.',
   },
   {
     id: 'Other',
     label: 'Other',
     icon: MoreHorizontal,
-    hint: 'Anything else you would like to share with the Kalya team.',
+    hint: 'Anything else you would like to share with the Kalya Personal Finance App team.',
   },
 ];
 
@@ -199,7 +199,7 @@ export function ContactForm({
       const errorMessage =
         err instanceof Error
           ? err.message
-          : 'Something went wrong, and your message was not sent. Please try again, or email us at support@kalya.app.';
+          : 'Something went wrong, and your message was not sent. Please try again, or email us at kaalbyte@gmail.com.';
       setServerError(errorMessage);
     }
   };

@@ -1,6 +1,7 @@
 'use client';
 
-import { http, ENDPOINTS } from '@/libs/api';
+import { http, ENDPOINTS, axiosInstance } from '@/libs/api';
+import { useAuthStore } from '@/stores/auth';
 import type { PaginationMeta } from '@/libs/api/types';
 import type {
   AdminOverviewStats,
@@ -226,11 +227,37 @@ export class AdminService {
   }
 
   /**
-   * Generates the API download URL for a backup snapshot.
+   * Generates the API download URL for a backup snapshot, appending the active Bearer token if available.
    */
   static getBackupDownloadUrl(filename: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    return `${baseUrl}${ENDPOINTS.ADMIN.BACKUP_DOWNLOAD(filename)}`;
+    let token: string | undefined;
+    try {
+      token = useAuthStore.getState().session?.token;
+    } catch {
+      // Ignore during SSR
+    }
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `${baseUrl}${ENDPOINTS.ADMIN.BACKUP_DOWNLOAD(filename)}${query}`;
+  }
+
+  /**
+   * Downloads a backup snapshot file with Bearer authentication and triggers browser file save.
+   */
+  static async downloadBackup(filename: string): Promise<void> {
+    const response = await axiosInstance.get(ENDPOINTS.ADMIN.BACKUP_DOWNLOAD(filename), {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], { type: 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 
   /**

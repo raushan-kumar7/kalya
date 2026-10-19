@@ -5,13 +5,13 @@ import { LandingHeader, LandingFooter } from '@/components/landing';
 import { TermsAccordion } from '@/components/legal/terms-accordion';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Kalya',
+  title: 'Terms of Service | Kalya Personal Finance App',
   description:
-    'Last updated: October 2026. Plain-language terms of service for Kalya. Free budgeting, debt splitting, and net worth tracking.',
+    'Last updated: October 2026. Plain-language terms of service for Kalya Personal Finance App. Free budgeting, debt splitting, and net worth tracking.',
   openGraph: {
-    title: 'Terms of Service | Kalya',
+    title: 'Terms of Service | Kalya Personal Finance App',
     description:
-      'Last updated: October 2026. Plain-language terms of service for Kalya. Free budgeting, debt splitting, and net worth tracking.',
+      'Last updated: October 2026. Plain-language terms of service for Kalya Personal Finance App. Free budgeting, debt splitting, and net worth tracking.',
   },
 };
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
             <p className="mt-4 text-body-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
               Last updated:{' '}
               <span className="font-semibold text-text-primary font-numeric">October 2026</span>. By
-              using Kalya you agree to these terms.
+              using Kalya Personal Finance App you agree to these terms.
             </p>
           </div>
         </section>

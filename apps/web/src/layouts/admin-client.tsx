@@ -223,7 +223,7 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
               </div>
               <p className="text-caption text-text-secondary max-w-sm leading-relaxed">
                 Centralized platform governance, database explorer, real-time subsystem telemetry,
-                and zero-data-loss automated disaster recovery for the Kalya platform.
+                and zero-data-loss automated disaster recovery for the Kalya Personal Finance App.
               </p>
             </div>
 
@@ -292,7 +292,7 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
           {/* Sub-Footer Divider & Copyright */}
           <div className="mt-8 border-t border-border/60 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-text-muted font-numeric">
             <span>
-              &copy; {new Date().getFullYear()} Kalya Personal Finance Inc. Confidential Admin
+              &copy; {new Date().getFullYear()} Kalya Personal Finance App. Confidential Admin
               Console.
             </span>
             <div className="flex items-center gap-2">

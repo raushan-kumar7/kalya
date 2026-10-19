@@ -16,14 +16,14 @@ export function LandingFooter() {
               <div className="relative h-9 w-36 sm:w-40 transition-transform group-hover:scale-[1.02]">
                 <Image
                   src="/kalya_logo1.png"
-                  alt="Kalya - Ready For Tomorrow"
+                  alt="Kalya Personal Finance App - Ready For Tomorrow"
                   fill
                   sizes="160px"
                   className="object-contain object-left dark:hidden"
                 />
                 <Image
                   src="/kalya_logo_white1.png"
-                  alt="Kalya - Ready For Tomorrow"
+                  alt="Kalya Personal Finance App - Ready For Tomorrow"
                   fill
                   sizes="160px"
                   className="object-contain object-left hidden dark:block"
@@ -36,7 +36,8 @@ export function LandingFooter() {
             </div>
 
             <p className="text-caption sm:text-body-sm text-text-secondary max-w-sm leading-relaxed">
-              A free, private app to budget, split bills and track your wealth.
+              Kalya Personal Finance App — a free, private app to budget, split bills and track your
+              wealth.
             </p>
           </div>
 
@@ -116,7 +117,7 @@ export function LandingFooter() {
 
         {/* Bottom Bar: Copyright (left) · Trust Line (centre) · Theme Toggle (right) */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-caption text-text-muted">
-          <div className="text-left">© 2026 Kalya. All rights reserved.</div>
+          <div className="text-left">© 2026 Kalya Personal Finance App. All rights reserved.</div>
 
           <div className="text-text-secondary font-medium">No ads. Your data stays yours.</div>
 

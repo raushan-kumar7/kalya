@@ -77,7 +77,7 @@ export const Footer = ({
       <div className="flex items-center gap-3">
         <Link
           href="/dashboard"
-          aria-label="Kalya Dashboard"
+          aria-label="Kalya Personal Finance App Dashboard"
           className="group flex items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <Icon
@@ -88,7 +88,7 @@ export const Footer = ({
         </Link>
 
         <div className="text-caption text-text-secondary flex items-center gap-2 font-medium">
-          <span>© {year} Kalya</span>
+          <span>© {year} Kalya Personal Finance App</span>
           <span className="text-border/80 hidden sm:inline">•</span>
           <span className="tracking-brand hidden text-[9.5px] font-semibold text-accent-strong uppercase sm:inline">
             Private Financial Intelligence
@@ -169,7 +169,7 @@ export const Footer = ({
         {/* Optional Version Badge (rendered only if explicitly specified) */}
         {version && (
           <span
-            title="Kalya Financial Suite Version"
+            title="Kalya Personal Finance App Version"
             className="font-numeric text-text-muted/80 bg-surface-raised border-border/80 text-[10px] rounded-full border px-2 py-0.5 font-medium tracking-tight shadow-xs select-none"
           >
             {version}

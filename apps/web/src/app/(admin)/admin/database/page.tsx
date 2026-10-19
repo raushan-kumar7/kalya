@@ -135,6 +135,7 @@ export default function AdminDatabasePage() {
   const [restoreModalBackup, setRestoreModalBackup] = useState<DbBackupInfo | null>(null);
   const [restoreConfirmText, setRestoreConfirmText] = useState('');
   const [deleteModalBackup, setDeleteModalBackup] = useState<DbBackupInfo | null>(null);
+  const [downloadingBackup, setDownloadingBackup] = useState<string | null>(null);
 
   // Manual Refresh Indicators
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
@@ -261,6 +262,19 @@ export default function AdminDatabasePage() {
       toast.error(err instanceof Error ? err.message : 'Snapshot upload failed');
     },
   });
+
+  // Programmatic Authenticated Backup Download Handler
+  const handleDownloadBackup = async (filename: string) => {
+    try {
+      setDownloadingBackup(filename);
+      await AdminService.downloadBackup(filename);
+      toast.success(`Backup snapshot "${filename}" downloaded`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to download backup snapshot');
+    } finally {
+      setDownloadingBackup(null);
+    }
+  };
 
   // Dedicated Refresh Handlers with Guaranteed Spin Animation & Feedback
   const handleRefreshAll = async () => {
@@ -1504,15 +1518,22 @@ export default function AdminDatabasePage() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             {/* Download */}
-                            <Button variant="ghost" size="xs" asChild title="Download Snapshot">
-                              <a
-                                href={AdminService.getBackupDownloadUrl(b.filename)}
-                                download={b.filename}
-                                className="flex items-center gap-1"
-                              >
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              title="Download Snapshot"
+                              disabled={downloadingBackup === b.filename}
+                              onClick={() => handleDownloadBackup(b.filename)}
+                              className="flex items-center gap-1 cursor-pointer"
+                            >
+                              {downloadingBackup === b.filename ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin text-primary" />
+                              ) : (
                                 <Download className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Download</span>
-                              </a>
+                              )}
+                              <span className="hidden sm:inline">
+                                {downloadingBackup === b.filename ? 'Downloading...' : 'Download'}
+                              </span>
                             </Button>
 
                             {/* Restore */}

@@ -6,13 +6,13 @@ import { LandingHeader } from '@/components/landing/landing-header';
 import { LandingFooter } from '@/components/landing/landing-footer';
 
 export const metadata: Metadata = {
-  title: 'About Kalya: clear, private money tracking',
+  title: 'About Kalya Personal Finance App: clear, private money tracking',
   description:
-    'Kalya brings budgeting, bill splitting with UPI, and multi-asset wealth tracking into one calm, private place. No ads, no data selling.',
+    'Kalya Personal Finance App brings budgeting, bill splitting with UPI, and multi-asset wealth tracking into one calm, private place. No ads, no data selling.',
   openGraph: {
-    title: 'About Kalya: clear, private money tracking',
+    title: 'About Kalya Personal Finance App: clear, private money tracking',
     description:
-      'Kalya brings budgeting, bill splitting with UPI, and multi-asset wealth tracking into one calm, private place. No ads, no data selling.',
+      'Kalya Personal Finance App brings budgeting, bill splitting with UPI, and multi-asset wealth tracking into one calm, private place. No ads, no data selling.',
   },
 };
 
@@ -39,7 +39,7 @@ export default function AboutPage() {
             <p className="mt-6 text-body-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
               Your salary arrives, and by month-end it is hard to say where it went. Most of us
               juggle an expense app, a bill-splitting app, a gold or stock tracker and a
-              spreadsheet. Kalya brings them into one calm, private place.
+              spreadsheet. Kalya Personal Finance App brings them into one calm, private place.
             </p>
           </div>
         </section>
@@ -98,13 +98,13 @@ export default function AboutPage() {
                 From the Founder
               </span>
               <p className="text-body-md text-text-secondary leading-relaxed italic">
-                &ldquo;I built Kalya after getting tired of opening Splitwise for flat expenses, an
-                SMS expense logger for daily chai, and a manual Excel spreadsheet for tracking gold
-                and SIPs. Kalya puts mathematical order back into personal finances, without selling
-                your data to advertisers.&rdquo;
+                &ldquo;I built Kalya Personal Finance App after getting tired of opening Splitwise
+                for flat expenses, an SMS expense logger for daily chai, and a manual Excel
+                spreadsheet for tracking gold and SIPs. Kalya Personal Finance App puts mathematical
+                order back into personal finances, without selling your data to advertisers.&rdquo;
               </p>
               <div className="pt-2 font-display font-bold text-text-primary text-body-sm">
-                Raushan Kumar · Founder, Kalya
+                Raushan Kumar · Founder, Kalya Personal Finance App
               </div>
             </div>
 
@@ -114,8 +114,8 @@ export default function AboutPage() {
                 Completely free for now
               </h3>
               <p className="text-body-md text-text-secondary leading-relaxed">
-                We want Kalya to be genuinely useful first, so it is completely free for now. If
-                that changes, we will tell you before anything happens.
+                We want Kalya Personal Finance App to be genuinely useful first, so it is completely
+                free for now. If that changes, we will tell you before anything happens.
               </p>
               <div className="pt-2">
                 <Link

@@ -7,13 +7,13 @@ import { ContactForm } from '@/components/forms/shared';
 import { Card, CardContent, Badge } from '@/components/ui';
 
 export const metadata: Metadata = {
-  title: 'Talk to Us | Contact Kalya',
+  title: 'Talk to Us | Contact Kalya Personal Finance App',
   description:
-    'Questions, feedback or a feature idea? We read every message and reply within 2 working days.',
+    'Questions, feedback or a feature idea about Kalya Personal Finance App? We read every message and reply within 2 working days.',
   openGraph: {
-    title: 'Talk to Us | Kalya',
+    title: 'Talk to Us | Kalya Personal Finance App',
     description:
-      'Questions, feedback or a feature idea? We read every message and reply within 2 working days.',
+      'Questions, feedback or a feature idea about Kalya Personal Finance App? We read every message and reply within 2 working days.',
   },
 };
 
@@ -40,7 +40,8 @@ export default function ContactPage() {
             </h1>
 
             <p className="mt-4 text-body-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-              Questions, feedback or a feature idea? We read every message.
+              Questions, feedback or a feature idea about Kalya Personal Finance App? We read every
+              message.
             </p>
           </div>
         </section>
@@ -73,10 +74,10 @@ export default function ContactPage() {
                           </Badge>
                         </div>
                         <a
-                          href="mailto:support@kalya.app"
+                          href="mailto:kaalbyte@gmail.com"
                           className="font-medium text-primary hover:underline block text-body-sm"
                         >
-                          support@kalya.app
+                          kaalbyte@gmail.com
                         </a>
                         <p className="text-caption text-text-secondary leading-relaxed pt-0.5">
                           We reply within{' '}
@@ -109,10 +110,10 @@ export default function ContactPage() {
                         <p className="text-caption text-text-secondary leading-relaxed">
                           Choose &ldquo;Privacy request&rdquo; in the form, or write to{' '}
                           <a
-                            href="mailto:privacy@kalya.app"
+                            href="mailto:kaalbyte@gmail.com"
                             className="font-semibold text-primary hover:underline"
                           >
-                            privacy@kalya.app
+                            kaalbyte@gmail.com
                           </a>
                           . We review and resolve data requests promptly.
                         </p>

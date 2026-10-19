@@ -2139,7 +2139,9 @@ export function Home() {
               <span className="h-2 w-2 rounded-full bg-success" />
               <span>All Systems Operational</span>
               <span>·</span>
-              <span>© {new Date().getFullYear()} Kalya Technologies. All rights reserved.</span>
+              <span>
+                © {new Date().getFullYear()} Kalya Personal Finance App. All rights reserved.
+              </span>
             </div>
 
             <div className="font-numeric">Kalya Sovereign UI Engine · Ready For Tomorrow</div>

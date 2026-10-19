@@ -128,7 +128,7 @@ export function AuthLayoutClient({ children, className }: AuthLayoutClientProps)
 
         {/* Left Footer Info */}
         <footer className="relative z-10 flex items-center justify-between font-body text-caption text-on-primary/60">
-          <span>© {new Date().getFullYear()} Kalya Technologies Inc.</span>
+          <span>© {new Date().getFullYear()} Kalya Personal Finance App</span>
           <span className="inline-flex items-center gap-1.5 font-medium text-on-primary/80">
             <ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />
             <span>Bank-grade 256-bit encryption</span>

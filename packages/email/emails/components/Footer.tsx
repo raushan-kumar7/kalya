@@ -14,7 +14,7 @@ export const Footer = () => {
           <Link href={baseUrl} target="_blank" className="inline-block">
             <Img
               src={EMAIL_ASSETS.icon}
-              alt="Kalya"
+              alt="Kalya Personal Finance App"
               width="28"
               height="28"
               className="block mx-auto mb-2"
@@ -31,8 +31,8 @@ export const Footer = () => {
           </Text>
 
           <Text className="m-0 mb-3 font-body text-caption text-brand-textSecondary max-w-105 mx-auto leading-relaxed">
-            A free, private app to budget, split bills and track your wealth. Consolidate your
-            wealth. Secure your tomorrow.
+            Kalya Personal Finance App — a free, private app to budget, split bills and track your
+            wealth. Consolidate your wealth. Secure your tomorrow.
           </Text>
 
           {/* Trust Banner from apps/web */}
@@ -90,7 +90,7 @@ export const Footer = () => {
 
           {/* Copyright */}
           <Text className="m-0 font-body text-[11px] leading-4 text-brand-textMuted">
-            © {currentYear} Kalya Technologies. All rights reserved.
+            © {currentYear} Kalya Personal Finance App. All rights reserved.
           </Text>
         </Column>
       </Row>

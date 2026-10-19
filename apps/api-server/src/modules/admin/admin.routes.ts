@@ -193,6 +193,9 @@ export const createAdminRoutes = (controller: AdminController): FastifyPluginAsy
         params: z.object({
           filename: z.string().min(1).max(255),
         }),
+        querystring: z.object({
+          token: z.string().optional(),
+        }),
       },
       handler: controller.downloadBackup,
     });

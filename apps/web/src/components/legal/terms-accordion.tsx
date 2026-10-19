@@ -110,10 +110,10 @@ export function TermsAccordion() {
                 <p className="text-caption text-text-secondary leading-relaxed">
                   We are a remote team. Reach our team at{' '}
                   <a
-                    href="mailto:support@kalya.app"
+                    href="mailto:kaalbyte@gmail.com"
                     className="text-primary hover:underline font-semibold"
                   >
-                    support@kalya.app
+                    kaalbyte@gmail.com
                   </a>{' '}
                   or through our Contact page.
                 </p>
@@ -135,7 +135,7 @@ export function TermsAccordion() {
                       The short version
                     </CardTitle>
                     <CardDescription className="text-caption text-text-secondary">
-                      Plain-language summary of your agreement with Kalya
+                      Plain-language summary of your agreement with Kalya Personal Finance App
                     </CardDescription>
                   </div>
                 </div>
@@ -145,14 +145,15 @@ export function TermsAccordion() {
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
                     <span>
-                      Kalya is a free tool to track money, plan budgets, split bills and follow your
-                      wealth.
+                      Kalya Personal Finance App is a free tool to track money, plan budgets, split
+                      bills and follow your wealth.
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
                     <span>
-                      Kalya does not hold or move your money, and it does not give financial advice.
+                      Kalya Personal Finance App does not hold or move your money, and it does not
+                      give financial advice.
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
@@ -228,11 +229,11 @@ export function TermsAccordion() {
                 <AccordionContent className="px-5 pb-5 pt-2">
                   <p className="text-body-sm text-text-secondary leading-relaxed">
                     These terms are an agreement between you and{' '}
-                    <strong className="text-text-primary">Kalya Technologies</strong>{' '}
+                    <strong className="text-text-primary">Kalya Personal Finance App</strong>{' '}
                     (&ldquo;Kalya&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). We operate as a
                     remote-first team. You must be{' '}
                     <strong className="text-text-primary font-numeric">18</strong> or older to use
-                    Kalya. If you do not agree, please do not use it.
+                    Kalya Personal Finance App. If you do not agree, please do not use it.
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -261,20 +262,21 @@ export function TermsAccordion() {
                         expandedItems.includes('section-2') ? 'text-primary' : 'text-text-primary'
                       )}
                     >
-                      What Kalya is, and what it is not
+                      What Kalya Personal Finance App is, and what it is not
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-2 space-y-2">
                   <ul className="space-y-1.5 text-body-sm text-text-secondary leading-relaxed list-disc pl-5">
                     <li>
-                      Kalya is a tool for recording your money, budgeting, splitting bills with
-                      friends, setting goals and tracking assets such as gold, silver, shares and
-                      mutual funds.
+                      Kalya Personal Finance App is a tool for recording your money, budgeting,
+                      splitting bills with friends, setting goals and tracking assets such as gold,
+                      silver, shares and mutual funds.
                     </li>
                     <li>
                       <strong className="text-text-primary">
-                        Kalya is not a bank, a payment service, a broker or an adviser.
+                        Kalya Personal Finance App is not a bank, a payment service, a broker or an
+                        adviser.
                       </strong>{' '}
                       We do not hold, send or receive your money.
                     </li>
@@ -328,10 +330,10 @@ export function TermsAccordion() {
                     <li>
                       Tell us at once at{' '}
                       <a
-                        href="mailto:support@kalya.app"
+                        href="mailto:kaalbyte@gmail.com"
                         className="font-semibold text-primary hover:underline"
                       >
-                        support@kalya.app
+                        kaalbyte@gmail.com
                       </a>{' '}
                       if you think someone else has used your account.
                     </li>
@@ -503,9 +505,9 @@ export function TermsAccordion() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-2">
                   <p className="text-body-sm text-text-secondary leading-relaxed">
-                    Kalya is free for now. We may add paid features in the future. If we do, we will
-                    tell you in advance, and you will not be charged for anything unless you choose
-                    it.
+                    Kalya Personal Finance App is free for now. We may add paid features in the
+                    future. If we do, we will tell you in advance, and you will not be charged for
+                    anything unless you choose it.
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -540,9 +542,10 @@ export function TermsAccordion() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-2">
                   <p className="text-body-sm text-text-secondary leading-relaxed">
-                    The Kalya name, logo, design, text and software belong to us or our licensors.
-                    We give you a personal, non-exclusive, non-transferable right to use Kalya for
-                    your own use. You may not use our brand without written permission.
+                    The Kalya Personal Finance App name, logo, design, text and software belong to
+                    us or our licensors. We give you a personal, non-exclusive, non-transferable
+                    right to use Kalya Personal Finance App for your own use. You may not use our
+                    brand without written permission.
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -848,10 +851,10 @@ export function TermsAccordion() {
                     These terms follow the laws of India. If we cannot settle a dispute by talking,
                     the competent courts in India will have jurisdiction. Please contact us first at{' '}
                     <a
-                      href="mailto:support@kalya.app"
+                      href="mailto:kaalbyte@gmail.com"
                       className="font-semibold text-primary hover:underline"
                     >
-                      support@kalya.app
+                      kaalbyte@gmail.com
                     </a>
                     , because most problems can be solved that way.
                   </p>
@@ -929,10 +932,10 @@ export function TermsAccordion() {
                   <p className="text-body-sm text-text-secondary leading-relaxed">
                     Questions about these terms? Write to{' '}
                     <a
-                      href="mailto:support@kalya.app"
+                      href="mailto:kaalbyte@gmail.com"
                       className="font-semibold text-primary hover:underline"
                     >
-                      support@kalya.app
+                      kaalbyte@gmail.com
                     </a>{' '}
                     or use our{' '}
                     <Link href="/contact" className="font-semibold text-primary hover:underline">

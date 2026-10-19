@@ -27,7 +27,32 @@ export const authPlugin: FastifyPluginAsync = fp(
 
     // 4. Decorate PreHandler Guard for Protected Routes
     fastify.decorate('authenticate', async (request: FastifyRequest, _reply: FastifyReply) => {
-      const sessionResult = await authService.resolveSession(request.headers as HeadersInit);
+      // Build Headers collection from incoming request headers
+      const headers = new Headers();
+      for (const [key, val] of Object.entries(request.headers)) {
+        if (typeof val === 'string') {
+          headers.set(key, val);
+        } else if (Array.isArray(val)) {
+          for (const item of val) {
+            headers.append(key, item);
+          }
+        }
+      }
+
+      // Support ?token= query parameter for direct browser downloads or file links
+      const queryToken =
+        typeof request.query === 'object' && request.query !== null
+          ? (request.query as Record<string, unknown>).token
+          : undefined;
+      if (
+        typeof queryToken === 'string' &&
+        queryToken.trim().length > 0 &&
+        !headers.has('authorization')
+      ) {
+        headers.set('authorization', `Bearer ${queryToken.trim()}`);
+      }
+
+      const sessionResult = await authService.resolveSession(headers);
 
       if (!sessionResult || !sessionResult.user) {
         throw new UnauthorizedError('Authentication required to access this resource');

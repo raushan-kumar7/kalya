@@ -116,10 +116,10 @@ export function PrivacyAccordion() {
                 </div>
                 <p className="text-caption text-text-secondary">
                   <a
-                    href="mailto:privacy@kalya.app"
+                    href="mailto:kaalbyte@gmail.com"
                     className="text-primary hover:underline font-semibold"
                   >
-                    privacy@kalya.app
+                    kaalbyte@gmail.com
                   </a>
                 </p>
                 <p className="text-[11px] text-text-muted">
@@ -153,11 +153,11 @@ export function PrivacyAccordion() {
                 <ul className="space-y-2.5 text-body-sm text-text-primary">
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
-                    <span>We collect only what we need to run Kalya.</span>
+                    <span>We collect only what we need to run Kalya Personal Finance App.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
-                    <span>We never sell your data, and Kalya has no ads.</span>
+                    <span>We never sell your data, and Kalya Personal Finance App has no ads.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
@@ -235,16 +235,15 @@ export function PrivacyAccordion() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-2 space-y-2">
                   <p className="text-body-sm text-text-secondary leading-relaxed">
-                    Kalya is run by{' '}
-                    <strong className="text-text-primary">Kalya Technologies</strong>{' '}
-                    (&ldquo;Kalya&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). We operate as a
+                    <strong className="text-text-primary">Kalya Personal Finance App</strong>{' '}
+                    (&ldquo;Kalya&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates as a
                     remote-first team. We decide why and how your personal data is used. You can
                     reach us any time at{' '}
                     <a
-                      href="mailto:support@kalya.app"
+                      href="mailto:kaalbyte@gmail.com"
                       className="font-medium text-primary hover:underline"
                     >
-                      support@kalya.app
+                      kaalbyte@gmail.com
                     </a>
                     .
                   </p>
@@ -373,7 +372,8 @@ export function PrivacyAccordion() {
                   <div className="p-3.5 rounded-xl bg-surface-raised border border-border/80 flex items-center gap-2.5">
                     <Database className="h-4 w-4 text-primary shrink-0" />
                     <p className="text-caption font-semibold text-text-primary">
-                      Kalya does not connect to your bank. You add your own entries.
+                      Kalya Personal Finance App does not connect to your bank. You add your own
+                      entries.
                     </p>
                   </div>
                 </AccordionContent>
@@ -409,14 +409,20 @@ export function PrivacyAccordion() {
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5 pt-2 space-y-3">
                   <ul className="space-y-1.5 text-body-sm text-text-secondary leading-relaxed list-disc pl-5">
-                    <li>To provide Kalya: your budget, splits, goals, net worth and statements.</li>
+                    <li>
+                      To provide Kalya Personal Finance App: your budget, splits, goals, net worth
+                      and statements.
+                    </li>
                     <li>
                       To send alerts and emails you turned on, such as a budget warning or a split
                       invitation.
                     </li>
-                    <li>To keep Kalya safe and to prevent misuse.</li>
+                    <li>To keep Kalya Personal Finance App safe and to prevent misuse.</li>
                     <li>To reply to your messages.</li>
-                    <li>To improve Kalya, using combined data that does not identify you.</li>
+                    <li>
+                      To improve Kalya Personal Finance App, using combined data that does not
+                      identify you.
+                    </li>
                     <li>To meet legal duties.</li>
                   </ul>
                   <div className="p-3 rounded-xl bg-danger-subtle/30 border border-danger/20 text-caption text-text-primary font-medium">
@@ -715,10 +721,10 @@ export function PrivacyAccordion() {
                     To use these rights, go to{' '}
                     <strong className="text-text-primary">Settings &gt; Privacy</strong> or write to{' '}
                     <a
-                      href="mailto:privacy@kalya.app"
+                      href="mailto:kaalbyte@gmail.com"
                       className="font-semibold text-primary hover:underline"
                     >
-                      privacy@kalya.app
+                      kaalbyte@gmail.com
                     </a>
                     . We will reply within{' '}
                     <span className="font-semibold text-text-primary font-numeric">15 days</span>,
@@ -886,15 +892,15 @@ export function PrivacyAccordion() {
                         Grievance & Privacy Contact:
                       </span>
                       <a
-                        href="mailto:privacy@kalya.app"
+                        href="mailto:kaalbyte@gmail.com"
                         className="font-semibold text-primary hover:underline"
                       >
-                        privacy@kalya.app
+                        kaalbyte@gmail.com
                       </a>
                     </div>
                     <p className="text-caption text-text-secondary leading-relaxed">
-                      Kalya operates as a remote team. All privacy and grievance communications are
-                      handled digitally via email.
+                      Kalya Personal Finance App operates as a remote team. All privacy and
+                      grievance communications are handled digitally via email.
                     </p>
                     <div className="pt-2 border-t border-border/70 flex items-center gap-2 text-caption text-text-secondary">
                       <Clock className="h-4 w-4 text-primary shrink-0" />

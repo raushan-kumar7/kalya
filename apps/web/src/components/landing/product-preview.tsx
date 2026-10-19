@@ -126,7 +126,7 @@ export function ProductPreview() {
                   type="button"
                   onClick={() => handleTabClick(tab.id)}
                   className={cn(
-                    'relative py-3 px-4 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer min-h-11',
+                    'relative overflow-hidden py-3 px-4 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer min-h-11',
                     isActive
                       ? 'bg-primary text-on-primary shadow-xs'
                       : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
@@ -138,10 +138,12 @@ export function ProductPreview() {
 
                   {/* Thin gold progress line under active tab */}
                   {isActive && !isPaused && (
-                    <motion.div
-                      style={{ width: `${progress}%` }}
-                      className="absolute bottom-0 left-0 h-0.5 bg-accent rounded-full transition-all duration-75"
-                    />
+                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-accent/20 rounded-b-xl overflow-hidden pointer-events-none">
+                      <motion.div
+                        style={{ width: `${progress}%` }}
+                        className="h-full bg-accent rounded-r-full transition-all duration-75"
+                      />
+                    </div>
                   )}
                 </button>
               );
