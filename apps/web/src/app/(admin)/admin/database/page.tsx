@@ -136,6 +136,11 @@ export default function AdminDatabasePage() {
   const [restoreConfirmText, setRestoreConfirmText] = useState('');
   const [deleteModalBackup, setDeleteModalBackup] = useState<DbBackupInfo | null>(null);
 
+  // Manual Refresh Indicators
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+  const [isRefreshingTableData, setIsRefreshingTableData] = useState(false);
+  const [isRefreshingBackupsList, setIsRefreshingBackupsList] = useState(false);
+
   // 1. Fetch Tables
   const {
     data: tables = [],
@@ -173,7 +178,6 @@ export default function AdminDatabasePage() {
     data: recordsResult,
     isLoading: isRecordsLoading,
     refetch: refetchRecords,
-    isRefetching: isRefetchingRecords,
   } = useQuery({
     queryKey: [
       'admin',
@@ -257,6 +261,53 @@ export default function AdminDatabasePage() {
       toast.error(err instanceof Error ? err.message : 'Snapshot upload failed');
     },
   });
+
+  // Dedicated Refresh Handlers with Guaranteed Spin Animation & Feedback
+  const handleRefreshAll = async () => {
+    try {
+      setIsRefreshingAll(true);
+      await Promise.all([
+        refetchTables(),
+        refetchRecords(),
+        refetchBackups(),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'db-schema', selectedTable] }),
+        new Promise((resolve) => setTimeout(resolve, 600)),
+      ]);
+      toast.success('Database explorer & backups refreshed');
+    } catch {
+      toast.error('Failed to refresh database state');
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
+  const handleRefreshTableData = async () => {
+    try {
+      setIsRefreshingTableData(true);
+      await Promise.all([
+        refetchRecords(),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'db-schema', selectedTable] }),
+        new Promise((resolve) => setTimeout(resolve, 600)),
+      ]);
+      toast.success(`Table "${selectedTable}" data refreshed`);
+    } catch {
+      toast.error(`Failed to refresh table "${selectedTable}"`);
+    } finally {
+      setIsRefreshingTableData(false);
+    }
+  };
+
+  const handleRefreshBackups = async () => {
+    try {
+      setIsRefreshingBackupsList(true);
+      await Promise.all([refetchBackups(), new Promise((resolve) => setTimeout(resolve, 600))]);
+      toast.success('Backup snapshots refreshed');
+    } catch {
+      toast.error('Failed to refresh backups');
+    } finally {
+      setIsRefreshingBackupsList(false);
+    }
+  };
 
   // Category counts
   const authTablesCount = useMemo(
@@ -420,17 +471,13 @@ export default function AdminDatabasePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              refetchTables();
-              refetchRecords();
-              refetchBackups();
-            }}
-            disabled={isRefetchingRecords}
+            onClick={handleRefreshAll}
+            disabled={isRefreshingAll}
             leftIcon={
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefetchingRecords ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingAll ? 'animate-spin' : ''}`} />
             }
           >
-            Refresh
+            {isRefreshingAll ? 'Refreshing…' : 'Refresh'}
           </Button>
         </div>
       </div>
@@ -752,14 +799,12 @@ export default function AdminDatabasePage() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => {
-                        refetchRecords();
-                      }}
-                      disabled={isRefetchingRecords}
+                      onClick={handleRefreshTableData}
+                      disabled={isRefreshingTableData}
                       title="Refresh current table data"
                     >
                       <RefreshCw
-                        className={`h-3.5 w-3.5 ${isRefetchingRecords ? 'animate-spin' : ''}`}
+                        className={`h-3.5 w-3.5 ${isRefreshingTableData ? 'animate-spin' : ''}`}
                       />
                     </Button>
                   </div>
@@ -1377,10 +1422,15 @@ export default function AdminDatabasePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => refetchBackups()}
-                  leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+                  onClick={handleRefreshBackups}
+                  disabled={isRefreshingBackupsList}
+                  leftIcon={
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${isRefreshingBackupsList ? 'animate-spin' : ''}`}
+                    />
+                  }
                 >
-                  Refresh
+                  {isRefreshingBackupsList ? 'Refreshing…' : 'Refresh'}
                 </Button>
               }
             >

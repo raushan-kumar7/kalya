@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { account, session, user } from './auth';
-import { auditLogs } from './admin';
+import { auditLogs, contactInquiries, contactInquiryReplies } from './admin';
 import {
   alert,
   bucket,
@@ -203,6 +203,36 @@ export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) =
 export const auditLogRelations = relations(auditLogs, ({ one }) => ({
   actor: one(user, {
     fields: [auditLogs.actorId],
+    references: [user.id],
+  }),
+}));
+
+export const contactInquiriesRelations = relations(contactInquiries, ({ one, many }) => ({
+  user: one(user, {
+    fields: [contactInquiries.userId],
+    references: [user.id],
+    relationName: 'contactInquiryUser',
+  }),
+  assignedTo: one(user, {
+    fields: [contactInquiries.assignedToId],
+    references: [user.id],
+    relationName: 'contactInquiryAssignee',
+  }),
+  resolvedBy: one(user, {
+    fields: [contactInquiries.resolvedById],
+    references: [user.id],
+    relationName: 'contactInquiryResolver',
+  }),
+  replies: many(contactInquiryReplies),
+}));
+
+export const contactInquiryRepliesRelations = relations(contactInquiryReplies, ({ one }) => ({
+  inquiry: one(contactInquiries, {
+    fields: [contactInquiryReplies.inquiryId],
+    references: [contactInquiries.id],
+  }),
+  sender: one(user, {
+    fields: [contactInquiryReplies.senderId],
     references: [user.id],
   }),
 }));

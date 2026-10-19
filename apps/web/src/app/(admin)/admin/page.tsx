@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminService } from '@/libs/services/admin';
 import Link from 'next/link';
 import {
@@ -22,32 +23,57 @@ import {
 import { Badge } from '@/components/ui/data-display/badge';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/data-display/card';
+import { toast } from '@/components/ui/feedback';
 
 export default function AdminOverviewPage() {
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const {
     data: overview,
     isLoading: isOverviewLoading,
     refetch: refetchOverview,
-    isRefetching,
   } = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: () => AdminService.getOverview(),
     refetchInterval: 15000,
   });
 
-  const { data: diagnostics, isLoading: isDiagnosticsLoading } = useQuery({
+  const {
+    data: diagnostics,
+    isLoading: isDiagnosticsLoading,
+    refetch: refetchDiagnostics,
+  } = useQuery({
     queryKey: ['admin', 'diagnostics'],
     queryFn: () => AdminService.getDiagnostics(),
     refetchInterval: 15000,
   });
 
-  const { data: activitiesData } = useQuery({
+  const { data: activitiesData, refetch: refetchActivities } = useQuery({
     queryKey: ['admin', 'recent-activities'],
     queryFn: () => AdminService.getActivities({ limit: 5 }),
     refetchInterval: 15000,
   });
 
   const isLoading = isOverviewLoading || isDiagnosticsLoading;
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        refetchOverview(),
+        refetchDiagnostics(),
+        refetchActivities(),
+        queryClient.invalidateQueries({ queryKey: ['admin'] }),
+        new Promise((resolve) => setTimeout(resolve, 600)),
+      ]);
+      toast.success('Dashboard metrics refreshed');
+    } catch {
+      toast.error('Failed to refresh dashboard');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -74,11 +100,11 @@ export default function AdminOverviewPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetchOverview()}
-          disabled={isRefetching}
-          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
         >
-          {isRefetching ? 'Refreshing…' : 'Refresh Metrics'}
+          {isRefreshing ? 'Refreshing…' : 'Refresh Metrics'}
         </Button>
       </div>
 

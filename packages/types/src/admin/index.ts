@@ -201,3 +201,100 @@ export interface DbBackupInfo {
   sizeFormatted: string;
   createdAt: ISOTimestamp;
 }
+
+/**
+ * Valid topics for contact inquiry submissions.
+ */
+export const CONTACT_INQUIRY_TOPICS = [
+  'Question',
+  'Feedback or idea',
+  'Report a problem',
+  'Privacy request',
+  'Other',
+] as const;
+
+export type ContactInquiryTopic = (typeof CONTACT_INQUIRY_TOPICS)[number];
+
+/**
+ * Valid lifecycle states for contact inquiries.
+ */
+export const CONTACT_INQUIRY_STATUSES = [
+  'NEW',
+  'IN_REVIEW',
+  'RESOLVED',
+  'SPAM',
+  'ARCHIVED',
+] as const;
+
+export type ContactInquiryStatus = (typeof CONTACT_INQUIRY_STATUSES)[number];
+
+/**
+ * Priority levels for contact inquiries.
+ */
+export const CONTACT_INQUIRY_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const;
+
+export type ContactInquiryPriority = (typeof CONTACT_INQUIRY_PRIORITIES)[number];
+
+/**
+ * Single contact inquiry representation.
+ */
+export interface ContactInquiry extends Identifiable {
+  name: string;
+  email: string;
+  topic: ContactInquiryTopic;
+  message: string;
+  status: ContactInquiryStatus;
+  priority: ContactInquiryPriority;
+  userId?: UUID | null;
+  assignedToId?: UUID | null;
+  assignedToName?: string | null;
+  assignedToEmail?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  slaDueDate: string;
+  resolvedAt?: string | null;
+  resolvedById?: UUID | null;
+  createdAt: ISOTimestamp;
+  updatedAt: ISOTimestamp;
+  replyCount?: number;
+  replies?: ContactInquiryReply[];
+}
+
+/**
+ * Thread reply or internal note on a contact inquiry.
+ */
+export interface ContactInquiryReply extends Identifiable {
+  inquiryId: string;
+  senderId?: UUID | null;
+  senderEmail: string;
+  senderName: string;
+  type: 'PUBLIC_REPLY' | 'INTERNAL_NOTE';
+  message: string;
+  createdAt: ISOTimestamp;
+}
+
+/**
+ * KPI summary counters for the Support Inquiries dashboard.
+ */
+export interface ContactInquiryStats {
+  total: number;
+  new: number;
+  inReview: number;
+  resolved: number;
+  privacyRequests: number;
+  slaAtRisk: number;
+}
+
+/**
+ * Query filters and pagination for retrieving contact inquiries.
+ */
+export interface AdminInquiriesQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  topic?: ContactInquiryTopic;
+  status?: ContactInquiryStatus;
+  priority?: ContactInquiryPriority;
+  sortBy?: 'createdAt' | 'slaDueDate' | 'name' | 'status' | 'priority';
+  sortOrder?: 'asc' | 'desc';
+}

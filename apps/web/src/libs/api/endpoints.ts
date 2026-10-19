@@ -265,7 +265,17 @@ export const ENDPOINTS = {
     BACKUP_RESTORE: `${ROOT}/admin/database/backups/restore`,
     BACKUP_UPLOAD: `${ROOT}/admin/database/backups/upload`,
     BACKUP_DELETE: (filename: string) => `${ROOT}/admin/database/backups/${filename}`,
+    INQUIRIES: `${ROOT}/admin/inquiries`,
+    INQUIRY_STATS: `${ROOT}/admin/inquiries/stats`,
+    INQUIRY_EXPORT: `${ROOT}/admin/inquiries/export`,
+    INQUIRY_DETAIL: (id: string) => `${ROOT}/admin/inquiries/${id}`,
+    INQUIRY_STATUS: (id: string) => `${ROOT}/admin/inquiries/${id}/status`,
+    INQUIRY_ASSIGN: (id: string) => `${ROOT}/admin/inquiries/${id}/assign`,
+    INQUIRY_REPLIES: (id: string) => `${ROOT}/admin/inquiries/${id}/replies`,
   },
+
+  // Public Contact Form Intake
+  CONTACT: `${ROOT}/contact`,
 
   // System Health & Monitoring (mounted at server root, not under /api/v1)
   HEALTH: {

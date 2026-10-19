@@ -8,18 +8,27 @@ import type { User } from '@kalya/types';
 import type {
   AdminAuditLogsQueryInput,
   AdminDbRecordsQueryInput,
+  AdminInquiriesQueryInput,
   AdminUsersQueryInput,
+  AssignInquiryInput,
+  ContactSubmissionInput,
+  CreateInquiryReplyInput,
   RestoreBackupInput,
+  UpdateInquiryStatusInput,
   UpdateUserRoleInput,
   UpdateUserStatusInput,
 } from '@kalya/validations';
 import { AdminService } from './admin.service';
+import { ContactInquiryService, type ActorContext } from './contact-inquiry.service';
 
 /**
  * Controller translating administrative HTTP requests into AdminService invocations.
  */
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly contactInquiryService: ContactInquiryService
+  ) {}
 
   /**
    * Helper extracting authenticated User or throwing UnauthorizedError.
@@ -309,5 +318,139 @@ export class AdminController {
 
     const result = await this.adminService.deleteBackup(filename, adminUser, clientContext);
     return ApiResponse.ok(reply, result, `Backup "${filename}" deleted successfully`);
+  };
+
+  /**
+   * Public contact form submission intake.
+   */
+  submitContactInquiry = async (
+    request: FastifyRequest<{ Body: ContactSubmissionInput }>,
+    reply: FastifyReply
+  ) => {
+    const meta = {
+      ipAddress: request.ip || (request.headers['x-forwarded-for'] as string | undefined),
+      userAgent: request.headers['user-agent'],
+      userId: request.user?.id,
+    };
+    const result = await this.contactInquiryService.createInquiry(request.body, meta);
+    return ApiResponse.created(reply, result, result.message);
+  };
+
+  /**
+   * Retrieves paginated contact inquiries in admin console.
+   */
+  getInquiries = async (
+    request: FastifyRequest<{ Querystring: AdminInquiriesQueryInput }>,
+    reply: FastifyReply
+  ) => {
+    this.assertAdminUser(request);
+    const query = request.query ?? {};
+    const { inquiries, meta } = await this.contactInquiryService.getInquiries(query);
+    return ApiResponse.paginated(reply, inquiries, meta, 'Inquiries retrieved successfully');
+  };
+
+  /**
+   * Retrieves KPI summary statistics for Support Inquiries.
+   */
+  getInquiryStats = async (request: FastifyRequest, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+    const stats = await this.contactInquiryService.getInquiryStats();
+    return ApiResponse.ok(reply, stats, 'Inquiry statistics retrieved successfully');
+  };
+
+  /**
+   * Inspects detailed inquiry records and conversation thread.
+   */
+  getInquiry = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+    const inquiry = await this.contactInquiryService.getInquiryById(request.params.id);
+    return ApiResponse.ok(reply, inquiry, 'Inquiry retrieved successfully');
+  };
+
+  /**
+   * Transitions status of a contact inquiry.
+   */
+  updateInquiryStatus = async (
+    request: FastifyRequest<{ Params: { id: string }; Body: UpdateInquiryStatusInput }>,
+    reply: FastifyReply
+  ) => {
+    const user = this.assertAdminUser(request);
+    const actor: ActorContext = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      ipAddress: request.ip,
+      userAgent: request.headers['user-agent'],
+    };
+    const inquiry = await this.contactInquiryService.updateStatus(
+      request.params.id,
+      request.body.status,
+      actor
+    );
+    return ApiResponse.ok(reply, inquiry, 'Inquiry status updated successfully');
+  };
+
+  /**
+   * Assigns an inquiry to an administrative staff member.
+   */
+  assignInquiry = async (
+    request: FastifyRequest<{ Params: { id: string }; Body: AssignInquiryInput }>,
+    reply: FastifyReply
+  ) => {
+    const user = this.assertAdminUser(request);
+    const actor: ActorContext = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      ipAddress: request.ip,
+      userAgent: request.headers['user-agent'],
+    };
+    const inquiry = await this.contactInquiryService.assignInquiry(
+      request.params.id,
+      request.body.assignedToId,
+      actor
+    );
+    return ApiResponse.ok(reply, inquiry, 'Inquiry assigned successfully');
+  };
+
+  /**
+   * Adds an internal note or sends an official email reply to the customer.
+   */
+  addInquiryReply = async (
+    request: FastifyRequest<{ Params: { id: string }; Body: CreateInquiryReplyInput }>,
+    reply: FastifyReply
+  ) => {
+    const user = this.assertAdminUser(request);
+    const actor: ActorContext = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      ipAddress: request.ip,
+      userAgent: request.headers['user-agent'],
+    };
+    const replyRecord = await this.contactInquiryService.addReply(
+      request.params.id,
+      request.body,
+      actor
+    );
+    return ApiResponse.created(
+      reply,
+      replyRecord,
+      request.body.type === 'PUBLIC_REPLY'
+        ? 'Reply sent to visitor successfully'
+        : 'Internal note added successfully'
+    );
+  };
+
+  /**
+   * Data export for compliance / DPDP auditing.
+   */
+  exportInquiries = async (request: FastifyRequest, reply: FastifyReply) => {
+    this.assertAdminUser(request);
+    const inquiries = await this.contactInquiryService.exportInquiries();
+    return ApiResponse.ok(reply, inquiries, 'Inquiries exported successfully');
   };
 }

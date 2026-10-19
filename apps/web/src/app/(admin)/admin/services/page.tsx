@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminService } from '@/libs/services/admin';
 import { Clock, Cpu, Database, HardDrive, Mail, RefreshCw, Server } from 'lucide-react';
@@ -7,13 +8,28 @@ import { Clock, Cpu, Database, HardDrive, Mail, RefreshCw, Server } from 'lucide
 import { Badge } from '@/components/ui/data-display/badge';
 import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/data-display/card';
+import { toast } from '@/components/ui/feedback';
 
 export default function AdminServicesPage() {
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['admin', 'diagnostics'],
     queryFn: () => AdminService.getDiagnostics(),
     refetchInterval: 10000,
   });
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([refetch(), new Promise((resolve) => setTimeout(resolve, 600))]);
+      toast.success('Diagnostics telemetry probe updated');
+    } catch {
+      toast.error('Failed to run diagnostics probe');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const getStatusPill = (status?: string) => {
     if (status === 'healthy' || status === 'operational') {
@@ -66,11 +82,11 @@ export default function AdminServicesPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
         >
-          {isRefetching ? 'Testing Subsystems…' : 'Run Diagnostics Probe'}
+          {isRefreshing ? 'Testing Subsystems…' : 'Run Diagnostics Probe'}
         </Button>
       </div>
 

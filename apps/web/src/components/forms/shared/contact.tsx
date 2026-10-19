@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/libs/utils';
+import { http, ENDPOINTS } from '@/libs/api';
 import {
   Input,
   Textarea,
@@ -185,17 +186,21 @@ export function ContactForm({
 
     setServerError(null);
     try {
-      // Simulate network request to backend
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await http.post<{ id: string; referenceNumber: string; message: string }>(
+        ENDPOINTS.CONTACT,
+        payload
+      );
 
       setSubmittedName(payload.name.split(' ')[0] || payload.name);
       setSubmittedTopic(payload.topic);
       setSubmissionSuccess(true);
       onSuccess?.(payload);
-    } catch {
-      setServerError(
-        'Something went wrong, and your message was not sent. Please try again, or email us at support@kalya.app.'
-      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong, and your message was not sent. Please try again, or email us at support@kalya.app.';
+      setServerError(errorMessage);
     }
   };
 

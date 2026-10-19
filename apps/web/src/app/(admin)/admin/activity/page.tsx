@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/forms/button';
 import { Card, CardContent } from '@/components/ui/data-display/card';
 import { Input } from '@/components/ui/forms/input';
 import { EmptyState } from '@/components/ui/states/empty-state';
+import { toast } from '@/components/ui/feedback';
 import { cn } from '@/libs/utils';
 
 export default function AdminActivityPage() {
@@ -30,8 +31,9 @@ export default function AdminActivityPage() {
   const [statusFilter, setStatusFilter] = useState<BaseAuditStatus | ''>('');
   const [page, setPage] = useState(1);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: [
       'admin',
       'activities',
@@ -46,6 +48,18 @@ export default function AdminActivityPage() {
         status: statusFilter || undefined,
       }),
   });
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([refetch(), new Promise((resolve) => setTimeout(resolve, 600))]);
+      toast.success('Activity audit log refreshed');
+    } catch {
+      toast.error('Failed to refresh activity log');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedLogId((prev) => (prev === id ? null : id));
@@ -109,11 +123,11 @@ export default function AdminActivityPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
         >
-          {isRefetching ? 'Refreshing…' : 'Refresh Events'}
+          {isRefreshing ? 'Refreshing…' : 'Refresh Events'}
         </Button>
       </div>
 

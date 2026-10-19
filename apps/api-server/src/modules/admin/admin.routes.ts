@@ -3,8 +3,13 @@ import { env } from '@kalya/env';
 import {
   adminAuditLogsQuerySchema,
   adminDbRecordsQuerySchema,
+  adminInquiriesQuerySchema,
   adminUsersQuerySchema,
+  assignInquirySchema,
+  contactSubmissionSchema,
+  createInquiryReplySchema,
   restoreBackupSchema,
+  updateInquiryStatusSchema,
   updateUserRoleSchema,
   updateUserStatusSchema,
   UUIDSchema,
@@ -24,9 +29,20 @@ import { AdminController } from './admin.controller';
  */
 export const createAdminRoutes = (controller: AdminController): FastifyPluginAsyncZod => {
   return async (fastify) => {
+    const publicPrefix = `/api/${env.app.apiVersion}`;
     const basePrefix = `/api/${env.app.apiVersion}/admin`;
     const adminGuards = [fastify.authenticate, fastify.requireAdmin];
     const superAdminGuards = [fastify.authenticate, fastify.requireSuperAdmin];
+
+    // 0. Public Ingestion Endpoint for Contact Form
+    fastify.post(`${publicPrefix}/contact`, {
+      schema: {
+        tags: ['Public Support'],
+        summary: 'Submit a contact or support inquiry from the public website',
+        body: contactSubmissionSchema,
+      },
+      handler: controller.submitContactInquiry,
+    });
 
     // 1. Platform Overview KPIs & Summary
     fastify.get(`${basePrefix}/overview`, {
@@ -213,6 +229,92 @@ export const createAdminRoutes = (controller: AdminController): FastifyPluginAsy
         }),
       },
       handler: controller.deleteBackup,
+    });
+
+    // 17. Inquiries & Support Governance: Paginated List
+    fastify.get(`${basePrefix}/inquiries`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Retrieve paginated contact inquiries with search and filtering',
+        querystring: adminInquiriesQuerySchema,
+      },
+      handler: controller.getInquiries,
+    });
+
+    // 18. Inquiries & Support Governance: KPI Statistics
+    fastify.get(`${basePrefix}/inquiries/stats`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Retrieve KPI counters and SLA metrics for contact inquiries',
+      },
+      handler: controller.getInquiryStats,
+    });
+
+    // 19. Inquiries & Support Governance: Export Inquiries
+    fastify.get(`${basePrefix}/inquiries/export`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Export all contact inquiries for auditing or compliance',
+      },
+      handler: controller.exportInquiries,
+    });
+
+    // 20. Inquiries & Support Governance: Inspect Inquiry Detail & Conversation Thread
+    fastify.get(`${basePrefix}/inquiries/:id`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Inspect detailed inquiry records and conversation history',
+        params: z.object({
+          id: UUIDSchema,
+        }),
+      },
+      handler: controller.getInquiry,
+    });
+
+    // 21. Inquiries & Support Governance: Update Status
+    fastify.patch(`${basePrefix}/inquiries/:id/status`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Transition lifecycle status of a contact inquiry',
+        params: z.object({
+          id: UUIDSchema,
+        }),
+        body: updateInquiryStatusSchema,
+      },
+      handler: controller.updateInquiryStatus,
+    });
+
+    // 22. Inquiries & Support Governance: Assign Inquiry
+    fastify.patch(`${basePrefix}/inquiries/:id/assign`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Assign or reassign an inquiry to an administrative staff member',
+        params: z.object({
+          id: UUIDSchema,
+        }),
+        body: assignInquirySchema,
+      },
+      handler: controller.assignInquiry,
+    });
+
+    // 23. Inquiries & Support Governance: Add Reply or Internal Note
+    fastify.post(`${basePrefix}/inquiries/:id/replies`, {
+      preHandler: adminGuards,
+      schema: {
+        tags: ['Super Admin Support'],
+        summary: 'Add an internal note or send an official email reply to the inquiry submitter',
+        params: z.object({
+          id: UUIDSchema,
+        }),
+        body: createInquiryReplySchema,
+      },
+      handler: controller.addInquiryReply,
     });
   };
 };

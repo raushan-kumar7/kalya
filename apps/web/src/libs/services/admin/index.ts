@@ -6,13 +6,19 @@ import type {
   AdminOverviewStats,
   AdminUserDetail,
   AuditLog,
+  ContactInquiry,
+  ContactInquiryReply,
+  ContactInquiryStats,
+  ContactInquiryStatus,
   Session,
   SubsystemDiagnostics,
   User,
 } from '@kalya/types';
 import type {
   AdminAuditLogsQueryInput,
+  AdminInquiriesQueryInput,
   AdminUsersQueryInput,
+  CreateInquiryReplyInput,
   UpdateUserRoleInput,
   UpdateUserStatusInput,
 } from '@kalya/validations';
@@ -225,5 +231,79 @@ export class AdminService {
   static getBackupDownloadUrl(filename: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     return `${baseUrl}${ENDPOINTS.ADMIN.BACKUP_DOWNLOAD(filename)}`;
+  }
+
+  /**
+   * Retrieves paginated contact inquiries with filtering.
+   */
+  static async getInquiries(
+    query?: AdminInquiriesQueryInput
+  ): Promise<{ inquiries: ContactInquiry[]; meta?: PaginationMeta }> {
+    const searchParams = new URLSearchParams();
+    if (query?.page) searchParams.set('page', String(query.page));
+    if (query?.limit) searchParams.set('limit', String(query.limit));
+    if (query?.search) searchParams.set('search', query.search);
+    if (query?.status) searchParams.set('status', query.status);
+    if (query?.topic) searchParams.set('topic', query.topic);
+    if (query?.priority) searchParams.set('priority', query.priority);
+    if (query?.sortBy) searchParams.set('sortBy', query.sortBy);
+    if (query?.sortOrder) searchParams.set('sortOrder', query.sortOrder);
+
+    const qs = searchParams.toString();
+    const url = qs ? `${ENDPOINTS.ADMIN.INQUIRIES}?${qs}` : ENDPOINTS.ADMIN.INQUIRIES;
+
+    const res = await http.get<ContactInquiry[] & { meta?: PaginationMeta }>(url);
+    return {
+      inquiries: Array.isArray(res) ? res : [],
+      meta: (res as unknown as { meta?: PaginationMeta })?.meta,
+    };
+  }
+
+  /**
+   * Retrieves KPI summary statistics for Support Inquiries.
+   */
+  static async getInquiryStats(): Promise<ContactInquiryStats> {
+    return http.get<ContactInquiryStats>(ENDPOINTS.ADMIN.INQUIRY_STATS);
+  }
+
+  /**
+   * Retrieves detailed inquiry with full replies conversation history.
+   */
+  static async getInquiry(id: string): Promise<ContactInquiry> {
+    return http.get<ContactInquiry>(ENDPOINTS.ADMIN.INQUIRY_DETAIL(id));
+  }
+
+  /**
+   * Transitions status of an inquiry.
+   */
+  static async updateInquiryStatus(
+    id: string,
+    status: ContactInquiryStatus
+  ): Promise<ContactInquiry> {
+    return http.patch<ContactInquiry>(ENDPOINTS.ADMIN.INQUIRY_STATUS(id), { status });
+  }
+
+  /**
+   * Assigns an inquiry to an administrative staff member.
+   */
+  static async assignInquiry(id: string, assignedToId: string | null): Promise<ContactInquiry> {
+    return http.patch<ContactInquiry>(ENDPOINTS.ADMIN.INQUIRY_ASSIGN(id), { assignedToId });
+  }
+
+  /**
+   * Adds an internal note or sends an official email reply to the customer.
+   */
+  static async addInquiryReply(
+    id: string,
+    body: CreateInquiryReplyInput
+  ): Promise<ContactInquiryReply> {
+    return http.post<ContactInquiryReply>(ENDPOINTS.ADMIN.INQUIRY_REPLIES(id), body);
+  }
+
+  /**
+   * Exports all inquiries for auditing / DPDP 2023 compliance.
+   */
+  static async exportInquiries(): Promise<ContactInquiry[]> {
+    return http.get<ContactInquiry[]>(ENDPOINTS.ADMIN.INQUIRY_EXPORT);
   }
 }

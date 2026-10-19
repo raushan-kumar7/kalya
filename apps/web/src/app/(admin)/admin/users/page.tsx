@@ -78,13 +78,13 @@ export default function AdminUsersPage() {
   const [statusModalUser, setStatusModalUser] = useState<AdminUserDetail | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<BaseUserStatus>('ACTIVE');
   const [banReason, setBanReason] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 1. Fetch Users Query
   const {
     data: usersData,
     isLoading,
     refetch,
-    isRefetching,
   } = useQuery({
     queryKey: ['admin', 'users', { page, search, role: roleFilter, status: statusFilter }],
     queryFn: () =>
@@ -96,6 +96,18 @@ export default function AdminUsersPage() {
         status: statusFilter || undefined,
       }),
   });
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([refetch(), new Promise((resolve) => setTimeout(resolve, 600))]);
+      toast.success('User list refreshed');
+    } catch {
+      toast.error('Failed to refresh user list');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // 2. Fetch Inspected User Detail Query
   const { data: inspectedUserDetail, isLoading: isInspectLoading } = useQuery({
@@ -214,11 +226,11 @@ export default function AdminUsersPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
         >
-          {isRefetching ? 'Refreshing…' : 'Refresh'}
+          {isRefreshing ? 'Refreshing…' : 'Refresh'}
         </Button>
       </div>
 

@@ -5,7 +5,9 @@ import { useStoreHydration } from '@/hooks/use-store-hydration';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
-import { Activity, Cpu, Database, LogOut, ShieldCheck, Users } from 'lucide-react';
+import { Activity, Cpu, Database, LogOut, MessageSquare, ShieldCheck, Users } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { AdminService } from '@/libs/services/admin';
 import { Badge } from '@/components/ui/data-display/badge';
 import { Button } from '@/components/ui/forms/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/data-display/avatar';
@@ -18,6 +20,20 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, isAuthenticated, isInitialized, isLoading } = useAuth();
+
+  const isAuthorizedAdmin =
+    isInitialized &&
+    !isLoading &&
+    isAuthenticated &&
+    Boolean(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+  // Inquiry KPI Stats for Dynamic Badge (Called unconditionally at top level)
+  const { data: inquiryStats } = useQuery({
+    queryKey: ['admin', 'inquiry-stats'],
+    queryFn: () => AdminService.getInquiryStats(),
+    refetchInterval: 30000,
+    enabled: isAuthorizedAdmin,
+  });
 
   useEffect(() => {
     if (isInitialized && !isLoading) {
@@ -57,6 +73,12 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
     { name: 'Overview', href: '/admin', icon: Activity, exact: true },
     { name: 'Database & Backups', href: '/admin/database', icon: Database },
     { name: 'User Management', href: '/admin/users', icon: Users },
+    {
+      name: 'Inquiries & Support',
+      href: '/admin/inquiries',
+      icon: MessageSquare,
+      badge: inquiryStats?.new,
+    },
     { name: 'Platform Activities', href: '/admin/activity', icon: ShieldCheck },
     { name: 'System Diagnostics', href: '/admin/services', icon: Cpu },
   ];
@@ -129,7 +151,7 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
         </div>
 
         {/* Tier 2: Dedicated Segmented Navigation Tabs & System Telemetry Heartbeat */}
-        <div className="border-t border-border/60 bg-surface/75 backdrop-blur-md">
+        <div className="border-t border-border/60 bg-surface/75 backdrop-blur-md py-2">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-12">
             {/* Navigation Tabs - Modern Segmented Pills */}
             <nav className="flex items-center gap-1 rounded-xl border border-border/80 bg-surface-raised p-1 shadow-2xs overflow-x-auto no-scrollbar">
@@ -153,6 +175,11 @@ export function AdminLayoutClient({ children }: Readonly<{ children: ReactNode }
                       className={cn('h-3.5 w-3.5', isActive ? 'text-primary' : 'text-text-muted')}
                     />
                     <span>{item.name}</span>
+                    {typeof item.badge === 'number' && item.badge > 0 && (
+                      <span className="rounded-full bg-primary/20 text-primary px-1.5 py-0.5 text-[10px] font-bold font-numeric">
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
