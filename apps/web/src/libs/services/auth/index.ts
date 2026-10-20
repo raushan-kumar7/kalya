@@ -102,6 +102,7 @@ export class AuthService {
       ENDPOINTS.AUTH.SIGN_IN_SOCIAL,
       {
         provider: 'google',
+        disableRedirect: true,
         callbackURL: toAbsolute(options?.callbackURL, '/dashboard'),
         newUserCallbackURL: toAbsolute(options?.newUserCallbackURL, '/dashboard'),
         errorCallbackURL: toAbsolute(options?.errorCallbackURL, '/auth/sign-in?error=oauth_failed'),
@@ -137,6 +138,7 @@ export class AuthService {
       {
         provider: 'google',
         requestSignUp: true,
+        disableRedirect: true,
         callbackURL: toAbsolute(options?.callbackURL, '/dashboard'),
         newUserCallbackURL: toAbsolute(options?.newUserCallbackURL, '/onboarding'),
         errorCallbackURL: toAbsolute(options?.errorCallbackURL, '/auth/sign-up?error=oauth_failed'),

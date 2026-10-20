@@ -73,9 +73,17 @@ export const createAuth = (db: DatabaseClient) => {
     basePath: `/api/${env.app.apiVersion}/auth`,
     trustedOrigins: Array.from(
       new Set(
-        [...env.server.corsAllowedOrigins, env.app.clientUrl, 'http://localhost:3000'].filter(
-          Boolean
-        )
+        [
+          ...env.server.corsAllowedOrigins,
+          env.app.clientUrl,
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:5173',
+          'https://kalya-iota.vercel.app',
+          'https://kalya.vercel.app',
+          '*.vercel.app',
+          'https://*.vercel.app',
+        ].filter(Boolean)
       )
     ),
     socialProviders: {

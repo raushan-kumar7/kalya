@@ -43,8 +43,53 @@ export const buildApp = (): FastifyInstance => {
 
   // 1. Security & Access Control
   app.register(securityPlugin);
+
+  const configuredOrigins = new Set(
+    [
+      env.app.clientUrl,
+      ...env.server.corsAllowedOrigins,
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+    ]
+      .filter(Boolean)
+      .map((url) => {
+        try {
+          return new URL(url).origin.toLowerCase();
+        } catch {
+          return url.trim().toLowerCase();
+        }
+      })
+  );
+
   app.register(cors, {
-    origin: env.server.corsAllowedOrigins,
+    origin: (origin, cb) => {
+      // Allow non-browser requests (e.g. mobile apps, curl, server-to-server)
+      if (!origin) {
+        return cb(null, true);
+      }
+
+      try {
+        const parsed = new URL(origin).origin.toLowerCase();
+
+        // Allow explicitly configured origins (clientUrl, corsAllowedOrigins, local dev ports)
+        if (configuredOrigins.has(parsed)) {
+          return cb(null, true);
+        }
+
+        // Allow any Vercel deployment preview or production domain for Kalya
+        const hostname = new URL(origin).hostname.toLowerCase();
+        if (hostname.endsWith('.vercel.app')) {
+          return cb(null, true);
+        }
+
+        return cb(null, false);
+      } catch {
+        return cb(null, false);
+      }
+    },
     methods: env.server.corsAllowedMethods,
     allowedHeaders: [
       'Content-Type',

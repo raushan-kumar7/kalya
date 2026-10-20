@@ -117,7 +117,11 @@ export class AuthController {
               'http://localhost:3000',
             ];
 
-            if (allowedOrigins.includes(redirectUrl.origin)) {
+            const isAllowed =
+              allowedOrigins.includes(redirectUrl.origin) ||
+              redirectUrl.hostname.endsWith('.vercel.app');
+
+            if (isAllowed) {
               if (!redirectUrl.searchParams.has('token')) {
                 redirectUrl.searchParams.set('token', sessionToken);
                 redirectLocation = redirectUrl.toString();
@@ -135,7 +139,10 @@ export class AuthController {
         }
       });
 
-      if (redirectLocation) {
+      // ONLY set location header if this is actually a 3xx redirect response.
+      // Better-Auth internally sets a Location header even on 200 OK responses when disableRedirect is false.
+      // Emitting Location on a 200 response confuses browser fetch/XHR into attempting CORS redirects against accounts.google.com!
+      if (redirectLocation && response.status >= 300 && response.status < 400) {
         reply.header('location', redirectLocation);
       }
 
