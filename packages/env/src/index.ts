@@ -86,6 +86,7 @@ function createConfig(): AppConfig {
       provider: rawEnv['KALYA_MAIL.PROVIDER'],
       from: rawEnv['KALYA_MAIL.FROM'],
       resendApiKey: rawEnv['KALYA_MAIL.RESEND_API_KEY'],
+      assetsUrl: rawEnv['KALYA_EMAIL.ASSETS_URL'] || undefined,
     },
 
     storage: {

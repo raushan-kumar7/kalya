@@ -25,121 +25,145 @@ services:
     # Environment Variables (Matched 1-to-1 against @kalya/validations envSchema)
     envVars:
       # ---- Primary Environment ----
-      - key: KALYA_PRIMARY_ENV
+      - key: KALYA_PRIMARY.ENV
         value: production
 
       # ---- App Info ----
-      - key: KALYA_APP_NAME
+      - key: KALYA_APP.NAME
         value: Kalya
-      - key: KALYA_APP_API_VERSION
+      - key: KALYA_APP.API_VERSION
         value: v1
-      - key: KALYA_APP_CLIENT_URL
+      - key: KALYA_APP.CLIENT_URL
         sync: false # Set in Render UI: https://<your-web-app>.vercel.app
 
       # ---- Server Network & Port ----
-      - key: KALYA_SERVER_HOST
+      - key: KALYA_SERVER.HOST
         value: 0.0.0.0
-      - key: KALYA_SERVER_PORT
+      - key: KALYA_SERVER.PORT
         value: '3600'
-      - key: KALYA_SERVER_READ_TIMEOUT
+      - key: KALYA_SERVER.READ_TIMEOUT
         value: '30'
-      - key: KALYA_SERVER_WRITE_TIMEOUT
+      - key: KALYA_SERVER.WRITE_TIMEOUT
         value: '30'
-      - key: KALYA_SERVER_IDLE_TIMEOUT
+      - key: KALYA_SERVER.IDLE_TIMEOUT
         value: '60'
-      - key: KALYA_SERVER_CORS_ALLOWED_ORIGINS
+      - key: KALYA_SERVER.CORS_ALLOWED_ORIGINS
         sync: false # Set in Render UI: https://<your-web-app>.vercel.app
-      - key: KALYA_SERVER_CORS_ALLOWED_METHODS
+      - key: KALYA_SERVER.CORS_ALLOWED_METHODS
         value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 
       # ---- Database (Ephemeral SQLite for Free Tier) ----
-      - key: KALYA_DATABASE_URL
+      - key: KALYA_DATABASE.URL
         value: /app/data/kalya.db
 
       # ---- Authentication ----
-      - key: KALYA_AUTH_SECRET_KEY
+      - key: KALYA_AUTH.SECRET_KEY
         generateValue: true # Render auto-generates a secure 32+ character random secret
-      - key: KALYA_AUTH_BASE_URL
+      - key: KALYA_AUTH.BASE_URL
         sync: false # Set in Render UI: https://<your-service-name>.onrender.com
-      - key: KALYA_AUTH_ACCESS_TOKEN_EXPIRES_LIFE
+      - key: KALYA_AUTH.ACCESS_TOKEN_EXPIRES_LIFE
         value: 15m
-      - key: KALYA_AUTH_REFRESH_TOKEN_EXPIRES_LIFE
+      - key: KALYA_AUTH.REFRESH_TOKEN_EXPIRES_LIFE
         value: 7d
 
       # ---- Google Auth (Optional) ----
-      - key: KALYA_AUTH_GOOGLE_CLIENT_ID
+      - key: KALYA_AUTH.GOOGLE_CLIENT_ID
         sync: false # Optional: Set if using Google OAuth
-      - key: KALYA_AUTH_GOOGLE_CLIENT_SECRET
+      - key: KALYA_AUTH.GOOGLE_CLIENT_SECRET
         sync: false # Optional: Set if using Google OAuth
 
       # ---- Cross-Site Cookies ----
       # Use 'none' when frontend is on *.vercel.app and backend is on *.onrender.com
       # Use 'lax' if using a shared custom domain (e.g. app.kalya.io & api.kalya.io)
-      - key: KALYA_COOKIE_SAME_SITE
+      - key: KALYA_COOKIE.SAME_SITE
         value: none
-      - key: KALYA_COOKIE_DOMAIN
+      - key: KALYA_COOKIE.DOMAIN
         value: ''
 
       # ---- Observability & Health ----
-      - key: KALYA_OBSERVABILITY_SERVICE_NAME
+      - key: KALYA_OBSERVABILITY.SERVICE_NAME
         value: kalya-api
-      - key: KALYA_OBSERVABILITY_ENVIRONMENT
+      - key: KALYA_OBSERVABILITY.ENVIRONMENT
         value: production
-      - key: KALYA_OBSERVABILITY_LOGGING_LEVEL
+      - key: KALYA_OBSERVABILITY.LOGGING.LEVEL
         value: info
-      - key: KALYA_OBSERVABILITY_LOGGING_FORMAT
+      - key: KALYA_OBSERVABILITY.LOGGING.FORMAT
         value: json
-      - key: KALYA_OBSERVABILITY_LOGGING_SLOW_QUERY_THRESHOLD
+      - key: KALYA_OBSERVABILITY.LOGGING.SLOW_QUERY_THRESHOLD
         value: 500ms
-      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_ENABLED
+      - key: KALYA_OBSERVABILITY.HEALTH_CHECKS.ENABLED
         value: 'true'
-      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_INTERVAL
+      - key: KALYA_OBSERVABILITY.HEALTH_CHECKS.INTERVAL
         value: 30s
-      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_TIMEOUT
+      - key: KALYA_OBSERVABILITY.HEALTH_CHECKS.TIMEOUT
         value: 5s
-      - key: KALYA_OBSERVABILITY_HEALTH_CHECKS_CHECKS
+      - key: KALYA_OBSERVABILITY.HEALTH_CHECKS.CHECKS
         value: 'database,memory'
 
+      # -- Transnational Email Configuration --
+      - key: KALYA_MAIL.PROVIDER
+        value: smtp # smtp | resend
+      - key: KALYA_MAIL.FROM
+        value: Kalya <noreply@kalya.io>
+
       # ---- SMTP Configuration ----
-      - key: KALYA_SMTP_HOST
+      - key: KALYA_SMTP.HOST
         value: smtp.resend.com
-      - key: KALYA_SMTP_PORT
+      - key: KALYA_SMTP.PORT
         value: '465'
-      - key: KALYA_SMTP_SECURE
+      - key: KALYA_SMTP.SECURE
         value: 'true'
-      - key: KALYA_SMTP_USER
+      - key: KALYA_SMTP.USER
         value: resend
-      - key: KALYA_SMTP_PASSWORD
+      - key: KALYA_SMTP.PASSWORD
         sync: false # Optional: Set if using direct SMTP
-      - key: KALYA_SMTP_EMAIL
+      - key: KALYA_SMTP.EMAIL
         value: noreply@kalya.io
 
-      # ---- Email Provider (Resend or SMTP) ----
-      - key: KALYA_MAIL_PROVIDER
-        value: resend
-      - key: KALYA_MAIL_FROM
-        value: Kalya <noreply@kalya.io>
-      - key: KALYA_MAIL_RESEND_API_KEY
+      # -- Resend Transnational Email Configuration --
+      - key: KALYA_MAIL.RESEND_API_KEY
         sync: false # Set in Render UI if using Resend
 
       # ---- File Storage (Cloudinary recommended for cloud deployments) ----
-      - key: KALYA_STORAGE_PROVIDER
+      - key: KALYA_STORAGE.PROVIDER
         value: cloudinary
-      - key: KALYA_STORAGE_CLOUDINARY_CLOUD_NAME
+      - key: KALYA_STORAGE.CLOUDINARY_CLOUD_NAME
         sync: false # Set in Render UI if using Cloudinary
-      - key: KALYA_STORAGE_CLOUDINARY_API_KEY
+      - key: KALYA_STORAGE.CLOUDINARY_API_KEY
         sync: false # Set in Render UI if using Cloudinary
-      - key: KALYA_STORAGE_CLOUDINARY_API_SECRET
+      - key: KALYA_STORAGE.CLOUDINARY_API_SECRET
         sync: false # Set in Render UI if using Cloudinary
-      - key: KALYA_STORAGE_CLOUDINARY_FOLDER
+      - key: KALYA_STORAGE.CLOUDINARY_FOLDER
         value: kalya
 
       # ---- Push Notifications (Optional) ----
-      - key: KALYA_PUSH_VAPID_PUBLIC_KEY
+      - key: KALYA_PUSH.VAPID_PUBLIC_KEY
         sync: false
-      - key: KALYA_PUSH_VAPID_PRIVATE_KEY
+      - key: KALYA_PUSH.VAPID_PRIVATE_KEY
         sync: false
-      - key: KALYA_PUSH_VAPID_SUBJECT
+      - key: KALYA_PUSH.VAPID_SUBJECT
         value: 'mailto:admin@kalya.io'
-      - key: KALYA_PUSH_EXPO_ACCESS_TOKEN
+      - key: KALYA_PUSH.EXPO_ACCESS_TOKEN
         sync: false
+
+      # ---- Initial Super-Admin Seeding (Optional) ----
+      - key: KALYA_SUPER_ADMIN.FIRST_NAME
+        value: Admin
+      - key: KALYA_SUPER_ADMIN.MIDDLE_NAME
+        value: ''
+      - key: KALYA_SUPER_ADMIN.LAST_NAME
+        value: User
+      - key: KALYA_SUPER_ADMIN.USERNAME
+        value: admin
+      - key: KALYA_SUPER_ADMIN.EMAIL
+        sync: false # Optional: Set in Render UI to seed your super-admin account
+      - key: KALYA_SUPER_ADMIN.PASSWORD
+        sync: false # Optional: Set in Render UI to seed your super-admin password
+
+      # ---- Swagger API Documentation ----
+      - key: KALYA_DOCS.ENABLED
+        value: 'false'
+
+      # ---- Email Assets URL (Optional) ----
+      - key: KALYA_EMAIL.ASSETS_URL
+        sync: false # Optional: CDN or frontend URL for logo images in emails

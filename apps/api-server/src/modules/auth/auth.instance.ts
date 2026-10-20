@@ -84,6 +84,7 @@ export const createAuth = (db: DatabaseClient) => {
         enabled: true,
         trustedProviders: ['google'],
       },
+      skipStateCookieCheck: true,
     },
     emailVerification: {
       sendOnSignUp: true,

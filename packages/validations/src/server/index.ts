@@ -87,6 +87,7 @@ export const envSchema = databaseEnvSchema.extend({
   'KALYA_MAIL.PROVIDER': z.enum(['smtp', 'resend']).default('smtp'),
   'KALYA_MAIL.FROM': z.string().default('Kalya <noreply@kalya.io>'),
   'KALYA_MAIL.RESEND_API_KEY': z.string().optional().default(''),
+  'KALYA_EMAIL.ASSETS_URL': z.string().optional().default(''),
 
   // ---- Storage ----
   'KALYA_STORAGE.PROVIDER': z.enum(['local', 'cloudinary']).default('local'),

@@ -19,7 +19,10 @@ const KALYA_ICON_URL =
 export const swaggerPlugin = fp(
   async (app: FastifyInstance) => {
     // Disable Swagger & OpenAPI documentation in production by default to prevent exposing API endpoints
-    const isDocsEnabled = !env.isProd || process.env.KALYA_DOCS_ENABLED === 'true';
+    const isDocsEnabled =
+      !env.isProd ||
+      process.env['KALYA_DOCS.ENABLED'] === 'true' ||
+      process.env.KALYA_DOCS_ENABLED === 'true';
 
     if (!isDocsEnabled) {
       return;

@@ -67,6 +67,11 @@ function normalizeEnv(source: NodeJS.ProcessEnv): Record<string, unknown> {
     }
   }
 
+  // Fallback for PORT -> KALYA_SERVER.PORT (commonly provided by cloud platforms like Render)
+  if (result['KALYA_SERVER.PORT'] === undefined && source['PORT'] !== undefined) {
+    result['KALYA_SERVER.PORT'] = source['PORT'];
+  }
+
   return result;
 }
 

@@ -27,11 +27,21 @@ export class AuthController {
         );
       }
 
-      const url = new URL(requestUrl, `http://${request.headers.host}`);
+      const rawProto = request.headers['x-forwarded-proto'];
+      const protocol =
+        typeof rawProto === 'string' ? rawProto.split(',')[0].trim() : request.protocol || 'http';
+
+      const url = new URL(requestUrl, `${protocol}://${request.headers.host}`);
 
       const headers = new Headers(request.headers as HeadersInit);
       if (!headers.get('x-forwarded-for') && request.ip) {
         headers.set('x-forwarded-for', request.ip);
+      }
+      if (!headers.get('x-forwarded-proto')) {
+        headers.set('x-forwarded-proto', protocol);
+      }
+      if (!headers.get('x-forwarded-host') && request.headers.host) {
+        headers.set('x-forwarded-host', request.headers.host);
       }
 
       const response = await this.auth.handler(

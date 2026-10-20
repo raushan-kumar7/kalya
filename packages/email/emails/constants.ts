@@ -11,7 +11,13 @@ declare const process:
  * Uses centralized @kalya/env application configuration.
  */
 export const BASE_URL =
-  (typeof process !== 'undefined' && process.env?.EMAIL_ASSETS_URL?.replace(/\/+$/, '')) ||
+  env.mail?.assetsUrl?.replace(/\/+$/, '') ||
+  (typeof process !== 'undefined' &&
+    (
+      process.env?.['KALYA_EMAIL.ASSETS_URL'] ||
+      process.env?.KALYA_EMAIL_ASSETS_URL ||
+      process.env?.EMAIL_ASSETS_URL
+    )?.replace(/\/+$/, '')) ||
   env.app.clientUrl.replace(/\/+$/, '');
 
 export const getBaseUrl = (): string => BASE_URL;

@@ -127,6 +127,8 @@ export interface AppConfig {
     from: string;
     /** API key for Resend (if using provider='resend') */
     resendApiKey: string;
+    /** Base URL where email assets are hosted (defaults to clientUrl) */
+    assetsUrl?: string;
   };
 
   /** File Storage & Media management configuration */
