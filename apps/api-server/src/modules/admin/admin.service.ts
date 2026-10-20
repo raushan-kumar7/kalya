@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, unlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
-import { env, findRoot } from '@kalya/env';
+import { findRoot } from '@kalya/env';
 import {
   and,
   asc,
@@ -806,7 +806,27 @@ export class AdminService {
     const client = (this.db as unknown as { $client: Database.Database }).$client;
     if (!client) throw new Error('Underlying SQLite database driver not accessible');
 
-    // 1. Create emergency pre-restore snapshot
+    // 1. Validate source database integrity before touching live database
+    const sourceDb = new Database(sourcePath, { readonly: true });
+    try {
+      sourceDb.prepare('SELECT 1').get();
+      const backupTables = sourceDb
+        .prepare(
+          `SELECT count(*) as count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`
+        )
+        .get() as { count: number };
+      if (!backupTables || backupTables.count === 0) {
+        throw new Error('Backup database contains no tables');
+      }
+    } catch (err) {
+      throw new BadRequestError(
+        `Invalid or corrupt backup file "${filename}": ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      sourceDb.close();
+    }
+
+    // 2. Create emergency pre-restore snapshot
     const preRestoreFilename = `pre_restore_safety_${new Date().toISOString().replace(/[:.]/g, '-')}.sqlite`;
     const preRestorePath = path.join(backupsDir, preRestoreFilename);
 
@@ -818,27 +838,125 @@ export class AdminService {
 
     await client.backup(preRestorePath);
 
-    // 2. Validate source database integrity before restoration
-    const sourceDb = new Database(sourcePath, { readonly: true });
+    // 3. Atomically restore tables inside active connection via ATTACH DATABASE
     try {
-      sourceDb.prepare('SELECT 1').get();
-      sourceDb.close();
+      // Snapshot the current admin actor and their active sessions so that the admin is not logged out with 401
+      let currentActorRecord: Record<string, unknown> | undefined;
+      let currentSessionRecords: Record<string, unknown>[] = [];
 
-      const liveDbPath = env.database.url;
-      copyFileSync(sourcePath, liveDbPath);
+      try {
+        currentActorRecord = client
+          .prepare('SELECT * FROM main.user WHERE id = ?')
+          .get(actor.id) as Record<string, unknown> | undefined;
+        currentSessionRecords = client
+          .prepare('SELECT * FROM main.session WHERE user_id = ?')
+          .all(actor.id) as Record<string, unknown>[];
+      } catch {
+        // Fallback if user or session table is missing
+      }
 
+      client.pragma('foreign_keys = OFF');
+      const escapedSourcePath = sourcePath.replace(/'/g, "''");
+      client.exec(`ATTACH DATABASE '${escapedSourcePath}' AS backup_db`);
+
+      const restoreTransaction = client.transaction(() => {
+        // Fetch all tables from backup and main
+        const backupTables = client
+          .prepare(
+            `SELECT name, sql FROM backup_db.sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`
+          )
+          .all() as { name: string; sql: string }[];
+
+        const mainTables = client
+          .prepare(
+            `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`
+          )
+          .all() as { name: string }[];
+
+        // Drop tables in main that are not in backup
+        const backupTableNames = new Set(backupTables.map((t) => t.name));
+        for (const table of mainTables) {
+          if (!backupTableNames.has(table.name)) {
+            client.exec(`DROP TABLE IF EXISTS main."${table.name}"`);
+          }
+        }
+
+        // Drop and recreate all tables from backup
+        for (const table of backupTables) {
+          client.exec(`DROP TABLE IF EXISTS main."${table.name}"`);
+          client.exec(table.sql);
+          client.exec(`INSERT INTO main."${table.name}" SELECT * FROM backup_db."${table.name}"`);
+        }
+
+        // Recreate indexes from backup
+        const backupIndexes = client
+          .prepare(
+            `SELECT name, sql FROM backup_db.sqlite_master WHERE type = 'index' AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%'`
+          )
+          .all() as { name: string; sql: string }[];
+
+        for (const idx of backupIndexes) {
+          try {
+            client.exec(idx.sql);
+          } catch {
+            // Non-fatal if index was automatically created by UNIQUE or PRIMARY KEY constraint
+          }
+        }
+
+        // Restore current admin user and active sessions if needed so the admin retains access
+        if (currentActorRecord) {
+          const actorInRestored = client
+            .prepare('SELECT id FROM main.user WHERE id = ?')
+            .get(actor.id);
+          if (!actorInRestored) {
+            const cols = Object.keys(currentActorRecord);
+            const placeholders = cols.map(() => '?').join(', ');
+            client
+              .prepare(
+                `INSERT OR REPLACE INTO main.user (${cols.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders})`
+              )
+              .run(...Object.values(currentActorRecord));
+          }
+        }
+
+        if (currentSessionRecords.length > 0) {
+          for (const sess of currentSessionRecords) {
+            const sessInRestored = client
+              .prepare('SELECT id FROM main.session WHERE id = ?')
+              .get((sess as { id: string }).id);
+            if (!sessInRestored) {
+              const cols = Object.keys(sess);
+              const placeholders = cols.map(() => '?').join(', ');
+              client
+                .prepare(
+                  `INSERT OR REPLACE INTO main.session (${cols.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders})`
+                )
+                .run(...Object.values(sess));
+            }
+          }
+        }
+      });
+
+      restoreTransaction.exclusive();
+    } catch (err) {
+      throw new Error(
+        `Failed to restore database from "${filename}": ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      try {
+        client.exec('DETACH DATABASE backup_db');
+      } catch {
+        // Non-fatal
+      }
+      client.pragma('foreign_keys = ON');
       try {
         client.pragma('wal_checkpoint(TRUNCATE)');
       } catch {
         // Non-fatal
       }
-    } catch (err) {
-      throw new Error(
-        `Failed to restore database from "${filename}": ${err instanceof Error ? err.message : String(err)}`
-      );
     }
 
-    // 3. Record audit trail
+    // 4. Record audit trail
     await this.auditLogService.record({
       actorId: actor.id,
       actorEmail: actor.email,
