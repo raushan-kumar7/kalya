@@ -220,10 +220,17 @@ export class AuthService {
   /**
    * Retrieves current authenticated session and user profile.
    * Returns null if unauthenticated or session expired.
+   * Optional token parameter supports cross-origin OAuth hydrations where 3rd-party cookies are blocked.
    */
-  static async getSession(): Promise<SessionResponse | null> {
+  static async getSession(token?: string): Promise<SessionResponse | null> {
     try {
-      const data = await http.get<SessionResponse>(ENDPOINTS.AUTH.SESSION);
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const data = await http.get<SessionResponse>(ENDPOINTS.AUTH.SESSION, {
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
+      });
       if (!data || !data.user || !data.session) {
         return null;
       }

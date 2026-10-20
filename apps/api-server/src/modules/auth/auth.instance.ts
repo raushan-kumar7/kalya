@@ -4,7 +4,7 @@ import { AUTH_LIMITS } from '@kalya/types';
 import { parseDuration } from '@kalya/utils';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { username } from 'better-auth/plugins';
+import { bearer, username } from 'better-auth/plugins';
 import { generateUniqueUsername } from '../helpers';
 
 import { AuditLogService } from '../admin';
@@ -71,12 +71,20 @@ export const createAuth = (db: DatabaseClient) => {
     secret: env.auth.secretKey,
     baseURL: env.auth.baseUrl || env.app.clientUrl,
     basePath: `/api/${env.app.apiVersion}/auth`,
-    trustedOrigins: env.server.corsAllowedOrigins,
+    trustedOrigins: Array.from(
+      new Set(
+        [...env.server.corsAllowedOrigins, env.app.clientUrl, 'http://localhost:3000'].filter(
+          Boolean
+        )
+      )
+    ),
     socialProviders: {
       google: {
         clientId: env.auth.googleClientId as string,
         clientSecret: env.auth.googleClientSecret as string,
         scope: ['email', 'profile'],
+        accessType: 'offline',
+        prompt: 'select_account consent',
       },
     },
     account: {
@@ -240,6 +248,7 @@ export const createAuth = (db: DatabaseClient) => {
         maxUsernameLength: AUTH_LIMITS.MAX_USERNAME_LENGTH,
         displayUsernameValidator: (val: string) => val.length <= AUTH_LIMITS.MAX_USERNAME_LENGTH,
       }),
+      bearer(),
     ],
     user: {
       additionalFields: {
@@ -270,15 +279,13 @@ export const createAuth = (db: DatabaseClient) => {
     },
     advanced: {
       useSecureCookies: env.isProd || env.isStaging,
-      // When the API (kalya-api.onrender.com) and frontend (kalya-iota.vercel.app)
-      // are on different domains, browsers block SameSite=Lax/Strict cookies on
-      // cross-origin requests. Setting SameSite=None; Secure allows the browser
-      // to send the session cookie across origins.
-      // In local dev both app and API share localhost so Lax is fine.
-      defaultCookieAttributes:
-        env.isProd || env.isStaging
-          ? ({ sameSite: 'none', secure: true } as Record<string, unknown>)
-          : undefined,
+      // Cross-origin session cookies (Render API + Vercel Web) require SameSite=None and Secure=true.
+      defaultCookieAttributes: {
+        sameSite: (env.cookie.sameSite || (env.isProd || env.isStaging ? 'none' : 'lax')) as
+          'none' | 'lax' | 'strict',
+        secure: env.cookie.sameSite === 'none' ? true : env.isProd || env.isStaging,
+        ...(env.cookie.domain ? { domain: env.cookie.domain } : {}),
+      },
       crossSubdomainCookies: {
         enabled: false,
       },

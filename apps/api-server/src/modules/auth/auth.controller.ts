@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { env } from '@kalya/env';
 import type { AuthInstance } from './auth.instance';
 import type { AuthService } from './auth.service';
 import type { CheckAvailabilityDto } from '@kalya/types';
@@ -58,23 +59,85 @@ export class AuthController {
       // returns an array of individual cookie strings so Fastify can emit multiple Set-Cookie headers
       // rather than overwriting each or joining them with commas.
       const getSetCookie = (response.headers as any).getSetCookie;
+      let setCookies: string[] = [];
       if (typeof getSetCookie === 'function') {
-        const setCookies = getSetCookie.call(response.headers);
-        if (Array.isArray(setCookies) && setCookies.length > 0) {
-          reply.header('set-cookie', setCookies);
+        const rawCookies = getSetCookie.call(response.headers);
+        if (Array.isArray(rawCookies)) {
+          setCookies = rawCookies;
         }
       } else {
         const setCookie = response.headers.get('set-cookie');
         if (setCookie) {
-          reply.header('set-cookie', setCookie);
+          setCookies = [setCookie];
+        }
+      }
+
+      if (setCookies.length > 0) {
+        reply.header('set-cookie', setCookies);
+      }
+
+      // Cross-Domain OAuth Redirect Enhancement:
+      // When Better-Auth finishes an OAuth callback (status 301/302/303/307) and redirects
+      // to the frontend client URL (e.g. https://kalya-iota.vercel.app/dashboard),
+      // modern browsers (Safari ITP, Firefox Total Cookie Protection, Chrome 3rd-party cookie deprecation)
+      // will NOT send cookies set by onrender.com when making cross-origin requests from vercel.app.
+      // We extract the session token from Set-Cookie and append ?token= to the redirect URL
+      // so the frontend can immediately hydrate its session and authenticate via Bearer token!
+      let redirectLocation = response.headers.get('location');
+      if (
+        (response.status === 302 ||
+          response.status === 301 ||
+          response.status === 303 ||
+          response.status === 307) &&
+        redirectLocation
+      ) {
+        let sessionToken: string | null = null;
+        for (const cookieStr of setCookies) {
+          const match = cookieStr.match(
+            /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=([^;]+)/
+          );
+          if (match) {
+            sessionToken = decodeURIComponent(match[1]);
+            break;
+          }
+        }
+
+        if (sessionToken && redirectLocation.startsWith('http')) {
+          try {
+            const redirectUrl = new URL(redirectLocation);
+            const allowedOrigins = [
+              new URL(env.app.clientUrl).origin,
+              ...env.server.corsAllowedOrigins.map((o) => {
+                try {
+                  return new URL(o).origin;
+                } catch {
+                  return o;
+                }
+              }),
+              'http://localhost:3000',
+            ];
+
+            if (allowedOrigins.includes(redirectUrl.origin)) {
+              if (!redirectUrl.searchParams.has('token')) {
+                redirectUrl.searchParams.set('token', sessionToken);
+                redirectLocation = redirectUrl.toString();
+              }
+            }
+          } catch {
+            // Keep original location on URL parse error
+          }
         }
       }
 
       response.headers.forEach((value, key) => {
-        if (key.toLowerCase() !== 'set-cookie') {
+        if (key.toLowerCase() !== 'set-cookie' && key.toLowerCase() !== 'location') {
           reply.header(key, value);
         }
       });
+
+      if (redirectLocation) {
+        reply.header('location', redirectLocation);
+      }
 
       const responseText = await response.text();
       try {
