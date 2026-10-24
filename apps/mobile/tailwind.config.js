@@ -1,0 +1,116 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/app/**/*.{js,jsx,ts,tsx}', './src/components/**/*.{js,jsx,ts,tsx}'],
+  presets: [require('nativewind/preset')],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        inter: ['Inter-Regular', 'sans-serif'],
+        'inter-bold': ['Inter-Bold', 'sans-serif'],
+        outfit: ['Outfit-Regular', 'sans-serif'],
+        'outfit-bold': ['Outfit-Bold', 'sans-serif'],
+        'ibm-plex': ['IBMPlexMono-Regular', 'sans-serif'],
+        'ibm-plex-bold': ['IBMPlexMono-Bold', 'sans-serif'],
+      },
+      colors: {
+        kalya: {
+          /* Brand Primitives */
+          primary: {
+            DEFAULT: '#0d3e26', // Sovereign Emerald
+            dark: '#072617', // Vault Night
+            light: '#1b5e3a', // Forest Green
+            muted: '#257c4c',
+          },
+          gold: {
+            DEFAULT: '#d4af37', // Radiant Metallic Gold
+            warm: '#b8912e', // Burnished Deep Gold
+            soft: '#fdf3cd', // Champagne Gold Shimmer
+            dark: '#9a741c',
+          },
+          mint: {
+            DEFAULT: '#a3e6be', // Lucid Mint Sage
+            light: '#edfdf2', // Base Mint Canvas Wash
+            subtle: '#e1f7ea',
+          },
+          canvas: '#edfdf2',
+
+          /* Standard / Solid UI Colors */
+          surface: {
+            DEFAULT: '#ffffff',
+            subtle: '#f4fcf7',
+            muted: '#e7f8ec',
+            card: '#ffffff',
+            raised: '#ffffff',
+            dark: '#072617',
+          },
+          text: {
+            primary: '#082919',
+            secondary: '#2d5e46',
+            tertiary: '#5d8a72',
+            accent: '#9a741c',
+            inverse: '#ffffff',
+          },
+          border: {
+            subtle: '#cde8d7',
+            DEFAULT: '#b2dbc0',
+            strong: '#0d3e26',
+            accent: '#d4af37',
+          },
+
+          /* Financial 50/30/20 & Flow Allocation */
+          needs: '#0d3e26',
+          wants: '#d4af37',
+          savings: '#2d7a50',
+          inflow: '#1b8a51',
+          outflow: '#c83535',
+
+          /* Liquid UI Refractive & Translucent Glass Tokens */
+          glass: {
+            'ultra-thin': 'rgba(255, 255, 255, 0.40)',
+            base: 'rgba(255, 255, 255, 0.65)',
+            thick: 'rgba(255, 255, 255, 0.82)',
+            emerald: 'rgba(13, 62, 38, 0.88)',
+            'emerald-dark': 'rgba(7, 38, 23, 0.95)',
+            gold: 'rgba(212, 175, 55, 0.12)',
+            'gold-strong': 'rgba(212, 175, 55, 0.25)',
+            border: 'rgba(255, 255, 255, 0.65)',
+            'border-emerald': 'rgba(255, 255, 255, 0.18)',
+            'border-gold': 'rgba(212, 175, 55, 0.35)',
+          },
+        },
+      },
+      borderRadius: {
+        'kalya-xs': '6px',
+        'kalya-sm': '10px',
+        'kalya-md': '16px',
+        'kalya-lg': '24px',
+        'kalya-xl': '32px',
+        'kalya-pill': '9999px',
+      },
+      boxShadow: {
+        /* Standard Solid Elevation */
+        'kalya-card': '0 2px 8px rgba(13, 62, 38, 0.05)',
+        'kalya-elevated': '0 8px 24px rgba(13, 62, 38, 0.08)',
+        'kalya-floating': '0 16px 40px rgba(13, 62, 38, 0.12)',
+
+        /* Liquid UI Specular Depth & Glass Glows */
+        'liquid-float':
+          '0 14px 34px -8px rgba(13, 62, 38, 0.10), 0 4px 12px -2px rgba(13, 62, 38, 0.04)',
+        'liquid-dock':
+          '0 20px 48px -10px rgba(13, 62, 38, 0.18), 0 6px 16px -2px rgba(13, 62, 38, 0.06)',
+        'liquid-emerald': '0 22px 50px -12px rgba(7, 38, 23, 0.45)',
+        'liquid-inner-specular': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.75)',
+        'liquid-inner-dual':
+          'inset 0 1px 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 1px 0 rgba(13, 62, 38, 0.05)',
+      },
+      backdropBlur: {
+        subtle: '12px',
+        standard: '20px',
+        dense: '32px',
+        deep: '48px',
+      },
+    },
+  },
+  plugins: [],
+};
