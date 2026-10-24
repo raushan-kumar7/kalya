@@ -23,7 +23,7 @@ export function LandingHeader() {
   }, []);
 
   const navLinks = [
-    { label: 'Features', href: '#features' },
+    { label: 'Features', href: '/#features' },
     { label: 'About', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ];

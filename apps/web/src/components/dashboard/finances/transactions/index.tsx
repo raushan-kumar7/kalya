@@ -630,7 +630,7 @@ export function Transactions() {
   };
 
   return (
-    <section className="flex h-full min-h-0 flex-col gap-5 pb-12">
+    <section className="flex h-full min-h-0 min-w-0 max-w-full flex-col gap-5 pb-12">
       {/* 1. Page Action Header */}
       <TransactionsHeader
         monthLabel={monthLabel}
@@ -666,7 +666,7 @@ export function Transactions() {
       />
 
       {/* 4. Main Content Area (Unified Table) */}
-      <div className="min-h-75">
+      <div className="min-h-75 w-full min-w-0 max-w-full">
         {isLoading ? (
           <TransactionsTableSkeleton rows={7} />
         ) : isError ? (

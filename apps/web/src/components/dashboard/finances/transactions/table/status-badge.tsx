@@ -89,30 +89,42 @@ export function TransactionStatusBadge({
         >
           {singleFriend ? (
             <>
-              <Avatar size="xs" className="h-3.5 w-3.5 ring-1 ring-amber-500/30 shrink-0">
-                {singleFriend.memberImage ? (
+              {singleFriend.memberImage ? (
+                <Avatar size="xs" className="h-3.5 w-3.5 ring-1 ring-amber-500/30 shrink-0">
                   <AvatarImage src={singleFriend.memberImage} alt={singleFriend.memberName} />
-                ) : null}
-                <AvatarFallback className="bg-amber-500/25 text-amber-900 dark:text-amber-100 text-[8px] font-bold">
-                  {singleFriend.memberName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                  <AvatarFallback className="bg-amber-500/25 text-amber-900 dark:text-amber-100 text-[8px] font-bold">
+                    {singleFriend.memberName.slice(0, 1).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              )}
               <span className="truncate max-w-44">
                 {singleFriend.memberName} owes ₹{singleFriend.amount.toLocaleString('en-IN')}
               </span>
             </>
           ) : (
             <>
-              <span className="flex -space-x-1 items-center shrink-0">
-                {unsettledMembers.slice(0, 2).map((m, idx) => (
-                  <Avatar key={idx} size="xs" className="h-3.5 w-3.5 ring-1 ring-surface shrink-0">
-                    {m.memberImage ? <AvatarImage src={m.memberImage} alt={m.memberName} /> : null}
-                    <AvatarFallback className="bg-amber-500/25 text-amber-900 dark:text-amber-100 text-[7px] font-bold">
-                      {m.memberName.slice(0, 1).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </span>
+              {unsettledMembers.some((m) => m.memberImage) ? (
+                <span className="flex -space-x-1 items-center shrink-0">
+                  {unsettledMembers.slice(0, 2).map((m, idx) => (
+                    <Avatar
+                      key={idx}
+                      size="xs"
+                      className="h-3.5 w-3.5 ring-1 ring-surface shrink-0"
+                    >
+                      {m.memberImage ? (
+                        <AvatarImage src={m.memberImage} alt={m.memberName} />
+                      ) : null}
+                      <AvatarFallback className="bg-amber-500/25 text-amber-900 dark:text-amber-100 text-[7px] font-bold">
+                        {m.memberName.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </span>
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              )}
               <span className="truncate max-w-44">
                 {item.pendingDuesNarration || `${unsettledMembers.length} friends owe dues`}
               </span>

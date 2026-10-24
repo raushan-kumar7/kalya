@@ -43,9 +43,9 @@ export function DashboardLayoutClient({ children }: Readonly<{ children: ReactNo
   return (
     <div className="bg-bg flex min-h-full overflow-x-clip">
       <Sidebar user={user} onSignOut={signOut} />
-      <div className="flex min-h-full w-full flex-1 flex-col transition-[margin] duration-300 md:ml-(--sidebar-w,255px)">
+      <div className="flex min-h-full w-full min-w-0 flex-1 flex-col transition-[margin] duration-300 md:ml-(--sidebar-w,255px)">
         <Top user={user} />
-        <main className="flex-1 px-4 pb-24 sm:px-6 md:px-8 md:pb-16">{children}</main>
+        <main className="flex-1 min-w-0 px-4 pb-24 sm:px-6 md:px-8 md:pb-16">{children}</main>
         <Footer />
       </div>
     </div>

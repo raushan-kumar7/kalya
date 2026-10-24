@@ -23,9 +23,18 @@ import { Skeleton } from '@/components/ui/states/skeleton';
 // 1. Semantic Table Atoms
 // ------------------------------------------------------------
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-x-auto rounded-md border border-border bg-surface shadow-card">
+export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  wrapperClassName?: string;
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, wrapperClassName, ...props }, ref) => (
+    <div
+      className={cn(
+        'relative w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-card',
+        wrapperClassName
+      )}
+    >
       <table
         ref={ref}
         className={cn(

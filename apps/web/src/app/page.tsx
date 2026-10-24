@@ -5,7 +5,6 @@ import {
   LandingHeader,
   HeroSection,
   TrustStrip,
-  FeaturesCircle,
   ProductPreview,
   StatementsSection,
   PrivacySection,
@@ -15,6 +14,7 @@ import {
   FAQ_ITEMS,
   ClosingBanner,
   LandingFooter,
+  Features,
 } from '@/components/landing';
 
 export const metadata: Metadata = {
@@ -103,7 +103,8 @@ export default function HomePage() {
         <TrustStrip />
 
         {/* 4. Features Circle (Center Person Illustration + Stepped 60° Rotation) */}
-        <FeaturesCircle />
+        {/* <FeaturesCircle /> */}
+        <Features />
 
         {/* 5. Product Preview (Dashboard, Budget, Split, Wealth) */}
         <ProductPreview />

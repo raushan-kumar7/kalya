@@ -3,6 +3,7 @@ export * from './landing-header';
 export * from './hero-section';
 export * from './trust-strip';
 export * from './features-circle';
+export * from './features';
 export * from './person-illustration';
 export * from './product-preview';
 export * from './statements-section';
