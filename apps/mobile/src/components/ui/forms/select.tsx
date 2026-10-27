@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Modal, Pressable, ScrollView } from 'react-native';
 import { ChevronDown, Check, X } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -83,9 +83,9 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <View className={cn('w-full flex-col gap-1.5', className)}>
       {label ? (
-        <Text variant="body-sm" tone="secondary" className="font-inter-bold">
+        <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
           {label}
-        </Text>
+        </Typo>
       ) : null}
 
       <HapticTouchable
@@ -100,7 +100,7 @@ export const Select: React.FC<SelectProps> = ({
           {selectedOption?.icon ? (
             <View className="items-center justify-center">{selectedOption.icon}</View>
           ) : null}
-          <Text
+          <Typo
             variant="body-md"
             className={
               selectedOption
@@ -110,16 +110,16 @@ export const Select: React.FC<SelectProps> = ({
             numberOfLines={1}
           >
             {selectedOption ? selectedOption.label : placeholder}
-          </Text>
+          </Typo>
         </View>
 
         <ChevronDown size={18} color="#5d8a72" />
       </HapticTouchable>
 
       {error ? (
-        <Text variant="caption" tone="outflow">
+        <Typo variant="caption" tone="outflow">
           {error}
-        </Text>
+        </Typo>
       ) : null}
 
       {/* Bottom Sheet Modal */}
@@ -136,9 +136,9 @@ export const Select: React.FC<SelectProps> = ({
             {/* Sheet Handle & Header */}
             <View className="w-10 h-1 rounded-kalya-pill bg-kalya-border self-center mb-3" />
             <View className="flex-row items-center justify-between pb-3 border-b border-kalya-border-subtle mb-2">
-              <Text variant="title-sm" className="font-outfit-bold text-kalya-text-primary">
+              <Typo variant="title-sm" className="font-outfit-bold text-kalya-text-primary">
                 {label || 'Select Option'}
-              </Text>
+              </Typo>
               <Pressable onPress={() => setModalVisible(false)} className="p-1">
                 <X size={20} color="#5d8a72" />
               </Pressable>
@@ -161,7 +161,7 @@ export const Select: React.FC<SelectProps> = ({
                     <View className="flex-row items-center gap-2.5 flex-1 mr-2">
                       {opt.icon ? <View>{opt.icon}</View> : null}
                       <View className="flex-1">
-                        <Text
+                        <Typo
                           variant="body-md"
                           className={cn(
                             'font-inter',
@@ -171,11 +171,11 @@ export const Select: React.FC<SelectProps> = ({
                           )}
                         >
                           {opt.label}
-                        </Text>
+                        </Typo>
                         {opt.description ? (
-                          <Text variant="caption" tone="tertiary">
+                          <Typo variant="caption" tone="tertiary">
                             {opt.description}
-                          </Text>
+                          </Typo>
                         ) : null}
                       </View>
                     </View>

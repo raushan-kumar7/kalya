@@ -3,7 +3,7 @@
  *
  * Mapped 1:1 with kalya-mobile-ui-components.xlsx
  * Grouped into concern folders:
- * 1. Primitives (Text, Button, IconButton, Icon, Pressable, Divider, Badge, Avatar, Chip, Spacer, HapticTouchable)
+ * 1. Primitives (Typo, Button, IconButton, Icon, Pressable, Divider, Badge, Avatar, Chip, Spacer, HapticTouchable)
  * 2. Layout (Screen, Stack, Row, Card, GlassView, Section, Header, ListItem, SwipeableRow, FAB)
  * 3. Form Inputs (FormField, Input, TextField, PasswordField, AmountInput, CurrencyInput, Numpad, SearchInput, DatePicker, MonthPicker, Select, SegmentedControl, Switch, Checkbox, Slider, OTPInput)
  * 4. Feedback & Status (Skeleton, Spinner, Toast, Snackbar, UndoSnackBar, Banner, EmptyState, ErrorState, ErrorCard, ProgressBar, ProgressRing, Alert)

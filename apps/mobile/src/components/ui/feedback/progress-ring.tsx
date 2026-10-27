@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface ProgressRingProps {
@@ -94,9 +94,9 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
         {children ? (
           children
         ) : (
-          <Text variant="caption" tone="primary" className="font-ibm-plex-bold text-[11px]">
+          <Typo variant="caption" tone="primary" className="font-ibm-plex-bold text-[11px]">
             {percentageInt}%
-          </Text>
+          </Typo>
         )}
       </View>
     </View>

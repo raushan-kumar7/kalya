@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -85,24 +85,24 @@ export const ListItem: React.FC<ListItemProps> = ({
         {leading ? <View className="items-center justify-center">{leading}</View> : null}
 
         <View className="flex-1 justify-center">
-          <Text
+          <Typo
             variant="body-md"
             tone="primary"
             className="font-inter-bold leading-snug"
             numberOfLines={1}
           >
             {title}
-          </Text>
+          </Typo>
 
           {subtitle ? (
-            <Text
+            <Typo
               variant="caption"
               tone="tertiary"
               className="font-inter mt-0.5 leading-tight"
               numberOfLines={1}
             >
               {subtitle}
-            </Text>
+            </Typo>
           ) : null}
         </View>
       </View>

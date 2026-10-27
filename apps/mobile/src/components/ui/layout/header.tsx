@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -89,20 +89,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         <View className="flex-1">
           {title ? (
-            <Text
+            <Typo
               variant="title-sm"
               tone="primary"
               className="font-outfit-bold tracking-tight"
               numberOfLines={1}
             >
               {title}
-            </Text>
+            </Typo>
           ) : null}
 
           {subtitle ? (
-            <Text variant="caption" tone="tertiary" className="font-inter" numberOfLines={1}>
+            <Typo variant="caption" tone="tertiary" className="font-inter" numberOfLines={1}>
               {subtitle}
-            </Text>
+            </Typo>
           ) : null}
         </View>
       </View>

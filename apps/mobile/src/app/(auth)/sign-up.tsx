@@ -1,10 +1,13 @@
-import { View, Text } from 'react-native';
+import { Screen, Typo } from '@/components/ui';
+import { View } from 'react-native';
 
 const SignUp = () => {
   return (
-    <View>
-      <Text>SignUp</Text>
-    </View>
+    <Screen className="items-center justify-center font-ibm-plex">
+      <View>
+        <Typo>SignUp</Typo>
+      </View>
+    </Screen>
   );
 };
 

@@ -6,11 +6,11 @@ import {
   formatCardDate,
   TimestampInput,
 } from '@kalya/utils';
-import { Text, TextProps } from '../primitives/text';
+import { Typo, TypoProps } from '../primitives/typo';
 
 export type DateFormat = 'relative' | 'short' | 'full' | 'time' | 'month-year';
 
-export interface DateTextProps extends Omit<TextProps, 'children'> {
+export interface DateTextProps extends Omit<TypoProps, 'children'> {
   /**
    * ISO string, Date object, or epoch millisecond number.
    */
@@ -64,8 +64,8 @@ export const DateText: React.FC<DateTextProps> = ({
   ...rest
 }) => {
   return (
-    <Text variant={variant} tone={tone} {...rest}>
+    <Typo variant={variant} tone={tone} {...rest}>
       {formatDisplayDate(date, format)}
-    </Text>
+    </Typo>
   );
 };

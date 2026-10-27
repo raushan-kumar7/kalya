@@ -9,6 +9,11 @@ import kalyaEquity from '@/assets/images/kalya-equity.png';
 import kalyaGrowthRoadmap from '@/assets/images/kalya-growth-roadmap.png';
 import kalyaGrowth from '@/assets/images/kalya-growth.png';
 import kalyaSplits from '@/assets/images/kalya-splits.png';
+import goal from '@/assets/images/01_financial_goal_mountain.png';
+import wealth_coins from '@/assets/images/02_wealth_coins_bowls.png';
+import equity from '@/assets/images/03_investment_growth_chart.png';
+import grow from '@/assets/images/04_growing_investment_plant.png';
+import growth from '@/assets/images/05_infinity_community_growth.png';
 
 export {
   kalyaIcon,
@@ -22,4 +27,9 @@ export {
   kalyaGrowth,
   kalyaGrowthRoadmap,
   kalyaSplits,
+  goal,
+  wealth_coins,
+  equity,
+  grow,
+  growth,
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
@@ -91,13 +91,13 @@ export const Alert: React.FC<AlertProps> = ({
 
       <View className="flex-1">
         {title ? (
-          <Text variant="body-sm" className={v.title}>
+          <Typo variant="body-sm" className={v.title}>
             {title}
-          </Text>
+          </Typo>
         ) : null}
-        <Text variant="caption" className={cn(v.desc, title && 'mt-0.5')}>
+        <Typo variant="caption" className={cn(v.desc, title && 'mt-0.5')}>
           {description}
-        </Text>
+        </Typo>
       </View>
     </View>
   );

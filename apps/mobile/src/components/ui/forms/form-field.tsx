@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface FormFieldProps {
@@ -55,13 +55,13 @@ export const FormField: React.FC<FormFieldProps> = ({
     <View className={cn('w-full flex-col gap-1.5 my-1', className)}>
       {label ? (
         <View className="flex-row items-center gap-1">
-          <Text variant="body-sm" tone="secondary" className="font-inter-bold">
+          <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
             {label}
-          </Text>
+          </Typo>
           {required ? (
-            <Text variant="caption" tone="accent" className="font-inter-bold text-kalya-gold">
+            <Typo variant="caption" tone="accent" className="font-inter-bold text-kalya-gold">
               *
-            </Text>
+            </Typo>
           ) : null}
         </View>
       ) : null}
@@ -69,13 +69,13 @@ export const FormField: React.FC<FormFieldProps> = ({
       {children}
 
       {error ? (
-        <Text variant="caption" tone="outflow" className="font-inter">
+        <Typo variant="caption" tone="outflow" className="font-inter">
           {error}
-        </Text>
+        </Typo>
       ) : helperText ? (
-        <Text variant="caption" tone="tertiary" className="font-inter">
+        <Typo variant="caption" tone="tertiary" className="font-inter">
           {helperText}
-        </Text>
+        </Typo>
       ) : null}
     </View>
   );

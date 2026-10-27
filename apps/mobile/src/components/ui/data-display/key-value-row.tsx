@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface KeyValueRowProps {
@@ -48,14 +48,14 @@ export const KeyValueRow: React.FC<KeyValueRowProps> = ({
         className
       )}
     >
-      <Text variant="body-sm" tone="secondary" className="font-inter">
+      <Typo variant="body-sm" tone="secondary" className="font-inter">
         {label}
-      </Text>
+      </Typo>
 
       {typeof value === 'string' ? (
-        <Text variant="body-sm" tone="primary" className="font-inter-bold text-right">
+        <Typo variant="body-sm" tone="primary" className="font-inter-bold text-right">
           {value}
-        </Text>
+        </Typo>
       ) : (
         value
       )}

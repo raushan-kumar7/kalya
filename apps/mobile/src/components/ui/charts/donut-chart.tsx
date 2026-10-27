@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { PieChart as GiftedPieChart } from 'react-native-gifted-charts';
 import type { pieDataItem, PieChartPropsType } from 'react-native-gifted-charts';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface ChartSegment {
@@ -163,18 +163,18 @@ export const DonutChart: React.FC<DonutChartProps> = ({
     return (
       <View className="items-center justify-center pointer-events-none px-1">
         {centerLabel ? (
-          <Text variant="numeral-sm" tone="primary" className="font-ibm-plex-bold text-center">
+          <Typo variant="numeral-sm" tone="primary" className="font-ibm-plex-bold text-center">
             {centerLabel}
-          </Text>
+          </Typo>
         ) : null}
         {centerSubtitle ? (
-          <Text
+          <Typo
             variant="caption"
             tone="tertiary"
             className="font-inter text-[10px] text-center mt-0.5"
           >
             {centerSubtitle}
-          </Text>
+          </Typo>
         ) : null}
       </View>
     );

@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/purity */
 import React, { useState, useRef } from 'react';
 import { View, ScrollView, Alert as NativeAlert } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Text,
+  Typo,
   Button,
   IconButton,
   Icon,
@@ -73,7 +74,7 @@ export const ShowUIComponents: React.FC = () => {
   };
 
   // Form interactive states
-  const [textFieldVal, setTextFieldVal] = useState('Sovereign Vault Account');
+  const [TypoFieldVal, setTypoFieldVal] = useState('Sovereign Vault Account');
   const [passwordVal, setPasswordVal] = useState('KalyaSecretPass123');
   const [amountPaise, setAmountPaise] = useState(12500000); // ₹1,25,000.00
   const [searchVal, setSearchVal] = useState('');
@@ -106,6 +107,8 @@ export const ShowUIComponents: React.FC = () => {
     { label: 'Data', value: 'data-display' },
     { label: 'Charts', value: 'charts' },
   ];
+
+  console.log('Seach Value: ', searchVal);
 
   return (
     <SafeAreaView className="flex-1 bg-kalya-canvas" edges={['top', 'left', 'right']}>
@@ -158,33 +161,33 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Typography Hierarchy
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Outfit, Inter, IBM Plex Mono
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-2.5">
-                  <Text variant="display" tone="primary">
+                  <Typo variant="display" tone="primary">
                     Display Header
-                  </Text>
-                  <Text variant="title-lg" tone="primary">
+                  </Typo>
+                  <Typo variant="title-lg" tone="primary">
                     Heading Large
-                  </Text>
-                  <Text variant="title-md" tone="primary">
+                  </Typo>
+                  <Typo variant="title-md" tone="primary">
                     Heading Medium
-                  </Text>
-                  <Text variant="body-md" tone="secondary">
-                    Body Medium interface text with calibrated leading and tone.
-                  </Text>
-                  <Text variant="caption" tone="tertiary">
-                    Caption label text for metadata and timestamps.
-                  </Text>
-                  <Text variant="numeral-lg" tone="primary" className="font-ibm-plex-bold">
+                  </Typo>
+                  <Typo variant="body-md" tone="secondary">
+                    Body Medium interface Typo with calibrated leading and tone.
+                  </Typo>
+                  <Typo variant="caption" tone="tertiary">
+                    Caption label Typo for metadata and timestamps.
+                  </Typo>
+                  <Typo variant="numeral-lg" tone="primary" className="font-ibm-plex-bold">
                     ₹2,485,390.42 (Numeral Large)
-                  </Text>
+                  </Typo>
                 </CardBody>
               </Card>
 
@@ -192,12 +195,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Tactile Buttons & Actions
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Physics-driven spring feedback
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
@@ -229,9 +232,9 @@ export const ShowUIComponents: React.FC = () => {
                       hapticTier="success"
                       className="px-3 py-2 bg-kalya-mint-subtle rounded-kalya-md"
                     >
-                      <Text variant="body-sm" tone="primary" className="font-inter-bold">
+                      <Typo variant="body-sm" tone="primary" className="font-inter-bold">
                         Haptic Touchable
-                      </Text>
+                      </Typo>
                     </HapticTouchable>
                   </Row>
                 </CardBody>
@@ -241,9 +244,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Badges, Status & Identifiers
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-4">
@@ -287,35 +290,35 @@ export const ShowUIComponents: React.FC = () => {
             >
               {/* Glass View */}
               <GlassView variant="base" borderGlow className="p-4 rounded-kalya-xl mb-4">
-                <Text variant="title-sm" tone="primary">
+                <Typo variant="title-sm" tone="primary">
                   Specular Liquid Glass
-                </Text>
-                <Text variant="body-sm" tone="secondary" className="mt-1">
+                </Typo>
+                <Typo variant="body-sm" tone="secondary" className="mt-1">
                   Refractive translucency layered over canvas backgrounds.
-                </Text>
+                </Typo>
               </GlassView>
 
               {/* Structured Card */}
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Structured Surface Card
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Header, Body & Footer slots
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody>
-                  <Text variant="body-sm" tone="secondary">
+                  <Typo variant="body-sm" tone="secondary">
                     Cards provide elevated focal points for critical financial data.
-                  </Text>
+                  </Typo>
                 </CardBody>
                 <CardFooter className="flex-row justify-between items-center">
-                  <Text variant="caption" tone="tertiary">
+                  <Typo variant="caption" tone="tertiary">
                     Verified Vault State
-                  </Text>
+                  </Typo>
                   <Button title="Details" variant="ghost" size="sm" />
                 </CardFooter>
               </Card>
@@ -324,9 +327,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       List Items & Swipeable Rows
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="p-0">
@@ -335,9 +338,9 @@ export const ShowUIComponents: React.FC = () => {
                     subtitle="Lifestyle · Monthly"
                     leading={<Icon name="Music" size={20} color="#0d3e26" />}
                     trailing={
-                      <Text variant="body-sm" tone="primary" className="font-ibm-plex-bold">
+                      <Typo variant="body-sm" tone="primary" className="font-ibm-plex-bold">
                         ₹119.00
-                      </Text>
+                      </Typo>
                     }
                     bottomDivider
                   />
@@ -346,13 +349,13 @@ export const ShowUIComponents: React.FC = () => {
                     subtitle="Employer Inflow · Oct 25"
                     leading={<Icon name="ArrowDownLeft" size={20} color="#1b5e3a" />}
                     trailing={
-                      <Text
+                      <Typo
                         variant="body-sm"
                         tone="primary"
-                        className="font-ibm-plex-bold text-kalya-inflow"
+                        className="font-ibm-plex-bold Typo-kalya-inflow"
                       >
                         +₹1,45,000.00
-                      </Text>
+                      </Typo>
                     }
                     bottomDivider
                   />
@@ -387,16 +390,16 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
-                      Text & Secure Inputs
-                    </Text>
+                    <Typo variant="title-sm" tone="primary">
+                      Typo & Secure Inputs
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
                   <TextField
                     label="Account Name"
-                    value={textFieldVal}
-                    onChangeText={setTextFieldVal}
+                    value={TypoFieldVal}
+                    onChangeText={setTypoFieldVal}
                     placeholder="Enter account label"
                     clearable
                   />
@@ -419,12 +422,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Financial Currency & Amount
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Integer paise handling
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-4">
@@ -435,9 +438,9 @@ export const ShowUIComponents: React.FC = () => {
                     justify="between"
                     className="p-3 bg-kalya-surface-subtle rounded-kalya-md"
                   >
-                    <Text variant="caption" tone="secondary">
+                    <Typo variant="caption" tone="secondary">
                       Formatted Currency:
-                    </Text>
+                    </Typo>
                     <CurrencyInput valuePaise={amountPaise} size="md" />
                   </Row>
                 </CardBody>
@@ -447,9 +450,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Controls, Dates & Selectors
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-4">
@@ -464,9 +467,9 @@ export const ShowUIComponents: React.FC = () => {
                   />
 
                   <Row align="center" justify="between">
-                    <Text variant="body-sm" tone="primary">
+                    <Typo variant="body-sm" tone="primary">
                       Biometric Authentication
-                    </Text>
+                    </Typo>
                     <Switch value={switchState} onValueChange={setSwitchState} />
                   </Row>
 
@@ -508,9 +511,9 @@ export const ShowUIComponents: React.FC = () => {
                   />
 
                   <View className="gap-1.5">
-                    <Text variant="caption" tone="secondary">
+                    <Typo variant="caption" tone="secondary">
                       6-Digit Verification Code (Better-Auth)
-                    </Text>
+                    </Typo>
                     <OTPInput value={otpVal} onChange={setOtpVal} />
                   </View>
                 </CardBody>
@@ -538,9 +541,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Alerts & Callouts
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
@@ -566,9 +569,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Progress Gauges & Loading
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-4">
@@ -577,9 +580,9 @@ export const ShowUIComponents: React.FC = () => {
 
                   <Row align="center" justify="around" className="pt-2">
                     <ProgressRing progress={0.68} size={70} strokeWidth={8}>
-                      <Text variant="caption" tone="primary" className="font-ibm-plex-bold">
+                      <Typo variant="caption" tone="primary" className="font-ibm-plex-bold">
                         68%
-                      </Text>
+                      </Typo>
                     </ProgressRing>
                     <Spinner size="md" color="#0d3e26" />
                   </Row>
@@ -590,9 +593,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Skeletons & Destructive Undo
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
@@ -618,9 +621,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Service Recovery States
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody>
@@ -653,9 +656,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Interactive Overlay Triggers
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
@@ -685,9 +688,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Tabs Component
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody>
@@ -737,38 +740,38 @@ export const ShowUIComponents: React.FC = () => {
                 />
               </Row>
 
-              {/* MoneyText & DateText */}
+              {/* MoneyTypo & DateTypo */}
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Localized Formatting (@kalya/utils)
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="gap-3">
                   <Row justify="between" align="center">
-                    <Text variant="body-sm" tone="secondary">
+                    <Typo variant="body-sm" tone="secondary">
                       MoneyText (Inflow):
-                    </Text>
+                    </Typo>
                     <MoneyText paise={4500000} showSign colored variant="numeral-md" />
                   </Row>
                   <Row justify="between" align="center">
-                    <Text variant="body-sm" tone="secondary">
+                    <Typo variant="body-sm" tone="secondary">
                       MoneyText (Outflow):
-                    </Text>
+                    </Typo>
                     <MoneyText paise={-1850000} showSign colored variant="numeral-md" />
                   </Row>
                   <Row justify="between" align="center">
-                    <Text variant="body-sm" tone="secondary">
+                    <Typo variant="body-sm" tone="secondary">
                       Relative Date:
-                    </Text>
+                    </Typo>
                     <DateText date={new Date(Date.now() - 7200000)} format="relative" />
                   </Row>
                   <Row justify="between" align="center">
-                    <Text variant="body-sm" tone="secondary">
+                    <Typo variant="body-sm" tone="secondary">
                       Calendar Date:
-                    </Text>
+                    </Typo>
                     <DateText date="2026-10-25" format="short" />
                   </Row>
                 </CardBody>
@@ -778,9 +781,9 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Detail Key-Value Rows
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="p-1">
@@ -798,12 +801,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Chronological Audit Trail
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Powered by @kalya/utils timestamps
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody>
@@ -813,6 +816,7 @@ export const ShowUIComponents: React.FC = () => {
                         id: '1',
                         title: 'Salary Deposited',
                         description: 'Direct corporate transfer from Kalya Labs',
+
                         timestamp: new Date(Date.now() - 3600000),
                         completed: true,
                       },
@@ -820,6 +824,7 @@ export const ShowUIComponents: React.FC = () => {
                         id: '2',
                         title: 'Budget Allocation Partitioned',
                         description: '50% Needs, 30% Wants, 20% Savings applied',
+
                         timestamp: new Date(Date.now() - 7200000),
                         completed: true,
                       },
@@ -827,6 +832,7 @@ export const ShowUIComponents: React.FC = () => {
                         id: '3',
                         title: 'Pending Merchant Settlement',
                         description: 'Starbucks Coffee reserve lock',
+
                         timestamp: new Date(Date.now() - 14400000),
                         completed: false,
                       },
@@ -857,12 +863,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       50/30/20 Allocation Donut
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Animated with center balance
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="items-center py-4">
@@ -892,12 +898,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Monthly Cash Inflow & Outflow
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Rounded bar tops with emerald gradient
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="py-2">
@@ -921,12 +927,12 @@ export const ShowUIComponents: React.FC = () => {
               <Card variant="surface" className="mb-4">
                 <CardHeader>
                   <View>
-                    <Text variant="title-sm" tone="primary">
+                    <Typo variant="title-sm" tone="primary">
                       Wealth Accumulation Trajectory
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
+                    </Typo>
+                    <Typo variant="caption" tone="tertiary">
                       Bezier curve with area gradient fill
-                    </Text>
+                    </Typo>
                   </View>
                 </CardHeader>
                 <CardBody className="py-2">
@@ -968,9 +974,9 @@ export const ShowUIComponents: React.FC = () => {
 
       {/* Overlays */}
       <Modal visible={showModal} onClose={() => setShowModal(false)} title="Sovereign Vault Notice">
-        <Text variant="body-sm" tone="secondary" className="mb-4">
+        <Typo variant="body-sm" tone="secondary" className="mb-4">
           This is an interactive centered modal dialog rendered using @kalya/mobile overlays.
-        </Text>
+        </Typo>
         <Button title="Acknowledge" variant="primary" onPress={() => setShowModal(false)} />
       </Modal>
 

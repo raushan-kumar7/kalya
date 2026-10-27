@@ -30,7 +30,7 @@ Components are grouped into dedicated concern subdirectories under `apps/mobile/
 
 ### [`primitives/`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/) (10 Components)
 
-1. **[`Text`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/text.tsx)** — Typography variants (display, heading, body, caption, label, numerals) with theme colors.
+1. **[`Typo`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/typo.tsx)** — Typography primitive (`Typo`, aliased as `Text`) with dynamic font mapping (Inter, Outfit, IBM Plex Mono) and semantic/scale variants.
 2. **[`Button`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/button.tsx)** — 7 variants (primary, gold, glass, glass-emerald, outline, ghost, destructive), sizes, loading state, icon slots, and spring physics.
 3. **[`IconButton`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/button.tsx)** — Icon-only button enforcing accessible $\ge 44\text{px}$ touch boundary.
 4. **[`Icon`](file:///Users/raushankumar/Workspace/Projects/Personal/kalya/apps/mobile/src/components/ui/primitives/icon.tsx)** — Unified wrapper around `lucide-react-native` with size and color tokens.

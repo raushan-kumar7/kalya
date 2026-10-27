@@ -10,7 +10,7 @@ import {
   toISO,
   Temporal,
 } from '@kalya/utils';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
 import { Button } from '../primitives/button';
 import { cn } from '@/libs/utils';
@@ -105,9 +105,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   return (
     <View className={cn('w-full flex-col gap-1.5', className)}>
       {label ? (
-        <Text variant="body-sm" className="font-inter-bold text-kalya-text-secondary">
+        <Typo variant="body-sm" className="font-inter-bold text-kalya-text-secondary">
           {label}
-        </Text>
+        </Typo>
       ) : null}
 
       <HapticTouchable
@@ -120,21 +120,21 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       >
         <View className="flex-row items-center gap-2.5">
           <CalendarIcon size={18} color="#0d3e26" />
-          <Text
+          <Typo
             variant="body-md"
             className={
               value ? 'font-inter text-kalya-text-primary' : 'font-inter text-kalya-text-tertiary'
             }
           >
             {value ? formatCardDate(value) : 'Select date'}
-          </Text>
+          </Typo>
         </View>
       </HapticTouchable>
 
       {error ? (
-        <Text variant="caption" tone="outflow">
+        <Typo variant="caption" tone="outflow">
           {error}
-        </Text>
+        </Typo>
       ) : null}
 
       {/* Calendar Dialog Modal */}
@@ -153,9 +153,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               >
                 <ChevronLeft size={18} color="#0d3e26" />
               </HapticTouchable>
-              <Text variant="title-sm" className="font-outfit-bold text-kalya-text-primary">
+              <Typo variant="title-sm" className="font-outfit-bold text-kalya-text-primary">
                 {monthName}
-              </Text>
+              </Typo>
               <HapticTouchable
                 hapticTier="light"
                 onPress={handleNextMonth}
@@ -169,9 +169,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             <View className="flex-row py-2 border-b border-kalya-border-subtle">
               {WEEKDAYS.map((day) => (
                 <View key={day} className="w-[14.28%] items-center py-1">
-                  <Text variant="caption" tone="tertiary" className="font-inter-bold">
+                  <Typo variant="caption" tone="tertiary" className="font-inter-bold">
                     {day}
-                  </Text>
+                  </Typo>
                 </View>
               ))}
             </View>
@@ -198,7 +198,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         isSelected ? 'bg-kalya-primary' : 'bg-transparent'
                       )}
                     >
-                      <Text
+                      <Typo
                         variant="body-sm"
                         className={cn(
                           'font-ibm-plex text-xs',
@@ -210,7 +210,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         )}
                       >
                         {plainDate.day}
-                      </Text>
+                      </Typo>
                     </View>
                   </Pressable>
                 );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Modal as RNModal, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface BottomSheetProps {
@@ -72,13 +72,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           {title ? (
             <View className="flex-row items-center justify-between pb-3 border-b border-kalya-border-subtle mb-3">
               <View className="flex-1 mr-2">
-                <Text variant="title-sm" tone="primary" className="font-outfit-bold">
+                <Typo variant="title-sm" tone="primary" className="font-outfit-bold">
                   {title}
-                </Text>
+                </Typo>
                 {subtitle ? (
-                  <Text variant="caption" tone="tertiary" className="font-inter mt-0.5">
+                  <Typo variant="caption" tone="tertiary" className="font-inter mt-0.5">
                     {subtitle}
-                  </Text>
+                  </Typo>
                 ) : null}
               </View>
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { formatInr, formatInrPrecise } from '@kalya/utils';
-import { Text, TextProps, TextVariant } from '../primitives/text';
+import { Typo, TypoProps, TypoVariant } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
-export interface MoneyTextProps extends Omit<TextProps, 'children'> {
+export interface MoneyTextProps extends Omit<TypoProps, 'children'> {
   /**
    * Financial amount represented strictly in integer minor units (paise).
    * e.g., 250000 = ₹2,500.00
@@ -38,7 +38,7 @@ export interface MoneyTextProps extends Omit<TextProps, 'children'> {
    * Typographic variant tier.
    * @default 'numeral-md'
    */
-  variant?: TextVariant;
+  variant?: TypoVariant;
 }
 
 /**
@@ -83,13 +83,13 @@ export const MoneyText: React.FC<MoneyTextProps> = ({
   };
 
   return (
-    <Text
+    <Typo
       variant={variant}
       className={cn('font-ibm-plex-bold tracking-tight', getColorClass(), className)}
       {...rest}
     >
       {sign}
       {displayAmount}
-    </Text>
+    </Typo>
   );
 };

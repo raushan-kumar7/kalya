@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, LayoutChangeEvent } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface SegmentOption<T extends string> {
@@ -63,7 +63,7 @@ export function SegmentedControl<T extends string>({
 
   const translateX = useSharedValue(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (segmentWidth > 0) {
       translateX.value = withSpring(selectedIndex * segmentWidth, {
         damping: 20,
@@ -122,7 +122,7 @@ export function SegmentedControl<T extends string>({
             onPress={() => handleSelect(option.value, index)}
             className="flex-1 py-2 px-3 rounded-kalya-pill items-center justify-center flex-row gap-1.5 z-10"
           >
-            <Text
+            <Typo
               className={cn(
                 'text-xs',
                 isSelected
@@ -131,7 +131,7 @@ export function SegmentedControl<T extends string>({
               )}
             >
               {option.label}
-            </Text>
+            </Typo>
 
             {option.badgeCount !== undefined ? (
               <View
@@ -142,14 +142,14 @@ export function SegmentedControl<T extends string>({
                     : 'bg-kalya-border text-kalya-text-tertiary'
                 )}
               >
-                <Text
+                <Typo
                   className={cn(
                     'text-[10px] font-ibm-plex-bold',
                     isSelected ? 'text-kalya-primary-dark' : 'text-kalya-text-secondary'
                   )}
                 >
                   {option.badgeCount}
-                </Text>
+                </Typo>
               </View>
             ) : null}
           </HapticTouchable>

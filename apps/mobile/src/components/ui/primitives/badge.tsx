@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Text } from './text';
+import { Typo } from './typo';
 import { cn } from '@/libs/utils';
 
 export type BadgeVariant =
@@ -171,7 +171,7 @@ export const Badge: React.FC<BadgeProps> = ({
         />
       ) : null}
 
-      <Text className={cn(vStyle.text, sStyle.text)}>{label}</Text>
+      <Typo className={cn(vStyle.text, sStyle.text)}>{label}</Typo>
     </View>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Image, ImageSourcePropType } from 'react-native';
-import { Text } from './text';
+import { Typo } from './typo';
 import { cn } from '@/libs/utils';
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
@@ -96,12 +96,12 @@ export const Avatar: React.FC<AvatarProps> = ({
           resizeMode="cover"
         />
       ) : (
-        <Text
+        <Typo
           variant={textVariant}
           className="font-outfit-bold text-kalya-text-inverse tracking-wider"
         >
           {initials}
-        </Text>
+        </Typo>
       )}
     </View>
   );

@@ -7,7 +7,7 @@ import {
   formatCardDate,
   TimestampInput,
 } from '@kalya/utils';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export type TimelineTimestampFormat = 'relative' | 'short' | 'full' | 'time' | 'raw';
@@ -111,20 +111,20 @@ export const Timeline: React.FC<TimelineProps> = ({
             {/* Content Details */}
             <View className="flex-1 pb-4">
               <View className="flex-row items-center justify-between">
-                <Text variant="body-sm" tone="primary" className="font-inter-bold">
+                <Typo variant="body-sm" tone="primary" className="font-inter-bold">
                   {item.title}
-                </Text>
+                </Typo>
                 {formattedTimestamp ? (
-                  <Text variant="caption" tone="tertiary" className="font-inter">
+                  <Typo variant="caption" tone="tertiary" className="font-inter">
                     {formattedTimestamp}
-                  </Text>
+                  </Typo>
                 ) : null}
               </View>
 
               {item.description ? (
-                <Text variant="caption" tone="secondary" className="font-inter mt-0.5 leading-snug">
+                <Typo variant="caption" tone="secondary" className="font-inter mt-0.5 leading-snug">
                   {item.description}
-                </Text>
+                </Typo>
               ) : null}
             </View>
           </View>

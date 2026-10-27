@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, TextInput, Pressable } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -96,18 +96,18 @@ export const OTPInput: React.FC<OTPInputProps> = ({
                       : 'border-kalya-border-subtle'
               )}
             >
-              <Text variant="numeral-lg" tone="primary" className="font-ibm-plex-bold text-center">
+              <Typo variant="numeral-lg" tone="primary" className="font-ibm-plex-bold text-center">
                 {digit}
-              </Text>
+              </Typo>
             </View>
           );
         })}
       </Pressable>
 
       {error ? (
-        <Text variant="caption" tone="outflow" className="mt-1 text-center font-inter">
+        <Typo variant="caption" tone="outflow" className="mt-1 text-center font-inter">
           {error}
-        </Text>
+        </Typo>
       ) : null}
     </View>
   );

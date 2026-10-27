@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { WifiOff, AlertTriangle, Info, X } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -107,13 +107,13 @@ export const Banner: React.FC<BannerProps> = ({
       <View className="flex-row items-start gap-2.5 flex-1 mr-2">
         <View className="mt-0.5">{cfg.icon}</View>
         <View className="flex-1">
-          <Text variant="body-sm" className={cn('font-inter-bold', cfg.text)}>
+          <Typo variant="body-sm" className={cn('font-inter-bold', cfg.text)}>
             {title}
-          </Text>
+          </Typo>
           {description ? (
-            <Text variant="caption" className={cn('font-inter mt-0.5', cfg.text)}>
+            <Typo variant="caption" className={cn('font-inter mt-0.5', cfg.text)}>
               {description}
-            </Text>
+            </Typo>
           ) : null}
 
           {actionLabel && onAction ? (
@@ -122,9 +122,9 @@ export const Banner: React.FC<BannerProps> = ({
               onPress={onAction}
               className="mt-2 self-start py-1 px-2.5 rounded-kalya-pill bg-kalya-surface border border-kalya-border-subtle"
             >
-              <Text variant="caption" className="font-inter-bold text-kalya-text-primary">
+              <Typo variant="caption" className="font-inter-bold text-kalya-text-primary">
                 {actionLabel}
-              </Text>
+              </Typo>
             </HapticTouchable>
           ) : null}
         </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -84,7 +84,7 @@ export function Tabs<T extends string>({
               )}
             >
               {tab.icon ? <View>{tab.icon}</View> : null}
-              <Text
+              <Typo
                 variant="body-sm"
                 className={cn(
                   isActive
@@ -93,7 +93,7 @@ export function Tabs<T extends string>({
                 )}
               >
                 {tab.label}
-              </Text>
+              </Typo>
             </HapticTouchable>
           );
         }
@@ -109,7 +109,7 @@ export function Tabs<T extends string>({
             )}
           >
             {tab.icon ? <View>{tab.icon}</View> : null}
-            <Text
+            <Typo
               variant="body-sm"
               className={cn(
                 isActive
@@ -118,16 +118,16 @@ export function Tabs<T extends string>({
               )}
             >
               {tab.label}
-            </Text>
+            </Typo>
 
             {tab.badge !== undefined && tab.badge > 0 ? (
               <View className="px-1.5 py-0.2 rounded-full bg-kalya-gold">
-                <Text
+                <Typo
                   variant="caption"
                   className="font-ibm-plex-bold text-[10px] text-kalya-primary-dark"
                 >
                   {tab.badge}
-                </Text>
+                </Typo>
               </View>
             ) : null}
           </HapticTouchable>

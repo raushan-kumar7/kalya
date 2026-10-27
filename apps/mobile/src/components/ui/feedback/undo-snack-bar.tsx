@@ -9,7 +9,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface UndoSnackBarProps {
@@ -181,19 +181,19 @@ export const UndoSnackBar: React.FC<UndoSnackBarProps> = ({
             />
           </Svg>
           <View className="absolute inset-0 items-center justify-center">
-            <Text variant="caption" className="text-[10px] font-ibm-plex-bold text-kalya-gold">
+            <Typo variant="caption" className="text-[10px] font-ibm-plex-bold text-kalya-gold">
               {secondsRemaining}
-            </Text>
+            </Typo>
           </View>
         </View>
 
-        <Text
+        <Typo
           variant="body-sm"
           className="font-inter text-kalya-text-inverse flex-1"
           numberOfLines={1}
         >
           {message}
-        </Text>
+        </Typo>
       </View>
 
       <HapticTouchable
@@ -201,9 +201,9 @@ export const UndoSnackBar: React.FC<UndoSnackBarProps> = ({
         onPress={handleUndoTap}
         className="px-3 py-1.5 rounded-kalya-pill bg-kalya-gold-warm border border-kalya-gold items-center justify-center"
       >
-        <Text variant="body-sm" className="font-inter-bold text-kalya-gold">
+        <Typo variant="body-sm" className="font-inter-bold text-kalya-gold">
           {actionLabel}
-        </Text>
+        </Typo>
       </HapticTouchable>
     </Animated.View>
   );

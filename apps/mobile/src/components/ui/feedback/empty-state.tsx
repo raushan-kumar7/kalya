@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Inbox } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { Button } from '../primitives/button';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
@@ -77,17 +77,17 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       </View>
 
       {/* Headings & Guidance */}
-      <Text variant="title-sm" tone="primary" className="text-center font-outfit-bold mb-1">
+      <Typo variant="title-sm" tone="primary" className="text-center font-outfit-bold mb-1">
         {title}
-      </Text>
+      </Typo>
 
-      <Text
+      <Typo
         variant="body-sm"
         tone="secondary"
         className="text-center font-inter max-w-[280px] leading-relaxed mb-6"
       >
         {description}
-      </Text>
+      </Typo>
 
       {/* Action Buttons */}
       <View className="flex-col items-center gap-2.5 w-full max-w-[240px]">
@@ -107,9 +107,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             onPress={onSecondaryAction}
             className="py-2 px-3 rounded-kalya-pill items-center justify-center"
           >
-            <Text variant="body-sm" tone="secondary" className="font-inter-bold">
+            <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
               {secondaryActionLabel}
-            </Text>
+            </Typo>
           </HapticTouchable>
         ) : null}
       </View>

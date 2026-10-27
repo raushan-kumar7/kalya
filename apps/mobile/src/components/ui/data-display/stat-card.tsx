@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { Card } from '../layout/card';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface StatTrend {
@@ -85,21 +85,21 @@ export const StatCard: React.FC<StatCardProps> = ({
       className={cn('flex-col justify-between min-h-[96px]', className)}
     >
       <View className="flex-row items-center justify-between mb-1.5">
-        <Text
+        <Typo
           variant="caption"
           tone="tertiary"
           className="font-inter-bold uppercase tracking-wider"
         >
           {label}
-        </Text>
+        </Typo>
         {icon ? <View>{icon}</View> : null}
       </View>
 
       <View className="my-0.5">
         {typeof value === 'string' ? (
-          <Text variant="numeral-lg" tone="primary" className="font-ibm-plex-bold">
+          <Typo variant="numeral-lg" tone="primary" className="font-ibm-plex-bold">
             {value}
-          </Text>
+          </Typo>
         ) : (
           value
         )}
@@ -113,7 +113,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             <TrendingDown size={13} color="#c83535" />
           )}
 
-          <Text
+          <Typo
             variant="caption"
             className={cn(
               'font-ibm-plex-bold text-[11px]',
@@ -121,12 +121,12 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           >
             {trend.value}
-          </Text>
+          </Typo>
 
           {trend.comparisonLabel ? (
-            <Text variant="caption" tone="tertiary" className="font-inter text-[10px]">
+            <Typo variant="caption" tone="tertiary" className="font-inter text-[10px]">
               {trend.comparisonLabel}
-            </Text>
+            </Typo>
           ) : null}
         </View>
       ) : null}

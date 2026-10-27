@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { ShieldAlert, RefreshCw } from 'lucide-react-native';
 import { Card } from '../layout/card';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { Button } from '../primitives/button';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
@@ -93,12 +93,12 @@ export const ErrorCard: React.FC<ErrorCardProps> = ({
         </View>
 
         <View className="flex-1">
-          <Text variant="title-sm" tone="primary" className="font-outfit-bold">
+          <Typo variant="title-sm" tone="primary" className="font-outfit-bold">
             {title}
-          </Text>
-          <Text variant="body-sm" tone="secondary" className="mt-1 font-inter leading-relaxed">
+          </Typo>
+          <Typo variant="body-sm" tone="secondary" className="mt-1 font-inter leading-relaxed">
             {description}
-          </Text>
+          </Typo>
         </View>
       </View>
 
@@ -121,9 +121,9 @@ export const ErrorCard: React.FC<ErrorCardProps> = ({
             onPress={onSecondaryAction}
             className="py-2 px-3 rounded-kalya-md items-center justify-center"
           >
-            <Text variant="body-sm" tone="secondary" className="font-inter-bold">
+            <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
               {secondaryActionLabel}
-            </Text>
+            </Typo>
           </HapticTouchable>
         ) : null}
       </View>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import { HapticTouchable } from '../primitives/haptic-touchable';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface FABProps {
@@ -91,7 +91,7 @@ export const FAB: React.FC<FABProps> = ({
         {icon ? icon : <Plus size={24} color={variant === 'gold' ? '#082919' : '#ffffff'} />}
 
         {label ? (
-          <Text
+          <Typo
             variant="body-md"
             className={cn(
               'font-inter-bold',
@@ -99,7 +99,7 @@ export const FAB: React.FC<FABProps> = ({
             )}
           >
             {label}
-          </Text>
+          </Typo>
         ) : null}
       </HapticTouchable>
     </View>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, TextInputProps, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -100,9 +100,9 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View className={cn('w-full flex-col gap-1.5', containerClassName)}>
       {label ? (
-        <Text variant="body-sm" className="font-inter-bold text-kalya-text-secondary">
+        <Typo variant="body-sm" className="font-inter-bold text-kalya-text-secondary">
           {label}
-        </Text>
+        </Typo>
       ) : null}
 
       <View
@@ -144,13 +144,13 @@ export const Input: React.FC<InputProps> = ({
       </View>
 
       {error ? (
-        <Text variant="caption" tone="outflow" className="font-inter">
+        <Typo variant="caption" tone="outflow" className="font-inter">
           {error}
-        </Text>
+        </Typo>
       ) : helperText ? (
-        <Text variant="caption" tone="tertiary">
+        <Typo variant="caption" tone="tertiary">
           {helperText}
-        </Text>
+        </Typo>
       ) : null}
     </View>
   );

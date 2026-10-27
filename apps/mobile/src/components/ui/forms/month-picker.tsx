@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { formatMonthLabel, shiftMonth, getCurrentMonthString } from '@kalya/utils';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -62,13 +62,13 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
   return (
     <View className={cn('w-full flex-col gap-1.5', className)}>
       {label ? (
-        <Text
+        <Typo
           variant="caption"
           tone="secondary"
           className="font-inter-bold uppercase tracking-wider"
         >
           {label}
-        </Text>
+        </Typo>
       ) : null}
 
       <View className="flex-row items-center justify-between px-3 py-2 rounded-kalya-md bg-kalya-surface border border-kalya-border-subtle">
@@ -81,9 +81,9 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
           <ChevronLeft size={18} color="#0d3e26" />
         </HapticTouchable>
 
-        <Text variant="title-sm" tone="primary" className="font-outfit-bold">
+        <Typo variant="title-sm" tone="primary" className="font-outfit-bold">
           {displayLabel}
-        </Text>
+        </Typo>
 
         <HapticTouchable
           accessibilityLabel="Next month"

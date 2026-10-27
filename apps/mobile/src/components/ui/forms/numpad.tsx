@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { Delete } from 'lucide-react-native';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface NumpadProps {
@@ -96,9 +96,9 @@ export const Numpad: React.FC<NumpadProps> = ({
               onPress={() => onSelectPreset?.(amount)}
               className="flex-1 py-1.5 px-2 rounded-kalya-pill bg-kalya-surface border border-kalya-border-subtle items-center justify-center"
             >
-              <Text variant="caption" tone="secondary" className="font-ibm-plex-bold">
+              <Typo variant="caption" tone="secondary" className="font-ibm-plex-bold">
                 +₹{amount.toLocaleString('en-IN')}
-              </Text>
+              </Typo>
             </HapticTouchable>
           ))}
         </View>
@@ -130,13 +130,13 @@ export const Numpad: React.FC<NumpadProps> = ({
                   {isDelete ? (
                     <Delete size={22} color="#0d3e26" />
                   ) : (
-                    <Text
+                    <Typo
                       variant="numeral-lg"
                       tone={isDisabled ? 'tertiary' : 'primary'}
                       className="font-ibm-plex-bold"
                     >
                       {key}
-                    </Text>
+                    </Typo>
                   )}
                 </HapticTouchable>
               );

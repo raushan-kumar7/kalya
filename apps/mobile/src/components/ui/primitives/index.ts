@@ -1,4 +1,4 @@
-export * from './text';
+export * from './typo';
 export * from './haptic-touchable';
 export * from './pressable';
 export * from './button';

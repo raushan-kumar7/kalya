@@ -1,10 +1,13 @@
-import { View, Text } from 'react-native';
+import { Screen, Typo } from '@/components/ui';
+import { View } from 'react-native';
 
 const ForgotPassword = () => {
   return (
-    <View>
-      <Text>ForgotPassword</Text>
-    </View>
+    <Screen className="items-center justify-center font-ibm-plex">
+      <View>
+        <Typo>ForgotPassword</Typo>
+      </View>
+    </Screen>
   );
 };
 

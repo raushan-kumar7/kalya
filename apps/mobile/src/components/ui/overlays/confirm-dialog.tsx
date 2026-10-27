@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { AlertTriangle } from 'lucide-react-native';
 import { Modal } from './modal';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { Button } from '../primitives/button';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 
@@ -91,17 +91,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </View>
         ) : null}
 
-        <Text variant="title-sm" tone="primary" className="font-outfit-bold text-center mb-1.5">
+        <Typo variant="title-sm" tone="primary" className="font-outfit-bold text-center mb-1.5">
           {title}
-        </Text>
+        </Typo>
 
-        <Text
+        <Typo
           variant="body-sm"
           tone="secondary"
           className="font-inter text-center mb-5 leading-relaxed"
         >
           {message}
-        </Text>
+        </Typo>
 
         <View className="flex-row items-center gap-2.5 w-full">
           <Button

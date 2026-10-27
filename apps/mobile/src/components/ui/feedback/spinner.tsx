@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface SpinnerProps {
@@ -59,9 +59,9 @@ export const Spinner: React.FC<SpinnerProps> = ({
     <View className={cn('items-center justify-center gap-2.5 p-4', className)}>
       <ActivityIndicator size={spinnerSize} color={spinnerColor} />
       {label ? (
-        <Text variant="body-sm" tone="secondary" className="font-inter text-center">
+        <Typo variant="body-sm" tone="secondary" className="font-inter text-center">
           {label}
-        </Text>
+        </Typo>
       ) : null}
     </View>
   );

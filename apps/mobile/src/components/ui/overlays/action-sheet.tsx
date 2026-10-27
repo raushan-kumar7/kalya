@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Modal, Pressable } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable, triggerHaptic } from '../primitives/haptic-touchable';
 import { Button } from '../primitives/button';
 import { cn } from '@/libs/utils';
@@ -82,13 +82,13 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
         >
           {title ? (
             <View className="px-4 py-2.5 border-b border-kalya-border-subtle mb-1">
-              <Text
+              <Typo
                 variant="caption"
                 tone="tertiary"
                 className="font-inter-bold uppercase tracking-wider text-center"
               >
                 {title}
-              </Text>
+              </Typo>
             </View>
           ) : null}
 
@@ -100,7 +100,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
               className="flex-row items-center gap-3 py-3 px-4 rounded-kalya-md"
             >
               {action.icon ? <View>{action.icon}</View> : null}
-              <Text
+              <Typo
                 variant="body-md"
                 className={cn(
                   'font-inter flex-1',
@@ -110,7 +110,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
                 )}
               >
                 {action.label}
-              </Text>
+              </Typo>
             </HapticTouchable>
           ))}
         </Pressable>

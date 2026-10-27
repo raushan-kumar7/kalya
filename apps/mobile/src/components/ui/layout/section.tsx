@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { HapticTouchable } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -54,13 +54,13 @@ export const Section: React.FC<SectionProps> = ({
     <View className={cn('w-full flex-col gap-2.5 my-2', className)}>
       <View className="flex-row items-baseline justify-between px-1">
         <View className="flex-1 mr-2">
-          <Text variant="title-sm" tone="primary" className="font-outfit-bold tracking-tight">
+          <Typo variant="title-sm" tone="primary" className="font-outfit-bold tracking-tight">
             {title}
-          </Text>
+          </Typo>
           {subtitle ? (
-            <Text variant="caption" tone="tertiary" className="font-inter mt-0.5">
+            <Typo variant="caption" tone="tertiary" className="font-inter mt-0.5">
               {subtitle}
-            </Text>
+            </Typo>
           ) : null}
         </View>
 
@@ -70,9 +70,9 @@ export const Section: React.FC<SectionProps> = ({
             onPress={onAction}
             className="py-1 px-2 rounded-kalya-sm"
           >
-            <Text variant="body-sm" tone="accent" className="font-inter-bold text-kalya-gold-warm">
+            <Typo variant="body-sm" tone="accent" className="font-inter-bold text-kalya-gold-warm">
               {actionLabel}
-            </Text>
+            </Typo>
           </HapticTouchable>
         ) : null}
       </View>

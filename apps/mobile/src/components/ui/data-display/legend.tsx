@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface LegendItem {
@@ -47,13 +47,13 @@ export const Legend: React.FC<LegendProps> = ({ items, orientation = 'horizontal
       {items.map((item, idx) => (
         <View key={`legend-${idx}`} className="flex-row items-center gap-1.5 mr-3 my-0.5">
           <View style={{ backgroundColor: item.color }} className="w-2.5 h-2.5 rounded-full" />
-          <Text variant="caption" tone="secondary" className="font-inter">
+          <Typo variant="caption" tone="secondary" className="font-inter">
             {item.label}
-          </Text>
+          </Typo>
           {item.value !== undefined ? (
-            <Text variant="caption" tone="primary" className="font-ibm-plex-bold">
+            <Typo variant="caption" tone="primary" className="font-ibm-plex-bold">
               ({item.value})
-            </Text>
+            </Typo>
           ) : null}
         </View>
       ))}

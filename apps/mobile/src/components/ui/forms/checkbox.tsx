@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -66,9 +66,9 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       </View>
 
       {label ? (
-        <Text variant="body-md" className="font-inter text-kalya-text-primary">
+        <Typo variant="body-md" className="font-inter text-kalya-text-primary">
           {label}
-        </Text>
+        </Typo>
       ) : null}
     </Pressable>
   );
@@ -118,13 +118,13 @@ export function RadioGroup<T extends string>({
             </View>
 
             <View className="flex-1">
-              <Text variant="body-md" className="font-inter-bold text-kalya-text-primary">
+              <Typo variant="body-md" className="font-inter-bold text-kalya-text-primary">
                 {opt.label}
-              </Text>
+              </Typo>
               {opt.description ? (
-                <Text variant="caption" tone="tertiary" className="font-inter mt-0.5">
+                <Typo variant="caption" tone="tertiary" className="font-inter mt-0.5">
                   {opt.description}
-                </Text>
+                </Typo>
               ) : null}
             </View>
           </Pressable>

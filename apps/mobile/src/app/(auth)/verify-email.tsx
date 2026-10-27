@@ -1,10 +1,13 @@
-import { View, Text } from 'react-native';
+import { Screen, Typo } from '@/components/ui';
+import { View } from 'react-native';
 
 const VerifyEmail = () => {
   return (
-    <View>
-      <Text>VerifyEmail</Text>
-    </View>
+    <Screen className="items-center justify-center font-ibm-plex">
+      <View>
+        <Typo>VerifyEmail</Typo>
+      </View>
+    </Screen>
   );
 };
 

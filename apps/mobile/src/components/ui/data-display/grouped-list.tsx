@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, SectionList } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { Skeleton } from '../feedback/skeleton';
 import { EmptyState, EmptyStateProps } from '../feedback/empty-state';
 import { cn } from '@/libs/utils';
@@ -99,13 +99,13 @@ export function GroupedList<T>({
       showsVerticalScrollIndicator={false}
       renderSectionHeader={({ section: { title } }: { section: { title: string } }) => (
         <View className="py-2 px-3 bg-kalya-canvas border-b border-kalya-border-subtle">
-          <Text
+          <Typo
             variant="caption"
             tone="secondary"
             className="font-inter-bold uppercase tracking-wider"
           >
             {title}
-          </Text>
+          </Typo>
         </View>
       )}
       className={className}

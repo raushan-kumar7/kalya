@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { cn } from '@/libs/utils';
 
 export interface CurrencyInputProps {
@@ -104,45 +104,45 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   return (
     <View className={cn('flex-col items-center justify-center p-4', className)}>
       {label ? (
-        <Text
+        <Typo
           variant="caption"
           tone="secondary"
           className="mb-1 font-inter-bold tracking-wider uppercase"
         >
           {label}
-        </Text>
+        </Typo>
       ) : null}
 
       <View className="flex-row items-baseline justify-center gap-1">
-        <Text
+        <Typo
           variant={cfg.majorVariant}
           tone="accent"
           className={cn('font-outfit-bold text-kalya-gold mr-0.5', cfg.symbolSize)}
         >
           {symbol}
-        </Text>
+        </Typo>
 
-        <Text
+        <Typo
           variant={cfg.majorVariant}
           tone="primary"
           className="font-ibm-plex-bold tracking-tight text-kalya-text-primary"
         >
           {major}
-        </Text>
+        </Typo>
 
-        <Text
+        <Typo
           variant={cfg.minorVariant}
           tone="tertiary"
           className="font-ibm-plex text-kalya-text-tertiary"
         >
           .{minor}
-        </Text>
+        </Typo>
       </View>
 
       {error ? (
-        <Text variant="caption" tone="outflow" className="mt-1 font-inter text-center">
+        <Typo variant="caption" tone="outflow" className="mt-1 font-inter text-center">
           {error}
-        </Text>
+        </Typo>
       ) : null}
     </View>
   );

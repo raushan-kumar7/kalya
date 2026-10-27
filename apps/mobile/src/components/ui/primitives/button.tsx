@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { HapticTouchable, HapticTouchableProps } from './haptic-touchable';
-import { Text } from './text';
+import { Typo } from './typo';
 import { cn } from '@/libs/utils';
 
 export type ButtonVariant =
@@ -161,15 +161,15 @@ export const Button: React.FC<ButtonProps> = ({
         <View className="flex-row items-center justify-center gap-2">
           <ActivityIndicator size="small" color={spinnerColors[variant]} />
           {loadingText ? (
-            <Text className={cn(variantTextColors[variant], sizeStyles[size].text)}>
+            <Typo className={cn(variantTextColors[variant], sizeStyles[size].text)}>
               {loadingText}
-            </Text>
+            </Typo>
           ) : null}
         </View>
       ) : (
         <>
           {leftIcon ? <View className="items-center justify-center">{leftIcon}</View> : null}
-          <Text className={cn(variantTextColors[variant], sizeStyles[size].text)}>{title}</Text>
+          <Typo className={cn(variantTextColors[variant], sizeStyles[size].text)}>{title}</Typo>
           {rightIcon ? <View className="items-center justify-center">{rightIcon}</View> : null}
         </>
       )}

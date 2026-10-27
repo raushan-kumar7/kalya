@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { View, PanResponder, LayoutChangeEvent } from 'react-native';
-import { Text } from '../primitives/text';
+import { Typo } from '../primitives/typo';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
 
@@ -100,15 +100,15 @@ export const Slider: React.FC<SliderProps> = ({
     <View className={cn('w-full flex-col gap-2 my-1', className)}>
       <View className="flex-row items-baseline justify-between px-0.5">
         {label ? (
-          <Text variant="body-sm" tone="secondary" className="font-inter-bold">
+          <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
             {label}
-          </Text>
+          </Typo>
         ) : null}
 
-        <Text variant="numeral-sm" tone="primary" className="font-ibm-plex-bold">
+        <Typo variant="numeral-sm" tone="primary" className="font-ibm-plex-bold">
           {clampedValue}
           {valueSuffix}
-        </Text>
+        </Typo>
       </View>
 
       <View
