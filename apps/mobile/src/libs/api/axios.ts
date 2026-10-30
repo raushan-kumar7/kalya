@@ -8,7 +8,15 @@ import axios, {
 } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { toSnake } from '@kalya/utils';
+import { toast } from '@/components/ui/feedback/toast';
 import { ApiError, ApiErrorDetail } from './types';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    skipToast?: boolean;
+    silent?: boolean;
+  }
+}
 
 export const AUTH_TOKEN_KEY = 'kalya_session_token';
 
@@ -23,12 +31,18 @@ export const axiosInstance: AxiosInstance = axios.create({
   timeout: 30_000, // 30s
   headers: {
     Accept: 'application/json',
+    Origin: 'kalya://',
   },
   withCredentials: true,
 });
 
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    // Ensure native mobile requests always send an Origin for Better-Auth CSRF & trustedOrigins checks
+    if (!config.headers.Origin && !config.headers.origin) {
+      config.headers.set('Origin', 'kalya://');
+    }
+
     if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
       if (config.headers) {
         delete (config.headers as Record<string, unknown>)['Content-Type'];
@@ -131,6 +145,10 @@ axiosInstance.interceptors.response.use(
       errMsg = err.message;
     }
 
+    const config = err.config as
+      (InternalAxiosRequestConfig & { skipToast?: boolean; silent?: boolean }) | undefined;
+    const shouldSkipToast = config?.skipToast || config?.silent;
+
     if (statusCode === 401) {
       const reqUrl = err.config?.url || '';
       const isAuthApi =
@@ -145,6 +163,29 @@ axiosInstance.interceptors.response.use(
         } catch {
           // Ignore removal errors
         }
+
+        if (!shouldSkipToast) {
+          toast.warning('Your session has expired. Please sign in again.', {
+            title: 'Session Expired',
+          });
+        }
+      }
+    } else if (!shouldSkipToast) {
+      const isNetworkError =
+        err.code === 'ERR_NETWORK' || err.message === 'Network Error' || !err.response;
+
+      if (isNetworkError) {
+        toast.error('Unable to connect to server. Please check your internet connection.', {
+          title: 'Network Error',
+        });
+      } else if (statusCode === 429) {
+        toast.warning(errMsg || 'Too many attempts. Please slow down and try again later.', {
+          title: 'Rate Limit Exceeded',
+        });
+      } else if (statusCode >= 500) {
+        toast.error(errMsg || 'A server error occurred. Please try again shortly.', {
+          title: 'Server Error',
+        });
       }
     }
 

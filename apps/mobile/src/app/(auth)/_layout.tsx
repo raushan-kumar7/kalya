@@ -8,7 +8,14 @@ const AuthLayout = () => {
         animation: 'fade',
         contentStyle: { backgroundColor: '#edfdf2' },
       }}
-    />
+    >
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="reset-password" />
+      <Stack.Screen name="verify-email" />
+    </Stack>
   );
 };
 

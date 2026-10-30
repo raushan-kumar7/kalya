@@ -21,6 +21,7 @@ import {
   USER_STATUS_OPTIONS,
   AUDIT_SEVERITY_OPTIONS,
   AUDIT_STATUS_OPTIONS,
+  OTP_TYPE_OPTIONS,
 } from './constants';
 import { Extensible } from './primitives';
 
@@ -33,6 +34,9 @@ export type AppEnvironment = 'local' | 'development' | 'staging' | 'production';
  * Standardized logging levels across the application for Observability.
  */
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+
+/** Purpose of an OTP request. Strict (not `Extensible`): Better-Auth rejects unknown types. */
+export type OtpType = (typeof OTP_TYPE_OPTIONS)[number];
 
 /**
  * Valid SameSite cookie policy attributes for session management.

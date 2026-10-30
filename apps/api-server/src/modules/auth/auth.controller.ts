@@ -19,12 +19,12 @@ export class AuthController {
     try {
       let requestUrl = request.url;
       if (
-        requestUrl.includes('/auth/forget-password') ||
-        requestUrl.includes('/auth/forgot-password')
+        (requestUrl.includes('/auth/forget-password') ||
+          requestUrl.includes('/auth/forgot-password')) &&
+        !requestUrl.includes('/email-otp')
       ) {
-        requestUrl = requestUrl.replace(
-          /\/auth\/(?:forget|forgot)-password/,
-          '/auth/request-password-reset'
+        requestUrl = requestUrl.replace(/\/auth\/(?:forget|forgot)-password(?:\?|$)/, (match) =>
+          match.endsWith('?') ? '/auth/request-password-reset?' : '/auth/request-password-reset'
         );
       }
 
@@ -43,6 +43,9 @@ export class AuthController {
       }
       if (!headers.get('x-forwarded-host') && request.headers.host) {
         headers.set('x-forwarded-host', request.headers.host);
+      }
+      if (!headers.get('origin') && !headers.get('referer')) {
+        headers.set('origin', 'kalya://');
       }
 
       const response = await this.auth.handler(
@@ -165,12 +168,14 @@ export class AuthController {
 
   /**
    * Handles real-time availability checks (/api/${env.app.apiVersion}/auth/check-availability).
+   * Supports both GET (querystring) and POST (request body) for maximum client interoperability.
    */
   checkAvailability = async (
-    request: FastifyRequest<{ Querystring: CheckAvailabilityDto }>,
+    request: FastifyRequest<{ Querystring?: CheckAvailabilityDto; Body?: CheckAvailabilityDto }>,
     reply: FastifyReply
   ) => {
-    const result = await this.authService.checkAvailability(request.query);
+    const dto = request.query?.field ? request.query : (request.body as CheckAvailabilityDto);
+    const result = await this.authService.checkAvailability(dto);
     return ApiResponse.ok(reply, result, result.message);
   };
 }

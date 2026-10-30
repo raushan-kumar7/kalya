@@ -3,19 +3,21 @@ import { env } from '@kalya/env';
 import { AUTH_LIMITS } from '@kalya/types';
 import { parseDuration } from '@kalya/utils';
 import { betterAuth } from 'better-auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { bearer, username } from 'better-auth/plugins';
+import { bearer, emailOTP, username } from 'better-auth/plugins';
 import { generateUniqueUsername } from '../helpers';
 
 import { AuditLogService } from '../admin';
 import {
   handleNewDeviceLogin,
   handlePasswordChanged,
+  handleSendPasswordResetOTP,
   handleSendResetPassword,
-  handleSendVerificationEmail,
+  // handleSendTwoFactorOTP,
+  handleSendVerificationOTP,
   handleWelcomeEmail,
   type SendResetPasswordPayload,
-  type SendVerificationEmailPayload,
 } from './hooks';
 
 /**
@@ -76,6 +78,10 @@ export const createAuth = (db: DatabaseClient) => {
         [
           ...env.server.corsAllowedOrigins,
           env.app.clientUrl,
+          'kalya://',
+          'kalya://*',
+          'exp://',
+          'exp://*',
           'http://localhost:3000',
           'http://localhost:3001',
           'http://localhost:5173',
@@ -105,12 +111,6 @@ export const createAuth = (db: DatabaseClient) => {
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: async (
-        data: SendVerificationEmailPayload,
-        request?: Request | null
-      ) => {
-        await handleSendVerificationEmail(data, request);
-      },
     },
     emailAndPassword: {
       enabled: true,
@@ -128,6 +128,30 @@ export const createAuth = (db: DatabaseClient) => {
           severity: 'INFO',
           status: 'SUCCESS',
           description: `Password reset link requested for ${data.user.email}`,
+        });
+      },
+      onPasswordReset: async ({ user }, request) => {
+        const req = request;
+        const ipAddress = req?.headers?.get('x-forwarded-for') || null;
+        const userAgent = req?.headers?.get('user-agent') || null;
+
+        await handlePasswordChanged(db, {
+          userId: user.id,
+          ipAddress,
+          userAgent,
+        });
+
+        await auditLogService.record({
+          actorId: user.id,
+          actorEmail: user.email,
+          action: 'USER_PASSWORD_CHANGED',
+          entityType: 'USER',
+          entityId: user.id,
+          severity: 'WARN',
+          status: 'SUCCESS',
+          description: 'User successfully reset account password',
+          ipAddress,
+          userAgent,
         });
       },
     },
@@ -220,43 +244,108 @@ export const createAuth = (db: DatabaseClient) => {
           },
         },
       },
-      account: {
-        update: {
-          after: async (account, context) => {
-            if (account.password) {
-              const req = context?.request;
-              const ipAddress = req?.headers?.get('x-forwarded-for') || null;
-              const userAgent = req?.headers?.get('user-agent') || null;
-
-              await handlePasswordChanged(db, {
-                userId: account.userId,
-                ipAddress,
-                userAgent,
-              });
-
-              await auditLogService.record({
-                actorId: account.userId,
-                action: 'USER_PASSWORD_CHANGED',
-                entityType: 'USER',
-                entityId: account.userId,
-                severity: 'WARN',
-                status: 'SUCCESS',
-                description: 'User updated account password',
-                ipAddress,
-                userAgent,
-              });
-            }
-          },
-        },
-      },
     },
     plugins: [
+      {
+        id: 'kalya-password-events',
+        hooks: {
+          after: [
+            {
+              matcher(context) {
+                return context.path === '/change-password' || context.path === '/set-password';
+              },
+              handler: createAuthMiddleware(async (ctx) => {
+                const returned = ctx.context.returned as Record<string, unknown> | undefined;
+                // If the endpoint failed with an APIError or was not successful, do not dispatch
+                if (
+                  !returned ||
+                  typeof returned !== 'object' ||
+                  'code' in returned ||
+                  'statusCode' in returned
+                ) {
+                  return;
+                }
+
+                const session = ctx.context.session;
+                const user =
+                  (returned.user as { id?: string; email?: string } | undefined) || session?.user;
+                const userId = user?.id;
+                if (!userId) return;
+
+                const req = ctx.request;
+                const ipAddress = req?.headers?.get('x-forwarded-for') || null;
+                const userAgent = req?.headers?.get('user-agent') || null;
+
+                await handlePasswordChanged(db, {
+                  userId,
+                  ipAddress,
+                  userAgent,
+                });
+
+                await auditLogService.record({
+                  actorId: userId,
+                  actorEmail: user?.email,
+                  action: 'USER_PASSWORD_CHANGED',
+                  entityType: 'USER',
+                  entityId: userId,
+                  severity: 'WARN',
+                  status: 'SUCCESS',
+                  description:
+                    ctx.path === '/set-password'
+                      ? 'User created an initial account password'
+                      : 'User updated account password',
+                  ipAddress,
+                  userAgent,
+                });
+              }),
+            },
+          ],
+        },
+      },
       username({
         minUsernameLength: AUTH_LIMITS.MIN_USERNAME_LENGTH,
         maxUsernameLength: AUTH_LIMITS.MAX_USERNAME_LENGTH,
         displayUsernameValidator: (val: string) => val.length <= AUTH_LIMITS.MAX_USERNAME_LENGTH,
       }),
       bearer(),
+      emailOTP({
+        otpLength: AUTH_LIMITS.OTP_LENGTH,
+        expiresIn: AUTH_LIMITS.OTP_EXPIRES_MINUTES * 60,
+        storeOTP: 'hashed',
+        resendStrategy: 'rotate',
+        allowedAttempts: 5,
+        sendVerificationOnSignUp: true,
+        overrideDefaultEmailVerification: true,
+        sendVerificationOTP: async ({ email, otp, type }, ctx) => {
+          if (type === 'email-verification') {
+            await handleSendVerificationOTP({ email, otp }, ctx);
+          } else if (
+            type === 'forget-password' ||
+            (type as string) === 'forgot-password' ||
+            (type as string) === 'reset-password'
+          ) {
+            await handleSendPasswordResetOTP({ email, otp }, ctx);
+            await auditLogService.record({
+              actorEmail: email,
+              action: 'USER_PASSWORD_RESET_REQUESTED',
+              entityType: 'USER',
+              severity: 'INFO',
+              status: 'SUCCESS',
+              description: `Password reset OTP requested for ${email}`,
+            });
+          }
+        },
+      }),
+      // twoFactor({
+      //   issuer: 'Kalya',
+      //   otpOptions: {
+      //     digits: AUTH_LIMITS.OTP_LENGTH,
+      //     period: AUTH_LIMITS.MFA_OTP_EXPIRES_MINUTES * 60,
+      //     sendOTP: async ({ user, otp }, ctx) => {
+      //       await handleSendTwoFactorOTP({ user, otp }, ctx);
+      //     },
+      //   },
+      // }),
     ],
     user: {
       additionalFields: {

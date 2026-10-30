@@ -1,7 +1,6 @@
 import Database, { type Options as BetterSqliteOptions } from 'better-sqlite3';
 import { defineConfig, type Config } from 'drizzle-kit';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { drizzle as mobileDrizzle } from 'drizzle-orm/expo-sqlite';
 import * as schema from './schemas';
 
 export { schema };
@@ -56,7 +55,7 @@ export { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqli
 export type { InferSelectModel, InferInsertModel, SQL, SQLWrapper } from 'drizzle-orm';
 
 // Drizzle Kit & Driver Re-exports
-export { drizzle, mobileDrizzle, defineConfig, Database };
+export { drizzle, defineConfig, Database };
 export type { Config, BetterSqliteOptions };
 export { runMigrations } from './migrate';
 

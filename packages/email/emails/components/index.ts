@@ -6,3 +6,4 @@ export * from './DetailRow';
 export * from './ListRow';
 export * from './Callout';
 export * from './Layout';
+export * from './OtpCode';

@@ -255,3 +255,4 @@ export type SessionOutput = z.infer<typeof SessionSchema>;
 export type AuthResponseOutput = z.infer<typeof AuthResponseSchema>;
 
 export * from './helper';
+export * from './otp';

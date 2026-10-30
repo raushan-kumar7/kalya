@@ -24,6 +24,11 @@ export const ENDPOINTS = {
     CHECK_AVAILABILITY: `${AUTH}/check-availability`,
     SIGN_IN_SOCIAL: `${AUTH}/sign-in/social`,
     CALLBACK_GOOGLE: `${AUTH}/callback/google`,
+    EMAIL_OTP_SEND: `${AUTH}/email-otp/send-verification-otp`,
+    EMAIL_OTP_REQUEST_PASSWORD_RESET: `${AUTH}/email-otp/request-password-reset`,
+    EMAIL_OTP_VERIFY_EMAIL: `${AUTH}/email-otp/verify-email`,
+    EMAIL_OTP_RESET_PASSWORD: `${AUTH}/email-otp/reset-password`,
+    EMAIL_OTP_CHECK: `${AUTH}/email-otp/check-verification-otp`,
   },
 
   // User Profile & Account Management (/api/v1/users/*)

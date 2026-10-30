@@ -156,12 +156,19 @@ const Welcome = () => {
             onPress={() => (isLast ? router.push('/(auth)/sign-up') : goTo(index + 1))}
           />
           <Button
-            title="I already have an account"
-            variant="ghost"
+            // title="I already have an account"
+            title="Already a Kalya User"
+            variant="glass"
             size="lg"
             fullWidth
             onPress={() => router.push('/(auth)/sign-in')}
           />
+
+          {/* <Pressable onPress={() => router.replace("/(auth)/sign-in")} >
+            <Typo size="caption" tone="link" >
+              Already a Kalya User
+            </Typo>
+          </Pressable> */}
         </View>
       </View>
     </Screen>

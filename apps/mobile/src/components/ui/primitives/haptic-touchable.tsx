@@ -12,12 +12,14 @@ import { cn } from '@/libs/utils';
 export type HapticTier =
   'none' | 'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning' | 'error';
 
+export type ExtendedHapticTier = HapticTier | 'notificationSuccess';
+
 export interface HapticTouchableProps extends Omit<RNPressableProps, 'style'> {
   /**
    * Calibrated haptic intensity triggered on press down.
    * @default 'light'
    */
-  hapticTier?: HapticTier;
+  hapticTier?: ExtendedHapticTier;
 
   /**
    * Target scale down factor on touch down.
@@ -47,10 +49,11 @@ export interface HapticTouchableProps extends Omit<RNPressableProps, 'style'> {
  *
  * @param tier - The haptic intensity tier
  */
-export async function triggerHaptic(tier: HapticTier = 'light'): Promise<void> {
+export async function triggerHaptic(tier: ExtendedHapticTier = 'light'): Promise<void> {
   if (tier === 'none') return;
   try {
-    switch (tier) {
+    const mappedTier: HapticTier = tier === 'notificationSuccess' ? 'success' : tier;
+    switch (mappedTier) {
       case 'selection':
         await Haptics.selectionAsync();
         break;

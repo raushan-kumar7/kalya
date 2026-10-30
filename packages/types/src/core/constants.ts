@@ -67,7 +67,25 @@ export const AUTH_LIMITS = {
   MIN_NAME_LENGTH: 1,
   /** Maximum character length for first / last names */
   MAX_NAME_LENGTH: 100,
+  /** Number of digits in an email OTP code (must match Better-Auth emailOTP `otpLength`) */
+  OTP_LENGTH: 6,
+  /** Client-side cooldown between OTP resend requests, in seconds */
+  OTP_RESEND_SECONDS: 30,
+  /** Otp expires in 10m */
+  OTP_EXPIRES_MINUTES: 10,
+  /** MFA codes are higher risk, so they live shorter than email-verification codes */
+  MFA_OTP_EXPIRES_MINUTES: 5,
 } as const;
+
+/**
+ * Purposes an email OTP can be issued for (matches Better-Auth emailOTP types).
+ */
+export const OTP_TYPE_OPTIONS = [
+  'email-verification',
+  'forget-password',
+  'sign-in',
+  'change-email',
+] as const;
 
 /**
  * Lifecycle states during real-time field uniqueness / availability checks

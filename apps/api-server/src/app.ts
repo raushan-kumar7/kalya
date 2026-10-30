@@ -67,7 +67,7 @@ export const buildApp = (): FastifyInstance => {
   app.register(cors, {
     origin: (origin, cb) => {
       // Allow non-browser requests (e.g. mobile apps, curl, server-to-server)
-      if (!origin) {
+      if (!origin || origin.startsWith('kalya://') || origin.startsWith('exp://')) {
         return cb(null, true);
       }
 

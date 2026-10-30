@@ -17,6 +17,10 @@ export interface AuthState {
   /** Any last encountered auth error message */
   error: string | null;
 
+  // ---- Multi-step Authentication Flow State ----
+  /** Email currently undergoing OTP verification or password recovery */
+  pendingEmail: string | null;
+
   // ---- Biometric Authentication State ----
   /** Whether the hardware supports biometrics (Face ID / Fingerprint) */
   isBiometricSupported: boolean;
@@ -99,6 +103,17 @@ export interface AuthActions {
    */
   setError: (error: string | null) => void;
 
+  // ---- Multi-step Authentication Flow Actions ----
+
+  /**
+   * Sets the email currently undergoing OTP verification or password recovery.
+   *
+   * @description Kept in memory only (not persisted) so it survives screen navigation but not an app restart.
+   * @param {string | null} email - Email address or null to clear.
+   * @returns {void}
+   */
+  setPendingEmail: (email: string | null) => void;
+
   // ---- Biometric Actions ----
 
   /**
@@ -146,6 +161,7 @@ const INITIAL_STATE: AuthState = {
   isLoading: true,
   isInitialized: false,
   error: null,
+  pendingEmail: null,
   isBiometricSupported: false,
   isBiometricEnrolled: false,
   isBiometricEnabled: false,
@@ -178,6 +194,7 @@ export const useAuthStore = create<AuthStore>()(
           isLoading: false,
           isInitialized: true,
           error: null,
+          pendingEmail: null,
         }),
 
       updateUser: (partial) =>
@@ -198,6 +215,8 @@ export const useAuthStore = create<AuthStore>()(
       setLoading: (isLoading) => set({ isLoading }),
       setInitialized: (isInitialized) => set({ isInitialized }),
       setError: (error) => set({ error }),
+
+      setPendingEmail: (pendingEmail) => set({ pendingEmail }),
 
       setBiometricSupported: (isBiometricSupported) => set({ isBiometricSupported }),
       setBiometricEnrolled: (isBiometricEnrolled) => set({ isBiometricEnrolled }),
@@ -280,6 +299,14 @@ export const useAuthInitialized = (): boolean => useAuthStore((s) => s.isInitial
  * @returns {string | null} Last error message.
  */
 export const useAuthError = (): string | null => useAuthStore((s) => s.error);
+
+/**
+ * Hook selector returning the email currently undergoing OTP verification or recovery.
+ *
+ * @description Returns the pending email or null if no multi-step flow is active.
+ * @returns {string | null} Pending email address.
+ */
+export const usePendingEmail = (): string | null => useAuthStore((s) => s.pendingEmail);
 
 /**
  * Hook selector returning whether device hardware supports biometrics.

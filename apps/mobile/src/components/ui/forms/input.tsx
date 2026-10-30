@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, TextInput, TextInputProps, Pressable } from 'react-native';
+import { View, TextInput, TextInputProps, Pressable, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
 import { Typo } from '../primitives/typo';
 import { triggerHaptic } from '../primitives/haptic-touchable';
 import { cn } from '@/libs/utils';
+import { FIELD_HEIGHT, FIELD_ICON_SLOT } from './constants';
 
 export interface InputProps extends TextInputProps {
   /**
@@ -75,6 +76,9 @@ export const Input: React.FC<InputProps> = ({
   onChangeText,
   onFocus,
   onBlur,
+  cursorColor,
+  selectionColor,
+  selectionHandleColor,
   ...rest
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -97,6 +101,28 @@ export const Input: React.FC<InputProps> = ({
     return 'border-kalya-border-subtle bg-kalya-surface';
   };
 
+  // Blinking cursor / pointer and selection colors consistent with tailwind.config.js palette
+  const defaultCursorColor = error ? '#c83535' : glowColor === 'gold' ? '#d4af37' : '#0d3e26';
+
+  const defaultSelectionColor =
+    Platform.OS === 'ios'
+      ? defaultCursorColor
+      : error
+        ? 'rgba(200, 53, 53, 0.25)'
+        : glowColor === 'gold'
+          ? 'rgba(212, 175, 55, 0.25)'
+          : 'rgba(13, 62, 38, 0.2)';
+
+  const activeCursorColor = cursorColor ?? defaultCursorColor;
+  const activeSelectionColor = selectionColor ?? defaultSelectionColor;
+  const activeSelectionHandleColor = selectionHandleColor ?? defaultCursorColor;
+
+  const caretClass = error
+    ? 'caret-kalya-outflow'
+    : glowColor === 'gold'
+      ? 'caret-kalya-gold'
+      : 'caret-kalya-primary';
+
   return (
     <View className={cn('w-full flex-col gap-1.5', containerClassName)}>
       {label ? (
@@ -107,11 +133,12 @@ export const Input: React.FC<InputProps> = ({
 
       <View
         className={cn(
-          'flex-row items-center px-3.5 py-2.5 rounded-kalya-md border',
+          FIELD_HEIGHT,
+          'flex-row items-center px-3.5 rounded-kalya-md border',
           getBorderClasses()
         )}
       >
-        {leftIcon ? <View className="mr-2.5 items-center justify-center">{leftIcon}</View> : null}
+        {leftIcon ? <View className={cn('mr-2.5', FIELD_ICON_SLOT)}>{leftIcon}</View> : null}
 
         <TextInput
           value={value}
@@ -124,12 +151,20 @@ export const Input: React.FC<InputProps> = ({
             setIsFocused(false);
             onBlur?.(e);
           }}
+          cursorColor={activeCursorColor}
+          selectionColor={activeSelectionColor}
+          selectionHandleColor={activeSelectionHandleColor}
           placeholderTextColor="#5d8a72"
-          className={cn('flex-1 font-inter text-sm text-kalya-text-primary p-0', className)}
+          textAlignVertical="center"
+          className={cn(
+            'min-w-0 flex-1 h-full font-inter text-sm text-kalya-text-primary p-0',
+            caretClass,
+            className
+          )}
           {...rest}
         />
 
-        {clearable && value && value.length > 0 ? (
+        {/* {clearable && value && value.length > 0 ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear input"
@@ -138,9 +173,21 @@ export const Input: React.FC<InputProps> = ({
           >
             <X size={14} color="#5d8a72" />
           </Pressable>
+        ) : null} */}
+
+        {clearable && value && value.length > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear input"
+            onPress={handleClear}
+            hitSlop={8}
+            className={cn('ml-1 rounded-kalya-pill bg-kalya-surface-muted', FIELD_ICON_SLOT)}
+          >
+            <X size={14} color="#5d8a72" />
+          </Pressable>
         ) : null}
 
-        {rightIcon ? <View className="ml-2 items-center justify-center">{rightIcon}</View> : null}
+        {rightIcon ? <View className={cn('ml-2', FIELD_ICON_SLOT)}>{rightIcon}</View> : null}
       </View>
 
       {error ? (

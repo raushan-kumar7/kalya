@@ -9,7 +9,7 @@ import { FOCUS_RING, INTERACTION_STATES, ICON_SIZES } from '@/components/ui/cons
 
 const inputVariants = cva(
   cn(
-    'flex w-full min-w-0 font-body text-text-primary placeholder:text-text-muted transition-colors duration-150',
+    'flex w-full min-w-0 font-body text-text-primary placeholder:text-text-muted transition-colors duration-150 caret-primary',
     INTERACTION_STATES.disabled,
     '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden'
   ),
@@ -17,23 +17,23 @@ const inputVariants = cva(
     variants: {
       variant: {
         default: cn(
-          'rounded-md border border-border bg-surface hover:border-text-secondary/70 focus-visible:border-primary',
+          'rounded-md border border-border bg-surface hover:border-text-secondary/70 focus-visible:border-primary caret-primary',
           FOCUS_RING.primary
         ),
         error: cn(
-          'rounded-md border border-danger bg-surface hover:border-danger focus-visible:border-danger',
+          'rounded-md border border-danger bg-surface hover:border-danger focus-visible:border-danger caret-danger',
           FOCUS_RING.danger
         ),
         warning: cn(
-          'rounded-md border border-warning bg-surface hover:border-warning focus-visible:border-warning',
+          'rounded-md border border-warning bg-surface hover:border-warning focus-visible:border-warning caret-accent',
           FOCUS_RING.accent
         ),
         success: cn(
-          'rounded-md border border-success bg-surface hover:border-success focus-visible:border-success',
+          'rounded-md border border-success bg-surface hover:border-success focus-visible:border-success caret-primary',
           FOCUS_RING.primary
         ),
         unstyled:
-          'border-0 bg-transparent rounded-none shadow-none outline-none ring-0 ring-offset-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
+          'border-0 bg-transparent rounded-none shadow-none outline-none ring-0 ring-offset-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 caret-primary',
       },
       size: {
         xs: 'h-7 text-[11px] rounded-xs',

@@ -55,11 +55,11 @@ export const FormField: React.FC<FormFieldProps> = ({
     <View className={cn('w-full flex-col gap-1.5 my-1', className)}>
       {label ? (
         <View className="flex-row items-center gap-1">
-          <Typo variant="body-sm" tone="secondary" className="font-inter-bold">
+          <Typo variant="body-sm" tone="secondary" className="font-inter-bold" numberOfLines={1}>
             {label}
           </Typo>
           {required ? (
-            <Typo variant="caption" tone="accent" className="font-inter-bold text-kalya-gold">
+            <Typo variant="caption" tone="accent" className="font-inter-bold text-kalya-outflow">
               *
             </Typo>
           ) : null}

@@ -10,6 +10,8 @@ module.exports = {
         'inter-bold': ['Inter-Bold', 'sans-serif'],
         outfit: ['Outfit-Regular', 'sans-serif'],
         'outfit-bold': ['Outfit-Bold', 'sans-serif'],
+        mono: ['IBMPlexMono-Regular', 'monospace'],
+        'mono-bold': ['IBMPlexMono-Bold', 'monospace'],
         'ibm-plex': ['IBMPlexMono-Regular', 'sans-serif'],
         'ibm-plex-bold': ['IBMPlexMono-Bold', 'sans-serif'],
       },

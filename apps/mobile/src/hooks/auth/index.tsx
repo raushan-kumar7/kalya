@@ -17,11 +17,13 @@ import type {
   ChangePasswordDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  ResetPasswordOtpDto,
   Session,
   SessionResponse,
   SignInDto,
   SignUpDto,
   VerifyEmailDto,
+  VerifyEmailOtpDto,
 } from '@kalya/types';
 
 /* ------------------------------------------------------------------ */
@@ -279,12 +281,23 @@ export function useSignInMutation(options?: UseMutationOptions<AuthResponse, Err
 export function useSignUpMutation(options?: UseMutationOptions<AuthResponse, Error, SignUpDto>) {
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
 
   return useMutation({
     ...options,
     mutationFn: (dto: SignUpDto) => AuthService.signUp(dto),
+    onMutate: async (...args) => {
+      const [variables] = args;
+      if (variables?.email) {
+        setPendingEmail(variables.email.trim().toLowerCase());
+      }
+      return options?.onMutate?.(...args);
+    },
     onSuccess: (...args) => {
-      const [data] = args;
+      const [data, variables] = args;
+      if (variables?.email) {
+        setPendingEmail(variables.email.trim().toLowerCase());
+      }
       if (data?.user) {
         const session =
           data.session ||
@@ -405,6 +418,76 @@ export function useVerifyEmailMutation(
   });
 }
 
+/**
+ * Mutation hook for verifying email via 6-digit OTP code.
+ * Upon success: auto-hydrates the session into Zustand and invalidates session query.
+ */
+export function useVerifyEmailOtpMutation(
+  options?: UseMutationOptions<{ success: boolean; message?: string }, Error, VerifyEmailOtpDto>
+) {
+  const queryClient = useQueryClient();
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
+
+  return useMutation({
+    ...options,
+    mutationFn: (dto: VerifyEmailOtpDto) => AuthService.verifyEmailOtp(dto),
+    onSuccess: (...args) => {
+      setPendingEmail(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.session() });
+      options?.onSuccess?.(...args);
+    },
+  });
+}
+
+/**
+ * Mutation hook for requesting/resending a verification OTP.
+ */
+export function useSendVerificationOtpMutation(
+  options?: UseMutationOptions<{ success: boolean; message?: string }, Error, string>
+) {
+  return useMutation({
+    ...options,
+    mutationFn: (email: string) => AuthService.sendVerificationOtp(email),
+  });
+}
+
+/**
+ * Mutation hook for requesting a password reset OTP.
+ */
+export function useSendPasswordResetOtpMutation(
+  options?: UseMutationOptions<{ success: boolean; message?: string }, Error, string>
+) {
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
+
+  return useMutation({
+    ...options,
+    mutationFn: (email: string) => AuthService.sendPasswordResetOtp(email),
+    onSuccess: (...args) => {
+      const [, email] = args;
+      setPendingEmail(email);
+      options?.onSuccess?.(...args);
+    },
+  });
+}
+
+/**
+ * Mutation hook for resetting password using OTP and new password credentials.
+ */
+export function useResetPasswordOtpMutation(
+  options?: UseMutationOptions<{ success: boolean; message?: string }, Error, ResetPasswordOtpDto>
+) {
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
+
+  return useMutation({
+    ...options,
+    mutationFn: (dto: ResetPasswordOtpDto) => AuthService.resetPasswordOtp(dto),
+    onSuccess: (...args) => {
+      setPendingEmail(null);
+      options?.onSuccess?.(...args);
+    },
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Primary Unified useAuth Hook                                       */
 /* ------------------------------------------------------------------ */
@@ -425,17 +508,26 @@ export function useAuth() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const error = useAuthStore((s) => s.error);
+  const pendingEmail = useAuthStore((s) => s.pendingEmail);
 
   const updateUser = useAuthStore((s) => s.updateUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
 
   const signInMutation = useSignInMutation();
   const signUpMutation = useSignUpMutation();
   const signOutMutation = useSignOutMutation();
+  const changePasswordMutation = useChangePasswordMutation();
+
+  // OTP Mutations
+  const verifyEmailOtpMutation = useVerifyEmailOtpMutation();
+  const sendVerificationOtpMutation = useSendVerificationOtpMutation();
+  const sendPasswordResetOtpMutation = useSendPasswordResetOtpMutation();
+  const resetPasswordOtpMutation = useResetPasswordOtpMutation();
+
   const forgotPasswordMutation = useForgotPasswordMutation();
   const resetPasswordMutation = useResetPasswordMutation();
-  const changePasswordMutation = useChangePasswordMutation();
   const verifyEmailMutation = useVerifyEmailMutation();
 
   const biometric = useBiometric();
@@ -449,19 +541,26 @@ export function useAuth() {
       isLoading ||
       signInMutation.isPending ||
       signUpMutation.isPending ||
-      signOutMutation.isPending,
+      signOutMutation.isPending ||
+      verifyEmailOtpMutation.isPending,
     isInitialized,
     error,
+    pendingEmail,
 
     // Store Actions
     updateUser,
     clearAuth,
     setAuth,
+    setPendingEmail,
 
     // High-Level Actions
     signIn: signInMutation.mutateAsync,
     signUp: signUpMutation.mutateAsync,
     signOut: signOutMutation.mutateAsync,
+    verifyEmailOtp: verifyEmailOtpMutation.mutateAsync,
+    sendVerificationOtp: sendVerificationOtpMutation.mutateAsync,
+    sendPasswordResetOtp: sendPasswordResetOtpMutation.mutateAsync,
+    resetPasswordOtp: resetPasswordOtpMutation.mutateAsync,
     forgotPassword: forgotPasswordMutation.mutateAsync,
     resetPassword: resetPasswordMutation.mutateAsync,
     changePassword: changePasswordMutation.mutateAsync,
@@ -475,6 +574,10 @@ export function useAuth() {
     signInMutation,
     signUpMutation,
     signOutMutation,
+    verifyEmailOtpMutation,
+    sendVerificationOtpMutation,
+    sendPasswordResetOtpMutation,
+    resetPasswordOtpMutation,
     forgotPasswordMutation,
     resetPasswordMutation,
     changePasswordMutation,
@@ -484,6 +587,9 @@ export function useAuth() {
     isSigningIn: signInMutation.isPending,
     isSigningUp: signUpMutation.isPending,
     isSigningOut: signOutMutation.isPending,
+    isVerifyingEmailOtp: verifyEmailOtpMutation.isPending,
+    isSendingOtp: sendVerificationOtpMutation.isPending || sendPasswordResetOtpMutation.isPending,
+    isResettingPasswordOtp: resetPasswordOtpMutation.isPending,
     isRequestingPasswordReset: forgotPasswordMutation.isPending,
     isResettingPassword: resetPasswordMutation.isPending,
     isChangingPassword: changePasswordMutation.isPending,

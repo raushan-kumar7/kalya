@@ -144,6 +144,143 @@
 //   );
 // };
 
+// import React, { useCallback } from 'react';
+// import {
+//   View,
+//   ScrollView,
+//   KeyboardAvoidingView,
+//   Platform,
+//   RefreshControl,
+//   StyleProp,
+//   ViewStyle,
+// } from 'react-native';
+// import { SafeAreaView, Edge } from 'react-native-safe-area-context';
+// import { StatusBar } from 'expo-status-bar';
+// import { useFocusEffect } from 'expo-router';
+// import * as SystemUI from 'expo-system-ui';
+// import { cn } from '@/libs/utils';
+// import { SCREEN_DEFAULT_BG } from '@/constants/color';
+
+// export interface ScreenProps {
+//   /** Children rendered inside the screen body. */
+//   children: React.ReactNode;
+
+//   /**
+//    * Whether content is scrollable via ScrollView.
+//    * @default true
+//    */
+//   scrollable?: boolean;
+
+//   /**
+//    * Whether to wrap in KeyboardAvoidingView.
+//    * @default true
+//    */
+//   keyboardAvoiding?: boolean;
+
+//   /**
+//    * Refreshing state for pull-to-refresh.
+//    * @default false
+//    */
+//   refreshing?: boolean;
+
+//   /** Callback invoked on pull-to-refresh. */
+//   onRefresh?: () => void;
+
+//   /**
+//    * Safe area edges to inset.
+//    * @default ['top', 'left', 'right']
+//    */
+//   edges?: Edge[];
+
+//   /**
+//    * Status bar icon style.
+//    * @default 'dark'
+//    */
+//   statusBarStyle?: 'light' | 'dark' | 'auto';
+
+//   /** Style for the inner content container. */
+//   contentContainerStyle?: StyleProp<ViewStyle>;
+
+//   /** Extra NativeWind classes for the outer wrapper. */
+//   className?: string;
+
+//   /**
+//    * Color painted behind the whole screen, including the area behind
+//    * the system navigation bar. Also applied to the native root window.
+//    * @default SCREEN_DEFAULT_BG
+//    */
+//   backgroundColor?: string;
+// }
+
+// /**
+//  * Screen provides a standardized container with safe area insets,
+//  * optional scrolling with pull-to-refresh, keyboard avoidance,
+//  * status bar handling, and a single background color applied at every layer.
+//  */
+// export const Screen: React.FC<ScreenProps> = ({
+//   children,
+//   scrollable = true,
+//   keyboardAvoiding = true,
+//   refreshing = false,
+//   onRefresh,
+//   edges = ['top', 'left', 'right'],
+//   statusBarStyle = 'dark',
+//   contentContainerStyle,
+//   className,
+//   backgroundColor = SCREEN_DEFAULT_BG,
+// }) => {
+//   // Sync the native root window color with whichever screen is focused.
+//   // This is the layer visible through a transparent system navigation bar.
+//   useFocusEffect(
+//     useCallback(() => {
+//       SystemUI.setBackgroundColorAsync(backgroundColor).catch(() => {});
+//     }, [backgroundColor])
+//   );
+
+//   const content = scrollable ? (
+//     <ScrollView
+//       className="flex-1"
+//       style={{ backgroundColor }}
+//       contentContainerStyle={[{ flexGrow: 1 }, contentContainerStyle]}
+//       keyboardShouldPersistTaps="handled"
+//       showsVerticalScrollIndicator={false}
+//       refreshControl={
+//         onRefresh ? (
+//           <RefreshControl
+//             refreshing={refreshing}
+//             onRefresh={onRefresh}
+//             tintColor="#0d3e26"
+//             colors={['#0d3e26', '#d4af37']}
+//           />
+//         ) : undefined
+//       }
+//     >
+//       {children}
+//     </ScrollView>
+//   ) : (
+//     <View className="flex-1" style={[{ backgroundColor }, contentContainerStyle]}>
+//       {children}
+//     </View>
+//   );
+
+//   return (
+//     <SafeAreaView edges={edges} className={cn('flex-1', className)} style={{ backgroundColor }}>
+//       <StatusBar style={statusBarStyle} />
+//       {keyboardAvoiding ? (
+//         <KeyboardAvoidingView
+//           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+//           className="flex-1"
+//           style={{ backgroundColor }}
+//         >
+//           {content}
+//         </KeyboardAvoidingView>
+//       ) : (
+//         content
+//       )}
+//     </SafeAreaView>
+//   );
+// };
+
 import React, { useCallback } from 'react';
 import {
   View,
@@ -201,7 +338,10 @@ export interface ScreenProps {
   /** Style for the inner content container. */
   contentContainerStyle?: StyleProp<ViewStyle>;
 
-  /** Extra NativeWind classes for the outer wrapper. */
+  /** NativeWind classes for the inner content container (padding, alignment, gap). */
+  contentContainerClassName?: string;
+
+  /** Extra NativeWind classes for the outer SafeAreaView wrapper. */
   className?: string;
 
   /**
@@ -212,11 +352,6 @@ export interface ScreenProps {
   backgroundColor?: string;
 }
 
-/**
- * Screen provides a standardized container with safe area insets,
- * optional scrolling with pull-to-refresh, keyboard avoidance,
- * status bar handling, and a single background color applied at every layer.
- */
 export const Screen: React.FC<ScreenProps> = ({
   children,
   scrollable = true,
@@ -226,11 +361,10 @@ export const Screen: React.FC<ScreenProps> = ({
   edges = ['top', 'left', 'right'],
   statusBarStyle = 'dark',
   contentContainerStyle,
+  contentContainerClassName,
   className,
   backgroundColor = SCREEN_DEFAULT_BG,
 }) => {
-  // Sync the native root window color with whichever screen is focused.
-  // This is the layer visible through a transparent system navigation bar.
   useFocusEffect(
     useCallback(() => {
       SystemUI.setBackgroundColorAsync(backgroundColor).catch(() => {});
@@ -239,8 +373,9 @@ export const Screen: React.FC<ScreenProps> = ({
 
   const content = scrollable ? (
     <ScrollView
-      className="flex-1"
+      className="flex-1 w-full"
       style={{ backgroundColor }}
+      contentContainerClassName={cn('flex-grow', contentContainerClassName)}
       contentContainerStyle={[{ flexGrow: 1 }, contentContainerStyle]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -258,18 +393,25 @@ export const Screen: React.FC<ScreenProps> = ({
       {children}
     </ScrollView>
   ) : (
-    <View className="flex-1" style={[{ backgroundColor }, contentContainerStyle]}>
+    <View
+      className={cn('flex-1 w-full', contentContainerClassName)}
+      style={[{ backgroundColor }, contentContainerStyle]}
+    >
       {children}
     </View>
   );
 
   return (
-    <SafeAreaView edges={edges} className={cn('flex-1', className)} style={{ backgroundColor }}>
+    <SafeAreaView
+      edges={edges}
+      className={cn('flex-1 w-full', className)}
+      style={{ backgroundColor }}
+    >
       <StatusBar style={statusBarStyle} />
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1"
+          className="flex-1 w-full"
           style={{ backgroundColor }}
         >
           {content}

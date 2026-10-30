@@ -8,26 +8,26 @@ import { FOCUS_RING, INTERACTION_STATES } from '@/components/ui/constants';
 
 const textareaVariants = cva(
   cn(
-    'flex w-full font-body text-text-primary placeholder:text-text-muted resize-y transition-colors duration-150',
+    'flex w-full font-body text-text-primary placeholder:text-text-muted resize-y transition-colors duration-150 caret-primary',
     INTERACTION_STATES.disabled
   ),
   {
     variants: {
       variant: {
         default: cn(
-          'rounded-md border border-border bg-surface hover:border-text-secondary/70 focus-visible:border-primary',
+          'rounded-md border border-border bg-surface hover:border-text-secondary/70 focus-visible:border-primary caret-primary',
           FOCUS_RING.primary
         ),
         error: cn(
-          'rounded-md border border-danger bg-surface hover:border-danger focus-visible:border-danger',
+          'rounded-md border border-danger bg-surface hover:border-danger focus-visible:border-danger caret-danger',
           FOCUS_RING.danger
         ),
         warning: cn(
-          'rounded-md border border-warning bg-surface hover:border-warning focus-visible:border-warning',
+          'rounded-md border border-warning bg-surface hover:border-warning focus-visible:border-warning caret-accent',
           FOCUS_RING.accent
         ),
         success: cn(
-          'rounded-md border border-success bg-surface hover:border-success focus-visible:border-success',
+          'rounded-md border border-success bg-surface hover:border-success focus-visible:border-success caret-primary',
           FOCUS_RING.primary
         ),
       },

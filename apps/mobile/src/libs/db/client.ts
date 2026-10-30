@@ -1,8 +1,8 @@
 import { openDatabaseSync } from 'expo-sqlite';
+import { mobileDrizzle } from '@kalya/db/mobile';
 import * as serverSchema from '@kalya/db/schema';
 import * as localschema from './schema/outbox';
 import { APP_CONFIG } from '@/configs';
-import { mobileDrizzle } from '@kalya/db';
 
 export const schema = { ...serverSchema, ...localschema };
 

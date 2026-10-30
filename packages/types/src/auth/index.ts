@@ -327,3 +327,5 @@ export interface PasswordStrengthReport {
   isValid: boolean;
   checklist: PasswordRuleResult[];
 }
+
+export * from './otp';

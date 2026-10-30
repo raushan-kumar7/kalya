@@ -115,7 +115,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         onPress={handleOpen}
         className={cn(
           'flex-row items-center justify-between px-3.5 py-3 rounded-kalya-md border bg-kalya-surface',
-          error ? 'border-kalya-outflow' : 'border-kalya-border-subtle'
+          error
+            ? 'border-kalya-outflow'
+            : modalVisible
+              ? 'border-kalya-primary'
+              : 'border-kalya-border-subtle'
         )}
       >
         <View className="flex-row items-center gap-2.5">

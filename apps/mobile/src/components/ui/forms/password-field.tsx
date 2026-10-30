@@ -3,6 +3,7 @@ import { Pressable } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { Input, InputProps } from './input';
 import { triggerHaptic } from '../primitives/haptic-touchable';
+import { FIELD_ICON_SLOT } from './constants';
 
 export interface PasswordFieldProps extends Omit<InputProps, 'secureTextEntry' | 'rightIcon'> {
   /**
@@ -38,7 +39,7 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({ showToggle = true,
             accessibilityRole="button"
             accessibilityLabel={isSecure ? 'Show password' : 'Hide password'}
             onPress={toggleSecure}
-            className="p-1"
+            className={FIELD_ICON_SLOT}
           >
             {isSecure ? <Eye size={18} color="#5d8a72" /> : <EyeOff size={18} color="#0d3e26" />}
           </Pressable>

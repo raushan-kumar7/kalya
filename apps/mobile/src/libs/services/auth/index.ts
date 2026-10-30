@@ -12,6 +12,7 @@ import type {
   VerifyEmailDto,
 } from '@kalya/types';
 import { SecureStoreTokenService } from './token';
+import { fullName } from '@kalya/utils';
 
 export class AuthService {
   /**
@@ -57,9 +58,31 @@ export class AuthService {
    * @returns {Promise<AuthResponse>} The created user profile and newly issued session.
    */
   static async signUp(dto: SignUpDto): Promise<AuthResponse> {
+    const name = await fullName(
+      dto.first_name.trim(),
+      dto.last_name.trim(),
+      dto.middle_name?.trim()
+    );
+    const payload = {
+      email: dto.email.trim().toLowerCase(),
+      password: dto.password,
+      name: name,
+      username: dto.username.trim().toLowerCase(),
+      first_name: dto.first_name.trim(),
+      last_name: dto.last_name.trim(),
+      middle_name: dto.middle_name?.trim() || undefined,
+      displayUsername: dto.displayUsername?.trim() || undefined,
+      gender: dto.gender,
+      dateOfBirth: dto.dateOfBirth,
+      phone: dto.phone?.trim() || undefined,
+      locale: dto.locale,
+      timezone: dto.timezone,
+      currency: dto.currency,
+      image: dto.image,
+    };
     const res = await http.post<AuthResponse & { token?: string }>(
       ENDPOINTS.AUTH.SIGN_UP_EMAIL,
-      dto
+      payload
     );
 
     if (res.token) {
@@ -107,7 +130,31 @@ export class AuthService {
    * @returns {Promise<AvailabilityResponse>} Availability outcome with validation message.
    */
   static async checkAvailability(dto: CheckAvailabilityDto): Promise<AvailabilityResponse> {
-    return http.post<AvailabilityResponse>(ENDPOINTS.AUTH.CHECK_AVAILABILITY, dto);
+    const query = new URLSearchParams({
+      field: dto.field,
+      value: dto.value.trim().toLowerCase(),
+    }).toString();
+    return http.get<AvailabilityResponse>(`${ENDPOINTS.AUTH.CHECK_AVAILABILITY}?${query}`);
+  }
+
+  /**
+   * Checks real-time availability of a username handle.
+   */
+  static async checkUsernameAvailability(username: string): Promise<AvailabilityResponse> {
+    return AuthService.checkAvailability({
+      field: 'username',
+      value: username,
+    });
+  }
+
+  /**
+   * Checks real-time availability of an email address.
+   */
+  static async checkEmailAvailability(email: string): Promise<AvailabilityResponse> {
+    return AuthService.checkAvailability({
+      field: 'email',
+      value: email,
+    });
   }
 
   /**
@@ -174,5 +221,55 @@ export class AuthService {
     dto: ChangePasswordDto
   ): Promise<{ success: boolean; message?: string }> {
     return http.post<{ success: boolean; message?: string }>(ENDPOINTS.AUTH.CHANGE_PASSWORD, dto);
+  }
+
+  /**
+   * Verifies an email using a 6-digit OTP code.
+   */
+  static async verifyEmailOtp(dto: {
+    email: string;
+    otp: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return http.post<{ success: boolean; message?: string }>(
+      ENDPOINTS.AUTH.EMAIL_OTP_VERIFY_EMAIL,
+      dto
+    );
+  }
+
+  /**
+   * Dispatches a fresh 6-digit verification OTP to the user's email.
+   */
+  static async sendVerificationOtp(email: string): Promise<{ success: boolean; message?: string }> {
+    return http.post<{ success: boolean; message?: string }>(ENDPOINTS.AUTH.EMAIL_OTP_SEND, {
+      email,
+      type: 'email-verification',
+    });
+  }
+
+  /**
+   * Dispatches a 6-digit password reset OTP to the user's email.
+   * Hits Better-Auth's dedicated /email-otp/request-password-reset endpoint.
+   */
+  static async sendPasswordResetOtp(
+    email: string
+  ): Promise<{ success: boolean; message?: string }> {
+    return http.post<{ success: boolean; message?: string }>(
+      ENDPOINTS.AUTH.EMAIL_OTP_REQUEST_PASSWORD_RESET,
+      { email }
+    );
+  }
+
+  /**
+   * Resets account password using email, 6-digit OTP, and new password.
+   */
+  static async resetPasswordOtp(dto: {
+    email: string;
+    otp: string;
+    password: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return http.post<{ success: boolean; message?: string }>(
+      ENDPOINTS.AUTH.EMAIL_OTP_RESET_PASSWORD,
+      dto
+    );
   }
 }

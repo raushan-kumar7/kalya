@@ -65,7 +65,7 @@ export async function handleSendResetPassword(
         userEmail: user.email,
         resetUrl,
         expiresInMinutes: 30,
-        requestedAt: formatDateTime(new Date(), tz),
+        requestedTime: formatDateTime(new Date(), tz),
         ipAddress: String(ip),
       },
       to: user.email,
@@ -122,6 +122,12 @@ export async function handlePasswordChanged(
         ? client.network.ipAddress
         : ipAddress || 'Unknown IP';
     const tz = resolveUserTimezone(user.timezone || client.geo.timezone);
+
+    log.info('Sending password changed security alert email', {
+      action: 'SENDING_PASSWORD_CHANGED_EMAIL',
+      userId,
+      to: user.email,
+    });
 
     await getMailer().sendTemplate({
       template: PasswordChangedNotice,
