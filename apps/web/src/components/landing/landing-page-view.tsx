@@ -2091,9 +2091,9 @@ export function Home() {
                   </Link>
                 </li>
                 <li>
-                  <a href="#security" className="hover:text-primary transition-colors">
-                    Sovereign Architecture
-                  </a>
+                  <Link href="/security" className="hover:text-primary transition-colors">
+                    Security Architecture
+                  </Link>
                 </li>
                 <li>
                   <a href="#statements" className="hover:text-primary transition-colors">

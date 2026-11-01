@@ -28,6 +28,12 @@ export interface AuthState {
   isBiometricEnrolled: boolean;
   /** Whether user has opted-in to biometric unlock for this app */
   isBiometricEnabled: boolean;
+
+  // ---- App Lock State ----
+  /** Whether the application is temporarily locked due to background inactivity */
+  isAppLocked: boolean;
+  /** Unix timestamp in ms when the application was last moved to the background */
+  lastBackgroundedAt: number | null;
 }
 
 export interface AuthActions {
@@ -143,6 +149,34 @@ export interface AuthActions {
    */
   setBiometricEnabled: (enabled: boolean) => void;
 
+  // ---- App Lock Actions ----
+
+  /**
+   * Sets the app lock flag.
+   *
+   * @description Locks or unlocks the application, typically after a period of background inactivity.
+   * @param {boolean} locked - True to lock the app.
+   * @returns {void}
+   */
+  setAppLocked: (locked: boolean) => void;
+
+  /**
+   * Records when the application was last moved to the background.
+   *
+   * @description Used to measure inactivity when the app returns to the foreground. Kept in memory only.
+   * @param {number | null} timestamp - Unix timestamp in ms, or null to clear.
+   * @returns {void}
+   */
+  setLastBackgroundedAt: (timestamp: number | null) => void;
+
+  /**
+   * Unlocks the application after successful biometric or credential verification.
+   *
+   * @description Clears the app lock flag and the background timestamp.
+   * @returns {void}
+   */
+  unlockApp: () => void;
+
   /**
    * Performs complete reset of the auth store back to initial unauthenticated values.
    *
@@ -165,6 +199,8 @@ const INITIAL_STATE: AuthState = {
   isBiometricSupported: false,
   isBiometricEnrolled: false,
   isBiometricEnabled: false,
+  isAppLocked: false,
+  lastBackgroundedAt: null,
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -221,6 +257,10 @@ export const useAuthStore = create<AuthStore>()(
       setBiometricSupported: (isBiometricSupported) => set({ isBiometricSupported }),
       setBiometricEnrolled: (isBiometricEnrolled) => set({ isBiometricEnrolled }),
       setBiometricEnabled: (isBiometricEnabled) => set({ isBiometricEnabled }),
+
+      setAppLocked: (isAppLocked) => set({ isAppLocked }),
+      setLastBackgroundedAt: (lastBackgroundedAt) => set({ lastBackgroundedAt }),
+      unlockApp: () => set({ isAppLocked: false, lastBackgroundedAt: null }),
 
       reset: () =>
         set({
@@ -331,3 +371,19 @@ export const useIsBiometricEnrolled = (): boolean => useAuthStore((s) => s.isBio
  * @returns {boolean} True if enabled.
  */
 export const useIsBiometricEnabled = (): boolean => useAuthStore((s) => s.isBiometricEnabled);
+
+/**
+ * Hook selector returning whether the app is currently locked.
+ *
+ * @description True after background inactivity, until the user unlocks the app.
+ * @returns {boolean} True if locked.
+ */
+export const useIsAppLocked = (): boolean => useAuthStore((s) => s.isAppLocked);
+
+/**
+ * Hook selector returning when the app was last moved to the background.
+ *
+ * @description Returns a Unix timestamp in ms, or null if the app has not been backgrounded.
+ * @returns {number | null} Last backgrounded timestamp.
+ */
+export const useLastBackgroundedAt = (): number | null => useAuthStore((s) => s.lastBackgroundedAt);

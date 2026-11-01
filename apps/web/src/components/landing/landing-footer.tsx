@@ -110,6 +110,11 @@ export function LandingFooter() {
                     Terms of Service
                   </Link>
                 </li>
+                <li>
+                  <Link href="/security" className="hover:text-primary transition-colors">
+                    Security & Trust
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>

@@ -20,6 +20,7 @@ export type BadgeVariant =
   | 'sync-offline'
   | 'sync-queued'
   | 'gold-pro'
+  | 'counter'
   | 'neutral';
 
 export type BadgeSize = 'xs' | 'sm' | 'md';
@@ -28,7 +29,12 @@ export interface BadgeProps {
   /**
    * Display text inside badge.
    */
-  label: string;
+  label?: string;
+
+  /**
+   * Numeric value for the `counter` variant. Values above 99 render as "99+".
+   */
+  count?: number;
 
   /**
    * Visual variant representing category or status.
@@ -111,6 +117,11 @@ const variantStyles: Record<BadgeVariant, { container: string; text: string; dot
     text: 'text-kalya-text-tertiary font-inter',
     dot: 'bg-kalya-text-tertiary',
   },
+  counter: {
+    container: 'bg-kalya-outflow border-kalya-surface',
+    text: 'text-white font-inter-bold',
+    dot: 'bg-kalya-outflow',
+  },
 };
 
 const sizeStyles: Record<BadgeSize, { container: string; text: string; dot: string }> = {
@@ -128,6 +139,7 @@ const sizeStyles: Record<BadgeSize, { container: string; text: string; dot: stri
  */
 export const Badge: React.FC<BadgeProps> = ({
   label,
+  count,
   variant = 'neutral',
   size = 'sm',
   showDot = false,
@@ -154,6 +166,24 @@ export const Badge: React.FC<BadgeProps> = ({
   const animatedDotStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
   }));
+
+  // Counter: compact round notification bubble (after hooks, so hook order stays stable)
+  if (variant === 'counter') {
+    if (!count || count <= 0) return null;
+    return (
+      <View
+        className={cn(
+          'h-[18px] min-w-[18px] items-center justify-center rounded-full border px-1',
+          vStyle.container,
+          className
+        )}
+      >
+        <Typo className={cn('text-[10px] leading-[12px]', vStyle.text)}>
+          {count > 99 ? '99+' : count}
+        </Typo>
+      </View>
+    );
+  }
 
   return (
     <View

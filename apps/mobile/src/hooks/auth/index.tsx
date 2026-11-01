@@ -598,3 +598,6 @@ export function useAuth() {
 }
 
 export * from './use-biometric';
+export * from './use-app-lock';
+export * from './use-route-guard';
+export * from './use-auth-gate';

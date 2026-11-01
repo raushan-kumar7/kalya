@@ -145,7 +145,7 @@ export class CategoryService extends BaseFinanceService {
       color: string;
       icon: string;
     }> = [
-      // Needs (Essentials)
+      // Needs
       {
         bucketKey: 'needs',
         key: 'groceries',
@@ -157,7 +157,7 @@ export class CategoryService extends BaseFinanceService {
       {
         bucketKey: 'needs',
         key: 'rent_housing',
-        label: 'Rent & Housing',
+        label: 'Rent / PG',
         origin: 'built-in',
         color: '#3B82F6',
         icon: 'home',
@@ -165,7 +165,7 @@ export class CategoryService extends BaseFinanceService {
       {
         bucketKey: 'needs',
         key: 'utilities',
-        label: 'Utilities & Bills',
+        label: 'Mobile, WiFi & Bills',
         origin: 'built-in',
         color: '#F59E0B',
         icon: 'zap',
@@ -173,7 +173,7 @@ export class CategoryService extends BaseFinanceService {
       {
         bucketKey: 'needs',
         key: 'transportation',
-        label: 'Transportation & Fuel',
+        label: 'Transport & Fuel',
         origin: 'built-in',
         color: '#6366F1',
         icon: 'truck',
@@ -181,59 +181,67 @@ export class CategoryService extends BaseFinanceService {
       {
         bucketKey: 'needs',
         key: 'healthcare',
-        label: 'Healthcare & Medical',
+        label: 'Medicine & Healthcare',
         origin: 'built-in',
         color: '#EF4444',
         icon: 'heart-pulse',
       },
       {
         bucketKey: 'needs',
-        key: 'insurance',
-        label: 'Insurance',
+        key: 'family_support',
+        label: 'Family Support',
         origin: 'built-in',
-        color: '#0EA5E9',
-        icon: 'shield',
+        color: '#84CC16',
+        icon: 'send',
+      },
+      {
+        bucketKey: 'needs',
+        key: 'emi_loans',
+        label: 'EMI & Loans',
+        origin: 'built-in',
+        color: '#F43F5E',
+        icon: 'credit-card',
+      },
+      {
+        bucketKey: 'needs',
+        key: 'education',
+        label: 'Education',
+        origin: 'built-in',
+        color: '#14B8A6',
+        icon: 'graduation-cap',
       },
 
-      // Wants (Lifestyle)
+      // Wants
       {
         bucketKey: 'wants',
         key: 'dining_out',
-        label: 'Dining & Cafes',
+        label: 'Food & Dining',
         origin: 'built-in',
         color: '#F97316',
         icon: 'utensils',
       },
       {
         bucketKey: 'wants',
-        key: 'entertainment',
-        label: 'Entertainment & Leisure',
+        key: 'tea_snacks',
+        label: 'Tea & Snacks',
         origin: 'built-in',
-        color: '#8B5CF6',
-        icon: 'film',
+        color: '#FB923C',
+        icon: 'coffee',
       },
       {
         bucketKey: 'wants',
         key: 'shopping',
-        label: 'Shopping & Apparel',
+        label: 'Shopping & Clothes',
         origin: 'built-in',
         color: '#EC4899',
         icon: 'shopping-bag',
       },
       {
         bucketKey: 'wants',
-        key: 'subscriptions',
-        label: 'Subscriptions & Services',
-        origin: 'built-in',
-        color: '#06B6D4',
-        icon: 'tv',
-      },
-      {
-        bucketKey: 'wants',
         key: 'travel',
-        label: 'Travel & Vacations',
+        label: 'Travel & Trips',
         origin: 'built-in',
-        color: '#14B8A6',
+        color: '#D946EF',
         icon: 'plane',
       },
       {
@@ -241,42 +249,50 @@ export class CategoryService extends BaseFinanceService {
         key: 'personal_care',
         label: 'Personal Care & Fitness',
         origin: 'built-in',
-        color: '#D946EF',
+        color: '#A855F7',
         icon: 'smile',
       },
+      {
+        bucketKey: 'wants',
+        key: 'wants_other',
+        label: 'Other (Wants)',
+        origin: 'built-in',
+        color: '#9CA3AF',
+        icon: 'more-horizontal',
+      },
 
-      // Savings & Investments
+      // Savings
       {
         bucketKey: 'savings',
         key: 'emergency_fund',
         label: 'Emergency Fund',
         origin: 'built-in',
-        color: '#10B981',
+        color: '#22C55E',
         icon: 'shield-check',
       },
       {
         bucketKey: 'savings',
-        key: 'investments',
+        key: 'stocks',
         label: 'Stocks & Mutual Funds',
         origin: 'built-in',
-        color: '#3B82F6',
+        color: '#2563EB',
         icon: 'trending-up',
       },
       {
         bucketKey: 'savings',
-        key: 'retirement',
-        label: 'Retirement & Pension',
+        key: 'gold_silver',
+        label: 'Gold & Silver',
         origin: 'built-in',
-        color: '#8B5CF6',
-        icon: 'award',
+        color: '#EAB308',
+        icon: 'coins',
       },
       {
         bucketKey: 'savings',
-        key: 'fixed_deposits',
-        label: 'Fixed Deposits & Bonds',
+        key: 'savings_other',
+        label: 'Other Savings',
         origin: 'built-in',
-        color: '#F59E0B',
-        icon: 'landmark',
+        color: '#9CA3AF',
+        icon: 'piggy-bank',
       },
     ];
 

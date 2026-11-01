@@ -1,6 +1,18 @@
-import { Stack } from 'expo-router';
+import { useAuthStore } from '@/stores/auth';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
 const AuthLayout = () => {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      router.replace('/(tabs)');
+    }
+  }, [isInitialized, isAuthenticated, router]);
+
   return (
     <Stack
       screenOptions={{

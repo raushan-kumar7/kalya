@@ -1,29 +1,30 @@
-import { Button, Typo } from '@/components/ui';
-import { useAuth } from '@/hooks/auth';
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
+import { Tabs } from 'expo-router';
+import { CustomTabBar, QuickActionsSheet, TABS, TabsFab } from '@/components/shared/tabs';
 
-const _Layout = () => {
-  const router = useRouter();
-  const { user, signOut } = useAuth();
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.replace('/(auth)/sign-in');
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
+export default function TabsLayout() {
   return (
-    <View className="flex-1 bg-kalya-canvas items-center justify-center">
-      <Typo variant="body-lg" tone="secondary">
-        {user?.name}
-      </Typo>
+    <View className="flex-1">
+      <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
+        {TABS.map((tab) => (
+          <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.title }} />
+        ))}
 
-      <Button title="Sign Out" onPress={handleSignOut} />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            href: null,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
+      </Tabs>
+
+      {/* Persistent Floating Action Button positioned above tab bar */}
+      <TabsFab />
+
+      {/* Global Quick Financial Actions Bottom Sheet */}
+      <QuickActionsSheet />
     </View>
   );
-};
-
-export default _Layout;
+}

@@ -74,7 +74,7 @@ axiosInstance.interceptors.request.use(
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
-      } catch (err) {
+      } catch {
         // secure-store access failure during cold start
       }
     }
@@ -163,6 +163,11 @@ axiosInstance.interceptors.response.use(
         } catch {
           // Ignore removal errors
         }
+
+        // Synchronize Zustand Auth Store to unauthenticated state immediately!
+        // This reactive trigger causes useRouteGuard to redirect cleanly to /(auth)/welcome.
+        const { useAuthStore } = await import('@/stores/auth');
+        useAuthStore.getState().clearAuth();
 
         if (!shouldSkipToast) {
           toast.warning('Your session has expired. Please sign in again.', {
